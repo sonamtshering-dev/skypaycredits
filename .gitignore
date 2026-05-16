@@ -1,0 +1,61 @@
+# ── Dependencies ──────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Environment & Secrets ─────────────────────
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+*.env
+
+# ── Build outputs ─────────────────────────────
+dist/
+build/
+.next/
+out/
+
+# ── Vite ──────────────────────────────────────
+.vite/
+
+# ── Uploads (user files) ──────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ── Logs ──────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS files ──────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Seed & temp scripts ───────────────────────
+backend/seedTestGames.js
+backend/fixTestGames.js
+backend/addMoreGames.js
+backend/addValorantPacks.js
+backend/createAdmin.js
+backend/seed*.js
+
+# ── Security ──────────────────────────────────
+*.pem
+*.key
+*.cert
+*.p12
