@@ -1,8 +1,11 @@
 // services/fintopupService.js
 const axios = require("axios")
 
-const BASE     = "https://fintopup.com/api"
-const API_KEY  = process.env.FINTOPUP_API_KEY  // Bearer token
+const BASE    = process.env.NODE_ENV === "production"
+  ? "https://fintopup.com/api"
+  : "https://fintopup.com/api/development"
+
+const API_KEY = process.env.FINTOPUP_API_KEY
 
 function getHeaders() {
   return {
@@ -23,7 +26,7 @@ async function getGames() {
   return r.data?.response || []
 }
 
-// ── Get all SKUs (products) ───────────────────────
+// ── Get all SKUs ──────────────────────────────────
 async function getSkus(gameCode) {
   const r = await axios.get(`${BASE}/skus`, {
     headers: getHeaders(),
@@ -33,35 +36,49 @@ async function getSkus(gameCode) {
 }
 
 // ── Place an order ────────────────────────────────
-// POST /order  { game_code, sku, user_id, zone_id? }
-async function placeOrder({ gameCode, sku, userId, zoneId, secondaryForm }) {
+async function placeOrder({ gameCode, sku, userId, zoneId, secondaryForm, txnMerchantId }) {
   const body = {
-    game_code: gameCode,
+    game_code:     gameCode,
     sku,
-    user_id:   userId,
+    user_id:       userId,
+    txnMerchantId: txnMerchantId || undefined,
   }
   if (zoneId)        body.zone_id        = zoneId
-  if (secondaryForm) body.secondary_form = secondaryForm  // e.g. Genshin region
+  if (secondaryForm) body.secondary_form = secondaryForm
 
   const r = await axios.post(`${BASE}/order`, body, { headers: getHeaders() })
   if (!r.data?.success) throw new Error(r.data?.message || "FinTopup order failed")
   return r.data?.response || r.data
 }
 
-// ── Check order status ────────────────────────────
-async function getOrderStatus(orderId) {
-  const r = await axios.get(`${BASE}/order/${orderId}`, { headers: getHeaders() })
+// ── Check order status by UUID ────────────────────
+async function getOrderStatusByUuid(uuid) {
+  const r = await axios.get(`${BASE}/orderStatus`, {
+    headers: getHeaders(),
+    params: { uuid }
+  })
   return r.data?.response || r.data
 }
 
-// ── Check player ID (FinTopup has no dedicated endpoint;
-//    we do a lightweight SKU fetch to confirm connectivity,
-//    actual player validation happens at order time) ────
-async function checkPlayerId(gameCode, userId, zoneId) {
-  // FinTopup validates player at order time — we just return optimistically
-  // so the UX flow stays the same. Set skipVerify=true on games if you want
-  // to skip this step entirely in the admin panel.
-  return { ok: true, username: userId }
+// ── Check order status by merchant txn ID ─────────
+async function getOrderStatusByMerchantId(txnMerchantId) {
+  const r = await axios.get(`${BASE}/orderStatus`, {
+    headers: getHeaders(),
+    params: { txnMerchantId }
+  })
+  return r.data?.response || r.data
+}
+
+// ── Map FinTopup status to internal status ─────────
+function mapStatus(fintopupStatus) {
+  switch (fintopupStatus) {
+    case "Success":    return "Completed"
+    case "Canceled":   return "Failed"
+    case "Refunded":   return "Failed"
+    case "Processing": return "Processing"
+    case "Pending":
+    default:           return "Pending"
+  }
 }
 
 module.exports = {
@@ -69,6 +86,7 @@ module.exports = {
   getGames,
   getSkus,
   placeOrder,
-  getOrderStatus,
-  checkPlayerId,
+  getOrderStatusByUuid,
+  getOrderStatusByMerchantId,
+  mapStatus,
 }
