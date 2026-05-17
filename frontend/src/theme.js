@@ -3,18 +3,18 @@
 // CHANGE ONLY THIS FILE TO RETHEME THE ENTIRE SITE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const P = '249,115,22'      // primary RGB — change this one value to retheme
-const PD = '234,106,16'     // primary dark RGB
+const P  = '0,170,255'      // primary RGB — Sky Blue
+const PD = '0,140,230'      // primary dark RGB
 
 const theme = {
-  primary:     `#f97316`,
-  primaryDark: `#ea6a10`,
+  primary:     `#00aaff`,
+  primaryDark: `#008ce6`,
   primaryGlow: `rgba(${P},0.35)`,
 
-  grad:        `linear-gradient(135deg,#f97316,#ea6a10)`,
-  gradSoft:    `linear-gradient(135deg,#f97316,#fbbf24)`,
+  grad:        `linear-gradient(135deg,#00aaff,#008ce6)`,
+  gradSoft:    `linear-gradient(135deg,#00aaff,#38bdf8)`,
 
-  bg:          '#0a0a0a',
+  bg:          '#060a0f',
   bgCard:      'rgba(255,255,255,0.06)',
   bgCardHover: 'rgba(255,255,255,0.1)',
 

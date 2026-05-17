@@ -1,6 +1,6 @@
 // services/rechargeService.js
-const g2bulk = require("./g2bulkService")
-const smile  = require("./smileService")
+const fintopup = require("./fintopupService")
+const smile    = require("./smileService")
 
 const isProd = process.env.NODE_ENV === "production"
 const log    = (...a) => { if (!isProd) console.log(...a) }
@@ -12,32 +12,28 @@ function cleanId(str) {
   return str.replace(/[^\x20-\x7E]/g, "").trim()
 }
 
-// Games that don't support player verification
-const NO_VERIFY_GAMES = ["magic_chess_gogo", "magic_chest_gogo"]
-
 // ── Verify Player ─────────────────────────────────
 async function verifyPlayer(game, playerData, packs) {
   const regionSlug = playerData.regionSlug || ""
   const region     = game.regions?.find(r => r.slug === regionSlug && r.active)
                   || game.regions?.find(r => r.active)
-  const provider   = region?.provider || playerData.regionProvider || (packs[0] && packs[0].provider) || "g2bulk"
+  const provider   = region?.provider || playerData.regionProvider || (packs[0] && packs[0].provider) || "fintopup"
   const gameId     = region?.providerGameId || playerData.regionGameId || (packs[0] && packs[0].providerGameId) || ""
   const userId     = cleanId(playerData.userId)
   const zoneId     = cleanId(playerData.zoneId || playerData.serverId || "")
 
   log("[RECHARGE] Verifying player", { provider, userId, zoneId, gameId })
 
-  // Skip verify for games that don't support it
-  if (NO_VERIFY_GAMES.includes(gameId)) {
-    log("[RECHARGE] Skipping verify — game does not support it")
+  if (game.skipVerify) {
+    log("[RECHARGE] Skipping verify — skipVerify flag set")
     return { username: userId, skipped: true }
   }
 
   if (provider === "smile") {
     try {
-      const skuCode = packs[0]?.skuCodes?.[0]?.skuCode || "212"
+      const skuCode   = packs[0]?.skuCodes?.[0]?.skuCode || "212"
       const regionData = game.regions?.find(r => r.slug === (playerData.regionSlug || "") && r.active) || game.regions?.find(r => r.active)
-      const baseUrl = regionData?.smileRegionUrl || process.env.SMILE_BASE_URL || "https://www.smile.one/ph"
+      const baseUrl   = regionData?.smileRegionUrl || process.env.SMILE_BASE_URL || "https://www.smile.one/ph"
       return await smile.verifyPlayer({ productId: gameId, userId, zoneId, skuCode, baseUrl })
     } catch (e) {
       warn("[RECHARGE] Smile verify failed", { error: e.message })
@@ -45,17 +41,12 @@ async function verifyPlayer(game, playerData, packs) {
     }
   }
 
-  if (provider === "g2bulk") {
-    try {
-      const serverId = zoneId || ""
-      return await g2bulk.checkPlayerId(gameId, userId, serverId)
-    } catch (e) {
-      warn("[RECHARGE] G2Bulk verify failed", { error: e.message })
-      throw new Error("Player not found. Please check your Player ID and try again.")
-    }
+  if (provider === "fintopup") {
+    // FinTopup validates at order time — return optimistically
+    return { username: userId, skipped: true }
   }
 
-  // Manual provider — skip verify
+  // Manual or unknown provider — skip verify
   return { username: userId, skipped: true }
 }
 
@@ -64,14 +55,13 @@ async function processRecharge(order, pack, game) {
   pack = pack || order.packSnapshot || {}
   const region = game?.regions?.find(r => r.slug === order.playerData?.regionSlug && r.active)
               || game?.regions?.find(r => r.active)
-  const provider       = region?.provider || order.providerTransactions?.[0]?.provider || "g2bulk"
+  const provider       = region?.provider || order.providerTransactions?.[0]?.provider || "fintopup"
   const providerGameId = pack.providerGameId || region?.providerGameId || order.providerTransactions?.[0]?.providerGameId || ""
-  const userId   = cleanId(order.playerData?.userId || "")
-  const serverId = cleanId(order.playerData?.zoneId || order.playerData?.serverId || "")
-  const callbackUrl = `${process.env.BACKEND_URL}/api/recharge/g2bulk-callback`
-  const baseUrl = region?.smileRegionUrl || process.env.SMILE_BASE_URL || "https://www.smile.one/ph"
+  const userId         = cleanId(order.playerData?.userId || "")
+  const zoneId         = cleanId(order.playerData?.zoneId || order.playerData?.serverId || "")
+  const baseUrl        = region?.smileRegionUrl || process.env.SMILE_BASE_URL || "https://www.smile.one/ph"
 
-  // Build full list of SKUs to process (supports multiple SKUs per pack)
+  // Build full list of SKUs to process
   const allSkus = []
   if (pack.skuCodes?.length > 0) {
     for (const s of pack.skuCodes) {
@@ -83,7 +73,7 @@ async function processRecharge(order, pack, game) {
     allSkus.push(pack.skuCode || "")
   }
 
-  if (!userId) throw new Error("Player ID missing")
+  if (!userId)                              throw new Error("Player ID missing")
   if (allSkus.length === 0 || !allSkus[0]) throw new Error("SKU code missing from pack")
 
   log("[RECHARGE] Processing", { provider, providerGameId, skus: allSkus, userId })
@@ -104,33 +94,28 @@ async function processRecharge(order, pack, game) {
     try {
       let result
 
-      // ── G2Bulk ─────────────────────────────────
-      if (provider === "g2bulk") {
+      // ── FinTopup ────────────────────────────────
+      if (provider === "fintopup") {
         if (!providerGameId) throw new Error("Provider game ID missing")
-        const crypto = require('crypto')
-        const idempotencyKey = crypto.createHash('md5').update(order._id.toString() + "_" + i + "_" + skuCode).digest('hex').replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
-        result = await g2bulk.placeOrder({
-          gameCode:      providerGameId,
-          catalogueName: skuCode,
-          playerId:      userId,
-          serverId:      serverId,
-          callbackUrl,
-          idempotencyKey
+        result = await fintopup.placeOrder({
+          gameCode: providerGameId,
+          sku:      skuCode,
+          userId,
+          zoneId:   zoneId || undefined,
         })
-        if (!result.success) throw new Error(result.message || "G2Bulk order failed")
         transactions.push({
           skuCode,
-          providerOrderId: String(result.order?.order_id || ""),
+          providerOrderId: String(result.order_id || result.id || ""),
           status: "success"
         })
       }
 
-      // ── Smile ──────────────────────────────────
+      // ── Smile ───────────────────────────────────
       else if (provider === "smile") {
         result = await smile.placeOrder({
           productId:   providerGameId,
           userId,
-          zoneId:      serverId,
+          zoneId,
           skuCode,
           referenceId: `${order._id}-${i}-${skuCode}`,
           baseUrl
@@ -155,7 +140,7 @@ async function processRecharge(order, pack, game) {
   }
 
   const successful = transactions.filter(t => t.status === "success")
-  const failed = transactions.filter(t => t.status === "failed")
+  const failed     = transactions.filter(t => t.status === "failed")
 
   if (successful.length === 0) throw new Error(failed[0]?.error || "All SKUs failed")
 
@@ -168,15 +153,11 @@ async function processRecharge(order, pack, game) {
     transactions
   }
 }
+
 // ── Get Servers for a region ──────────────────────
 async function getServers(provider, gameId, smileUrl) {
-  if (provider === "smile") return []
-  if (provider === "g2bulk") {
-    return await g2bulk.getServers(gameId)
-  }
-  if (provider === "smile") {
-    return await smile.getServers(gameId, smileUrl)
-  }
+  if (provider === "smile")    return await smile.getServers(gameId, smileUrl)
+  if (provider === "fintopup") return []  // FinTopup has no server list endpoint
   return []
 }
 

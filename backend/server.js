@@ -1,4 +1,4 @@
-// server.js — Recharge Shop API
+// server.js — Sky Pay Credits API
 const express      = require("express")
 const mongoose     = require("mongoose")
 const cors         = require("cors")
@@ -12,13 +12,10 @@ dotenv.config()
 
 const app = express()
 
-// ── Trust Cloudflare proxy — get real user IP ─────
 app.set('trust proxy', 1)
 
-// ── Security headers ──────────────────────────────
 app.use(cookieParser())
 
-// ── ngrok browser warning bypass ─────────────────
 app.use((req, res, next) => {
   res.setHeader('ngrok-skip-browser-warning', 'true')
   next()
@@ -31,12 +28,9 @@ app.use(helmet({
 
 // ── CORS ──────────────────────────────────────────
 const allowedOrigins = [
-  "https://bdcoins.store",
-  "https://www.bdcoins.store",
-  "http://bdcoins.store",
-  "http://www.bdcoins.store",
   process.env.FRONTEND_URL,
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://localhost:4173",
 ].filter(Boolean)
 
@@ -132,8 +126,6 @@ app.use("/api/orders",    orderLimiter,    require("./routes/orderRoutes"))
 app.use("/api/users",     adminLimiter,    require("./routes/userRoutes"))
 app.use("/api/payment",   payLimiter,      require("./routes/paymentRoutes"))
 app.use("/api/smile",     adminLimiter,    require("./routes/smileRoutes"))
-app.use("/api/g2bulk",    adminLimiter,    require("./routes/g2bulkRoutes"))
-app.post("/api/recharge/g2bulk-callback",  require("./routes/g2bulkRoutes").callback || ((req,res)=>res.json({ok:true})))
 app.use("/api/recharge",  rechargeLimiter, require("./routes/rechargeRoutes"))
 app.use("/api/settings",                   require("./routes/settingsRoutes"))
 app.use("/api/banners",                    require("./routes/bannerRoutes"))
@@ -150,20 +142,20 @@ app.use((err, req, res, next) => {
   })
 })
 
-// ── Startup security validation ───────────────────
+// ── Startup validation ────────────────────────────
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
   { console.error("FATAL: JWT_SECRET must be at least 32 characters"); process.exit(1) }
-if (!process.env.ZINIPAY_WEBHOOK_SECRET)
-  console.warn("WARNING: ZINIPAY_WEBHOOK_SECRET not set — webhooks will be rejected")
-if (!process.env.G2BULK_CALLBACK_SECRET)
-  console.warn("WARNING: G2BULK_CALLBACK_SECRET not set")
+if (!process.env.NOVAPAY_API_KEY)
+  console.warn("WARNING: NOVAPAY_API_KEY not set — payments will fail")
+if (!process.env.FINTOPUP_API_KEY)
+  console.warn("WARNING: FINTOPUP_API_KEY not set — game top-ups will fail")
 
 // ── Connect & start ───────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✓ MongoDB connected")
-    app.listen(process.env.PORT || 5001, () =>
-      console.log(`✓ API running on port ${process.env.PORT || 5001}`)
+    app.listen(process.env.PORT || 5002, () =>
+      console.log(`✓ API running on port ${process.env.PORT || 5002}`)
     )
   })
   .catch(err => {
@@ -171,7 +163,3 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1)
   })
 
-// Poll pending orders every 60 seconds (safety net)
-const pollPendingOrders = require("./jobs/pollPendingOrders")
-setTimeout(pollPendingOrders, 30000)
-setInterval(pollPendingOrders, 60 * 1000)

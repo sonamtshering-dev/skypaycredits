@@ -7,8 +7,8 @@ export default defineConfig({
     port: 5173,
     allowedHosts: ['cathey-unslippered-jon.ngrok-free.dev'],
     proxy: {
-      '/api': { target: 'http://localhost:5001', changeOrigin: true },
-      '/uploads': { target: 'http://localhost:5001', changeOrigin: true },
+      '/api': { target: 'http://localhost:5002', changeOrigin: true },
+      '/uploads': { target: 'http://localhost:5002', changeOrigin: true },
     }
   }
 })

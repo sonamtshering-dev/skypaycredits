@@ -1,8 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --primary: #f97316;
-  --primary-dark: #ea6a10;
+  --primary: #164ff9;
+  --primary-dark: #164ff9;
   --primary-glow: rgba(249,115,22,0.35);
   --bg: #0a0a0a;
   --bg2: rgba(255,255,255,0.06);
