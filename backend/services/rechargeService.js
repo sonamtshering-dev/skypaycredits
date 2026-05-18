@@ -6,68 +6,91 @@ const isProd = process.env.NODE_ENV === "production"
 const log    = (...a) => { if (!isProd) console.log(...a) }
 const warn   = (...a) => console.warn(...a)
 
-// Clean invisible unicode characters from player IDs
 function cleanId(str) {
   if (!str) return ""
   return str.replace(/[^\x20-\x7E]/g, "").trim()
 }
 
+// Smile verify config per FinTopup MLBB game code
+const SMILE_VERIFY_CONFIG = {
+  "484": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "412": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "413": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "414": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "432": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "485": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "467": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "468": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "443": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+}
+
 // ── Verify Player ─────────────────────────────────
 async function verifyPlayer(game, playerData, packs) {
-  const regionSlug = playerData.regionSlug || ""
-  const region     = game.regions?.find(r => r.slug === regionSlug && r.active)
-                  || game.regions?.find(r => r.active)
-  const provider   = region?.provider || playerData.regionProvider || (packs[0] && packs[0].provider) || "fintopup"
-  const gameId     = region?.providerGameId || playerData.regionGameId || (packs[0] && packs[0].providerGameId) || ""
-  const userId     = cleanId(playerData.userId)
-  const zoneId     = cleanId(playerData.zoneId || playerData.serverId || "")
+  const regionSlug     = playerData.regionSlug || ""
+  const region         = game.regions?.find(r => r.slug === regionSlug && r.active)
+                      || game.regions?.find(r => r.active)
+  const provider       = region?.provider || (packs[0] && packs[0].provider) || "fintopup"
+  const providerGameId = region?.providerGameId || (packs[0] && packs[0].providerGameId) || ""
+  const userId         = cleanId(playerData.userId)
+  const zoneId         = cleanId(playerData.zoneId || playerData.serverId || "")
 
-  log("[RECHARGE] Verifying player", { provider, userId, zoneId, gameId })
+  log("[RECHARGE] Verifying player", { provider, providerGameId, userId, zoneId })
 
   if (game.skipVerify) {
-    log("[RECHARGE] Skipping verify — skipVerify flag set")
     return { username: userId, skipped: true }
+  }
+
+  if (provider === "fintopup") {
+    const smileConfig = SMILE_VERIFY_CONFIG[providerGameId]
+    if (smileConfig) {
+      try {
+        const skuCode = packs[0]?.skuCodes?.[0]?.skuCode || "212"
+        log("[RECHARGE] Using Smile verify for MLBB (code:", providerGameId + ")")
+        return await smile.verifyPlayer({
+          productId: smileConfig.productId,
+          userId,
+          zoneId,
+          skuCode,
+          baseUrl: smileConfig.baseUrl
+        })
+      } catch (e) {
+        warn("[RECHARGE] Smile verify failed:", e.message)
+        throw new Error("Player not found. Please check your User ID and Zone ID.")
+      }
+    }
+    // Non-MLBB FinTopup — skip verify
+    return { username: `Player ${userId}`, skipped: true }
   }
 
   if (provider === "smile") {
     try {
-      const skuCode   = packs[0]?.skuCodes?.[0]?.skuCode || "212"
-      const regionData = game.regions?.find(r => r.slug === (playerData.regionSlug || "") && r.active) || game.regions?.find(r => r.active)
-      const baseUrl   = regionData?.smileRegionUrl || process.env.SMILE_BASE_URL || "https://www.smile.one/ph"
-      return await smile.verifyPlayer({ productId: gameId, userId, zoneId, skuCode, baseUrl })
+      const skuCode = packs[0]?.skuCodes?.[0]?.skuCode || "212"
+      const baseUrl = region?.smileRegionUrl || process.env.SMILE_BASE_URL || "https://www.smile.one/ph"
+      return await smile.verifyPlayer({ productId: providerGameId, userId, zoneId, skuCode, baseUrl })
     } catch (e) {
       warn("[RECHARGE] Smile verify failed", { error: e.message })
       throw new Error("Player not found. Please check your Player ID and Zone ID.")
     }
   }
 
-  if (provider === "fintopup") {
-    // FinTopup validates at order time — return optimistically
-    return { username: userId, skipped: true }
-  }
-
-  // Manual or unknown provider — skip verify
   return { username: userId, skipped: true }
 }
 
 // ── Process Recharge ──────────────────────────────
 async function processRecharge(order, pack, game) {
   pack = pack || order.packSnapshot || {}
-  const region = game?.regions?.find(r => r.slug === order.playerData?.regionSlug && r.active)
-              || game?.regions?.find(r => r.active)
-  const provider       = region?.provider || order.providerTransactions?.[0]?.provider || "fintopup"
-  const providerGameId = pack.providerGameId || region?.providerGameId || order.providerTransactions?.[0]?.providerGameId || ""
+  const region         = game?.regions?.find(r => r.slug === order.playerData?.regionSlug && r.active)
+                      || game?.regions?.find(r => r.active)
+  const provider       = region?.provider || "fintopup"
+  const providerGameId = pack.providerGameId || region?.providerGameId || ""
   const userId         = cleanId(order.playerData?.userId || "")
   const zoneId         = cleanId(order.playerData?.zoneId || order.playerData?.serverId || "")
   const baseUrl        = region?.smileRegionUrl || process.env.SMILE_BASE_URL || "https://www.smile.one/ph"
 
-  // Build full list of SKUs to process
   const allSkus = []
   if (pack.skuCodes?.length > 0) {
     for (const s of pack.skuCodes) {
-      for (let q = 0; q < (s.quantity || 1); q++) {
-        allSkus.push(s.skuCode)
-      }
+      for (let q = 0; q < (s.quantity || 1); q++) allSkus.push(s.skuCode)
     }
   } else {
     allSkus.push(pack.skuCode || "")
@@ -78,13 +101,8 @@ async function processRecharge(order, pack, game) {
 
   log("[RECHARGE] Processing", { provider, providerGameId, skus: allSkus, userId })
 
-  // ── Manual ───────────────────────────────────────
   if (provider === "manual") {
-    return {
-      providerOrderId: `MANUAL-${Date.now()}`,
-      status:          "PENDING",
-      message:         "Manual order — admin will process"
-    }
+    return { providerOrderId: `MANUAL-${Date.now()}`, status: "PENDING", message: "Manual order" }
   }
 
   const transactions = []
@@ -94,23 +112,22 @@ async function processRecharge(order, pack, game) {
     try {
       let result
 
-      // ── FinTopup ────────────────────────────────
       if (provider === "fintopup") {
         if (!providerGameId) throw new Error("Provider game ID missing")
         result = await fintopup.placeOrder({
-          gameCode: providerGameId,
-          sku:      skuCode,
+          gameCode:      providerGameId,
+          sku:           skuCode,
           userId,
-          zoneId:   zoneId || undefined,
+          zoneId:        zoneId || undefined,
+          txnMerchantId: `${order._id}-${i}-${skuCode}`,
         })
         transactions.push({
           skuCode,
-          providerOrderId: String(result.order_id || result.id || ""),
+          providerOrderId: String(result.uuid || result.order_id || result.id || ""),
           status: "success"
         })
       }
 
-      // ── Smile ───────────────────────────────────
       else if (provider === "smile") {
         result = await smile.placeOrder({
           productId:   providerGameId,
@@ -144,8 +161,6 @@ async function processRecharge(order, pack, game) {
 
   if (successful.length === 0) throw new Error(failed[0]?.error || "All SKUs failed")
 
-  log("[RECHARGE] Done", { total: allSkus.length, success: successful.length, failed: failed.length })
-
   return {
     providerOrderId: successful[0]?.providerOrderId || "",
     status:          "PENDING",
@@ -154,10 +169,9 @@ async function processRecharge(order, pack, game) {
   }
 }
 
-// ── Get Servers for a region ──────────────────────
+// ── Get Servers ───────────────────────────────────
 async function getServers(provider, gameId, smileUrl) {
-  if (provider === "smile")    return await smile.getServers(gameId, smileUrl)
-  if (provider === "fintopup") return []  // FinTopup has no server list endpoint
+  if (provider === "smile") return await smile.getServers(gameId, smileUrl)
   return []
 }
 
