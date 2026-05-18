@@ -10,7 +10,7 @@ const FACEBOOK  = 'https://www.facebook.com/share/189erMsnZ2'
 export default function Footer() {
   const { settings } = useSettings()
   const year = new Date().getFullYear()
-  const siteName = settings.siteName || 'BD COINS'
+  const siteName = settings.siteName || 'Sky Pay Credits'
 
   // Update page title
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function Footer() {
               backgroundClip: 'text', marginBottom: 10,
             }}>⚡ {siteName}</div>
             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, lineHeight: 1.7, maxWidth: 200 }}>
-             BD COINS offers reliable game top-ups with fast and secure delivery. We are committed to providing smooth transactions and professional service for every gamer.
+             {siteName} offers reliable game top-ups with fast and secure delivery. We are committed to providing smooth transactions and professional service for every gamer.
             </p>
             {/* Social icons */}
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
