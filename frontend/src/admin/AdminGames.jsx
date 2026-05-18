@@ -243,7 +243,7 @@ export default function AdminGames() {
                     <div className="form-group" style={{ flex: 1 }}>
                       <label>Provider</label>
                       <select className="form-input" value={form.provider} onChange={e => setForm(f=>({...f,provider:e.target.value}))}>
-                        <option value="">Manual</option><option value="smile">Smile.One</option><option value="g2bulk">G2Bulk (150+ games)</option><option value="moogold">Moogold</option>
+                        <option value="">Manual</option><option value="fintopup">FinTopup</option><option value="smile">Smile.One</option><option value="moogold">Moogold</option>
                       </select>
                     </div>
                     <div className="form-group" style={{ flex: 1 }}>
@@ -298,8 +298,9 @@ export default function AdminGames() {
                           setForm(f => ({ ...f, regions: updated }))
                         }}>
                           <option value="">Manual</option>
-                          <option value="g2bulk">G2Bulk</option>
+                          <option value="fintopup">FinTopup</option>
                           <option value="smile">Smile.One</option>
+                          <option value="moogold">Moogold</option>
                         </select>
                       </div>
                       <div className="form-group" style={{ flex: 1, minWidth: 140 }}>
@@ -400,20 +401,20 @@ export default function AdminGames() {
                       <label>Provider</label>
                       <select className="form-input" value={newRegion.provider} onChange={e=>setNewRegion(r=>({...r,provider:e.target.value}))}>
                         <option value="">Manual</option>
-                        <option value="g2bulk">G2Bulk (150+ games)</option>
+                        <option value="fintopup">FinTopup</option>
                         <option value="smile">Smile.One</option>
                         <option value="moogold">Moogold</option>
                       </select>
                     </div>
                     <div className="form-group" style={{ flex: 1 }}>
                       <label>Provider Game ID</label>
-                      <input className="form-input" placeholder="e.g. mlbb, genshin_ph, pubgm" value={newRegion.providerGameId} onChange={e=>setNewRegion(r=>({...r,providerGameId:e.target.value}))} />
+                      <input className="form-input" placeholder={newRegion.provider === 'fintopup' ? 'e.g. 484 (MLBB PH), 412 (MLBB ID)' : 'e.g. mlbb, genshin_ph'} value={newRegion.providerGameId} onChange={e=>setNewRegion(r=>({...r,providerGameId:e.target.value}))} />
                     </div>
                   </div>
 
-                  {newRegion.provider === 'g2bulk' && (
-                    <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)', fontSize: 12, color: 'var(--text2)' }}>
-                      ⚡ G2Bulk game codes: <b>mlbb</b>, <b>mlbb_global</b>, <b>pubgm</b>, <b>genshin</b>, <b>genshin_ph</b>, <b>honkai_star_rail</b>, <b>wuwa</b>, <b>hok</b>, <b>freefire_bd</b>, etc.
+                  {newRegion.provider === 'fintopup' && (
+                    <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(0,170,255,0.08)', border: '1px solid rgba(0,170,255,0.2)', fontSize: 12, color: 'var(--text2)' }}>
+                      ⚡ FinTopup game codes: <b>484</b>=MLBB PH · <b>412</b>=MLBB ID · <b>413</b>=MLBB SG · <b>414</b>=MLBB MY · <b>262</b>=Valorant · <b>143</b>=Genshin PH · <b>435</b>=Roblox · <b>468</b>=MLBB USA
                     </div>
                   )}
 

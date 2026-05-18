@@ -155,14 +155,21 @@ function PackModal({ pack, gameId, regionSlug, onSave, onClose }) {
               <label>Provider</label>
               <select style={inp} value={form.provider} onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}>
                 <option value="">Manual</option>
-                <option value="moogold">Moogold</option>
+                <option value="fintopup">FinTopup</option>
                 <option value="smile">Smile.One</option>
-                <option value="g2bulk">G2Bulk</option>
+                <option value="moogold">Moogold</option>
               </select>
             </div>
             <div className="form-group">
               <label>Provider Game ID</label>
-              <input style={inp} placeholder="e.g. mlbb" value={form.providerGameId} onChange={e => setForm(f => ({ ...f, providerGameId: e.target.value }))} />
+              <input style={inp}
+                placeholder={form.provider === 'fintopup' ? 'e.g. 484 (game code)' : form.provider === 'smile' ? 'e.g. mobilelegends' : 'e.g. 13814'}
+                value={form.providerGameId} onChange={e => setForm(f => ({ ...f, providerGameId: e.target.value }))} />
+              {form.provider === 'fintopup' && (
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+                  FinTopup game code — 484=MLBB PH · 412=MLBB ID · 262=Valorant · 143=Genshin · 435=Roblox
+                </div>
+              )}
             </div>
           </div>
 

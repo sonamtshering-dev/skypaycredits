@@ -133,7 +133,7 @@ export default function Recharge() {
 
   useEffect(() => {
     if (payData?.payment_id) {
-      const iv = pollStatus(payData.val_id)
+      const iv = pollStatus(payData.payment_id)
       return () => clearInterval(iv)
     }
   }, [payData?.payment_id])
