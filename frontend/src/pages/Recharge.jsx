@@ -138,6 +138,27 @@ export default function Recharge() {
     }
   }, [payData?.payment_id])
 
+  // MLBB FinTopup game codes that support Smile name check
+  const MLBB_CODES = ['484','412','413','414','432','485','467','468','443']
+
+  // Determine if verify button should be shown
+  const activeProvider    = region?.provider || packs[0]?.provider || ''
+  const activeGameCode    = region?.providerGameId || packs[0]?.providerGameId || ''
+  const isFintopupMLBB    = activeProvider === 'fintopup' && MLBB_CODES.includes(activeGameCode)
+  const isFintopupNonMLBB = activeProvider === 'fintopup' && !MLBB_CODES.includes(activeGameCode)
+  const showVerifyButton  = !isFintopupNonMLBB && !game.skipVerify
+
+  // Auto-verify for non-MLBB FinTopup games
+  useEffect(() => {
+    if (isFintopupNonMLBB && playerData[fields[0]?.name]) {
+      setVerified(true)
+      setUsername(`Player ${playerData[fields[0]?.name]}`)
+    } else if (isFintopupNonMLBB) {
+      setVerified(false)
+      setUsername('')
+    }
+  }, [isFintopupNonMLBB, playerData[fields[0]?.name]])
+
   const sym = settings.currencySymbol || '$'
 
   if (loading) return <><Navbar /><div style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div></>
@@ -282,6 +303,7 @@ export default function Recharge() {
               ))}
             </div>
 
+            {showVerifyButton && (
             <button
               onClick={verifyPlayer}
               disabled={verifying || !playerData[fields[0]?.name]}
@@ -295,6 +317,12 @@ export default function Recharge() {
             >
               {verifying ? 'Verifying…' : verified ? `✓ Verified: ${username || 'Player Verified'}` : 'Verify Player'}
             </button>
+            )}
+            {isFintopupNonMLBB && playerData[fields[0]?.name] && (
+              <div style={{ marginTop: 10, fontSize: 13, color: '#4ade80', fontWeight: 700 }}>
+                ✓ Player ID: {playerData[fields[0]?.name]}
+              </div>
+            )}
           </div>
         </div>
 
