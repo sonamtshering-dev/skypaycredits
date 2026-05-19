@@ -37,7 +37,7 @@ export default function Footer() {
           <div>
             <div style={{
               fontWeight: 900, fontSize: 20,
-              background: 'linear-gradient(135deg,#f97316,#fbbf24)',
+              background: 'linear-gradient(135deg,#00aaff,#38bdf8)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               backgroundClip: 'text', marginBottom: 10,
             }}>⚡ {siteName}</div>
@@ -48,7 +48,7 @@ export default function Footer() {
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <a href={INSTAGRAM} target="_blank" rel="noreferrer"
                 style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background='linear-gradient(135deg,#f97316,#ec4899)'; e.currentTarget.style.border='1px solid transparent' }}
+                onMouseEnter={e => { e.currentTarget.style.background='linear-gradient(135deg,#00aaff,#008ce6)'; e.currentTarget.style.border='1px solid transparent' }}
                 onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,0.06)'; e.currentTarget.style.border='1px solid rgba(255,255,255,0.1)' }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
@@ -77,7 +77,7 @@ export default function Footer() {
               { to: '/contact', label: 'Contact' },
             ].map(({ to, label }) => (
               <Link key={to} to={to} style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 13, textDecoration: 'none', marginBottom: 9, transition: 'color 0.15s' }}
-                onMouseEnter={e => e.target.style.color = '#f97316'}
+                onMouseEnter={e => e.target.style.color = '#00aaff'}
                 onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.4)'}
               >{label}</Link>
             ))}
@@ -117,7 +117,7 @@ export default function Footer() {
             <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>Made with</span>
             <span style={{ color: '#ef4444', fontSize: 14 }}>♥</span>
             <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>by</span>
-            <span style={{ fontSize: 12, fontWeight: 800, background: 'linear-gradient(135deg,#f97316,#fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Tshernova Studio</span>
+            <span style={{ fontSize: 12, fontWeight: 800, background: 'linear-gradient(135deg,#00aaff,#38bdf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Tshernova Studio</span>
           </a>
         </div>
       </div>
