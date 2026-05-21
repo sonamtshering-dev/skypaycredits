@@ -18,6 +18,7 @@ import AdminOrders   from './admin/AdminOrders'
 import AdminUsers    from './admin/AdminUsers'
 import AdminSettings from './admin/AdminSettings'
 import AdminBanners  from './admin/AdminBanners'
+import AdminCoupons  from './admin/AdminCoupons'
 import ManualOrder   from './pages/ManualOrder'
 
 function Loader() {
@@ -127,6 +128,7 @@ export default function App() {
         <Route path="orders"    element={<AdminOrders />} />
         <Route path="users"     element={<AdminUsers />} />
         <Route path="banners"   element={<AdminBanners />} />
+        <Route path="coupons"   element={<AdminCoupons />} />
         <Route path="settings"  element={<AdminSettings />} />
       </Route>
 
