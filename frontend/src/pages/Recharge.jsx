@@ -33,7 +33,11 @@ export default function Recharge() {
   const checkoutRef      = useRef(null)
 
   const [servers, setServers]       = useState([])
-  const [paying, setPaying]         = useState(false)
+  const [paying, setPaying]               = useState(false)
+  const [couponCode, setCouponCode]       = useState('')
+  const [couponApplied, setCouponApplied] = useState(null)
+  const [couponError, setCouponError]     = useState('')
+  const [couponLoading, setCouponLoading] = useState(false)
   const [payData, setPayData]     = useState(null)
   const [payStatus, setPayStatus] = useState('')
 
@@ -106,15 +110,34 @@ export default function Recharge() {
           serverId:   playerData[fields[2]?.name] || '',
           regionSlug: regionSlug || '',
         },
+        couponCode: couponApplied?.code || '',
       })
       const { data: pay } = await api.post('/payment/create', {
-        orderId: ord._id, amount: selectedPack.price, customerName: user?.name || 'Customer',
+        orderId: ord._id, amount: ord.price, customerName: user?.name || 'Customer',
       })
       setPayData(pay)
     } catch (err) {
       setError(typeof err.response?.data?.message === 'string' ? err.response.data.message : (err.message || 'Failed to create order'))
     } finally { setPaying(false) }
   }
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+    if (!selectedPack) return setCouponError('Select a pack first')
+    setCouponLoading(true); setCouponError(''); setCouponApplied(null)
+    try {
+      const { data } = await api.post('/coupons/validate', {
+        code: couponCode.trim(), price: selectedPack.price, gameId,
+      })
+      setCouponApplied(data)
+    } catch (err) {
+      setCouponError(err.response?.data?.message || 'Invalid coupon')
+    } finally { setCouponLoading(false) }
+  }
+
+  const removeCoupon = () => { setCouponApplied(null); setCouponCode(''); setCouponError('') }
+
+  const finalPrice = couponApplied ? couponApplied.finalPrice : selectedPack?.price
 
   const pollStatus = useCallback((paymentId) => {
     const iv = setInterval(async () => {
@@ -146,7 +169,7 @@ export default function Recharge() {
   const activeGameCode    = region?.providerGameId || packs[0]?.providerGameId || ''
   const isFintopupMLBB    = activeProvider === 'fintopup' && MLBB_CODES.includes(activeGameCode)
   const isFintopupNonMLBB = activeProvider === 'fintopup' && !MLBB_CODES.includes(activeGameCode)
-  const showVerifyButton  = !isFintopupNonMLBB && !game.skipVerify
+  const showVerifyButton  = !isFintopupNonMLBB && !game?.skipVerify
 
   // Auto-verify for non-MLBB FinTopup games
   useEffect(() => {
@@ -406,7 +429,7 @@ export default function Recharge() {
               background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)',
               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', marginBottom: 16,
             }}>
-              {[['Pack', selectedPack.title], ['Price', `${sym}${selectedPack.price}`]].map(([label, val], i) => (
+              {[['Pack', selectedPack.title], ['Original Price', `${sym}${selectedPack.price}`]].map(([label, val]) => (
                 <div key={label} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -415,15 +438,64 @@ export default function Recharge() {
                   <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{val}</span>
                 </div>
               ))}
+              {couponApplied && (
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+                  background: 'rgba(34,197,94,0.06)',
+                }}>
+                  <span style={{ color: '#4ade80', fontSize: 14 }}>🎟️ Coupon ({couponApplied.code})</span>
+                  <span style={{ color: '#4ade80', fontWeight: 700, fontSize: 14 }}>-{sym}{couponApplied.discount}</span>
+                </div>
+              )}
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 padding: '16px 20px', background: theme.alpha(0.08),
-                borderTop: '1px solid rgba(249,115,22,0.2)',
+                borderTop: `1px solid ${theme.alpha(0.2)}`,
               }}>
                 <span style={{ color: '#fff', fontWeight: 900, fontSize: 16, letterSpacing: 1 }}>TOTAL</span>
-                <span style={{ color: theme.primary, fontWeight: 900, fontSize: 22 }}>{sym}{selectedPack.price}</span>
+                <span style={{ color: theme.primary, fontWeight: 900, fontSize: 22 }}>{sym}{finalPrice}</span>
               </div>
             </div>
+
+            {/* Coupon Input */}
+            {!couponApplied ? (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    style={{
+                      flex: 1, background: 'rgba(255,255,255,0.07)',
+                      border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10,
+                      padding: '11px 14px', color: '#fff', fontSize: 14, outline: 'none',
+                    }}
+                    placeholder="Enter coupon code"
+                    value={couponCode}
+                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                  />
+                  <button onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim()} style={{
+                    padding: '11px 18px', borderRadius: 10, fontWeight: 700, fontSize: 14,
+                    background: theme.grad, border: 'none', color: '#fff',
+                    cursor: couponLoading || !couponCode.trim() ? 'not-allowed' : 'pointer',
+                    opacity: couponLoading || !couponCode.trim() ? 0.6 : 1,
+                    whiteSpace: 'nowrap',
+                  }}>{couponLoading ? '…' : 'Apply'}</button>
+                </div>
+                {couponError && <div style={{ color: '#f87171', fontSize: 12, marginTop: 6 }}>{couponError}</div>}
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+                borderRadius: 10, padding: '10px 14px', marginBottom: 14,
+              }}>
+                <span style={{ color: '#4ade80', fontSize: 13, fontWeight: 700 }}>✓ {couponApplied.message}</span>
+                <button onClick={removeCoupon} style={{
+                  background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+                  fontSize: 18, cursor: 'pointer', padding: 0, lineHeight: 1,
+                }}>×</button>
+              </div>
+            )}
 
             <button
               onClick={handlePay}

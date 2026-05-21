@@ -11,9 +11,7 @@ const path         = require("path")
 dotenv.config()
 
 const app = express()
-
 app.set('trust proxy', 1)
-
 app.use(cookieParser())
 
 app.use((req, res, next) => {
@@ -26,7 +24,6 @@ app.use(helmet({
   contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
 }))
 
-// ── CORS ──────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:5173",
@@ -44,26 +41,21 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"],
 }))
 
-// ── Webhook (raw body — MUST be before express.json) ──
+// Webhook — raw body MUST be before express.json
 app.post(
   "/api/payment/webhook",
   express.raw({ type: "application/json" }),
   require("./routes/paymentRoutes").webhookHandler
 )
 
-// ── Body parser ───────────────────────────────────
 app.use(express.json({ limit: "100kb" }))
 app.use(express.urlencoded({ extended: true, limit: "100kb" }))
 
-// ── NoSQL injection protection ────────────────────
 function sanitize(obj) {
   if (!obj || typeof obj !== "object") return obj
   for (const key of Object.keys(obj)) {
-    if (key.startsWith("$") || key.includes(".")) {
-      delete obj[key]
-    } else {
-      sanitize(obj[key])
-    }
+    if (key.startsWith("$") || key.includes(".")) delete obj[key]
+    else sanitize(obj[key])
   }
   return obj
 }
@@ -73,52 +65,23 @@ app.use((req, res, next) => {
   next()
 })
 
-// ── Static uploads ────────────────────────────────
 app.use("/uploads", (req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff")
   res.setHeader("Content-Security-Policy", "default-src 'none'; img-src 'self'; script-src 'none'")
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin")
-  if (!/\.(jpg|jpeg|png|gif|webp|ico)$/i.test(req.path)) {
-    res.setHeader("Content-Disposition", "attachment")
-  }
+  if (!/\.(jpg|jpeg|png|gif|webp|ico)$/i.test(req.path)) res.setHeader("Content-Disposition", "attachment")
   next()
 }, express.static(path.join(__dirname, "uploads")))
 
-// ── Rate limiters ─────────────────────────────────
-const globalLimiter = rateLimit({
-  windowMs: 60_000, max: 200,
-  message: { message: "Too many requests, please slow down" },
-  standardHeaders: true, legacyHeaders: false,
-})
-const authLimiter = rateLimit({
-  windowMs: 15*60_000, max: 20,
-  message: { message: "Too many auth attempts, try again later" },
-  standardHeaders: true, legacyHeaders: false,
-})
-const payLimiter = rateLimit({
-  windowMs: 60_000, max: 20,
-  message: { message: "Too many payment requests" },
-  standardHeaders: true, legacyHeaders: false,
-})
-const rechargeLimiter = rateLimit({
-  windowMs: 60_000, max: 10,
-  message: { message: "Too many recharge requests" },
-  standardHeaders: true, legacyHeaders: false,
-})
-const orderLimiter = rateLimit({
-  windowMs: 60_000, max: 15,
-  message: { message: "Too many orders" },
-  standardHeaders: true, legacyHeaders: false,
-})
-const adminLimiter = rateLimit({
-  windowMs: 60_000, max: 60,
-  message: { message: "Too many admin requests" },
-  standardHeaders: true, legacyHeaders: false,
-})
+const globalLimiter  = rateLimit({ windowMs: 60_000,      max: 200, standardHeaders: true, legacyHeaders: false, message: { message: "Too many requests" } })
+const authLimiter    = rateLimit({ windowMs: 15*60_000,   max: 20,  standardHeaders: true, legacyHeaders: false, message: { message: "Too many auth attempts" } })
+const payLimiter     = rateLimit({ windowMs: 60_000,      max: 20,  standardHeaders: true, legacyHeaders: false, message: { message: "Too many payment requests" } })
+const rechargeLimiter= rateLimit({ windowMs: 60_000,      max: 10,  standardHeaders: true, legacyHeaders: false, message: { message: "Too many recharge requests" } })
+const orderLimiter   = rateLimit({ windowMs: 60_000,      max: 15,  standardHeaders: true, legacyHeaders: false, message: { message: "Too many orders" } })
+const adminLimiter   = rateLimit({ windowMs: 60_000,      max: 60,  standardHeaders: true, legacyHeaders: false, message: { message: "Too many admin requests" } })
 
 app.use("/api", globalLimiter)
 
-// ── Routes ────────────────────────────────────────
 app.use("/api/auth",      authLimiter,     require("./routes/authRoutes"))
 app.use("/api/games",                      require("./routes/gameRoutes"))
 app.use("/api/packs",                      require("./routes/packRoutes"))
@@ -130,11 +93,10 @@ app.use("/api/fintopup",                   require("./routes/fintopupRoutes"))
 app.use("/api/recharge",  rechargeLimiter, require("./routes/rechargeRoutes"))
 app.use("/api/settings",                   require("./routes/settingsRoutes"))
 app.use("/api/banners",                    require("./routes/bannerRoutes"))
+app.use("/api/coupons",   adminLimiter,    require("./routes/couponRoutes"))
 
-// ── Health check ──────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "✓ API running" }))
 
-// ── Global error handler ──────────────────────────
 app.use((err, req, res, next) => {
   console.error(err.stack)
   const isProd = process.env.NODE_ENV === "production"
@@ -143,15 +105,11 @@ app.use((err, req, res, next) => {
   })
 })
 
-// ── Startup validation ────────────────────────────
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
   { console.error("FATAL: JWT_SECRET must be at least 32 characters"); process.exit(1) }
-if (!process.env.NOVAPAY_API_KEY)
-  console.warn("WARNING: NOVAPAY_API_KEY not set — payments will fail")
-if (!process.env.FINTOPUP_API_KEY)
-  console.warn("WARNING: FINTOPUP_API_KEY not set — game top-ups will fail")
+if (!process.env.NOVAPAY_API_KEY)  console.warn("WARNING: NOVAPAY_API_KEY not set — payments will fail")
+if (!process.env.FINTOPUP_API_KEY) console.warn("WARNING: FINTOPUP_API_KEY not set — game top-ups will fail")
 
-// ── Connect & start ───────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✓ MongoDB connected")
@@ -159,12 +117,4 @@ mongoose.connect(process.env.MONGO_URI)
       console.log(`✓ API running on port ${process.env.PORT || 5002}`)
     )
   })
-  .catch(err => {
-    console.error("✗ MongoDB error:", err.message)
-    process.exit(1)
-  })
-
-// Poll pending orders every 60 seconds (safety net)
-const pollPendingOrders = require("./jobs/pollPendingOrders")
-setTimeout(pollPendingOrders, 30000)
-setInterval(pollPendingOrders, 60 * 1000)
+  .catch(err => { console.error("✗ MongoDB error:", err.message); process.exit(1) })
