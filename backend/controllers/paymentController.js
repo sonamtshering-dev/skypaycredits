@@ -104,7 +104,7 @@ exports.createPayment = async (req, res) => {
 
     res.json({
       success:     true,
-      payment_url: data.data.pay_url,
+      payment_url: `https://nova-pay.in/pay/${data.data.payment_id}`,
       payment_id:  paymentId,
       qr_code:     data.data.qr_code_base64,
       upi_intent:  data.data.upi_intent_link,
