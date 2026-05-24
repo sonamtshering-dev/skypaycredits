@@ -217,19 +217,27 @@ export default function Recharge() {
               <>
                 <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 8 }}>Complete Payment</div>
                 <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
-                  Amount: <span style={{ color: '#fff', fontSize: 28, fontWeight: 900 }}>{sym}{selectedPack?.price}</span>
+                  Amount: <span style={{ color: '#fff', fontSize: 28, fontWeight: 900 }}>{sym}{finalPrice || selectedPack?.price}</span>
                 </div>
+                {(payData.pay_url || payData.payment_url) && (
+                  <a href={payData.pay_url || payData.payment_url} target="_blank" rel="noreferrer" style={{
+                    display: 'block', width: '100%', padding: '14px 0', borderRadius: 12,
+                    background: theme.grad, color: '#fff', fontWeight: 800, fontSize: 16,
+                    textDecoration: 'none', marginBottom: 16,
+                  }}>
+                    Pay ₹{finalPrice || selectedPack?.price} via UPI →
+                  </a>
+                )}
                 {payData.qr_code && (
                   <div style={{ marginBottom: 20 }}>
-                    <img src={`data:image/png;base64,${payData.qr_code}`} alt="QR"
-                      style={{ width: 200, height: 200, borderRadius: 12, background: '#fff', padding: 8 }} />
+                    <img
+                      src={payData.qr_code.startsWith('data:') ? payData.qr_code : `data:image/png;base64,${payData.qr_code}`}
+                      alt="QR Code"
+                      style={{ width: 200, height: 200, borderRadius: 12, background: '#fff', padding: 8 }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>Scan with any UPI app</div>
                   </div>
-                )}
-                {payData.payment_url && (
-                  <a href={payData.payment_url} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ width: '100%', marginBottom: 16, display: 'block' }}>
-                    Pay via Browser →
-                  </a>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
                   <div style={{ width: 14, height: 14, border: '2px solid #a78bfa', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
