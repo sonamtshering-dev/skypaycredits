@@ -234,7 +234,7 @@ export default function Recharge() {
                       src={payData.qr_code.startsWith('data:') ? payData.qr_code : `data:image/png;base64,${payData.qr_code}`}
                       alt="QR Code"
                       style={{ width: 200, height: 200, borderRadius: 12, background: '#fff', padding: 8 }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      onError={e => { e.target.style.display = 'none' }}
                     />
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>Scan with any UPI app</div>
                   </div>
