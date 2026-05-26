@@ -155,6 +155,12 @@ export default function Recharge() {
   }, [navigate])
 
   useEffect(() => {
+    if (payData?.payment_url) {
+      window.open(payData.payment_url, '_blank')
+    }
+  }, [payData?.payment_url])
+
+  useEffect(() => {
     if (payData?.payment_id) {
       const iv = pollStatus(payData.payment_id)
       return () => clearInterval(iv)
@@ -219,13 +225,13 @@ export default function Recharge() {
                 <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
                   Amount: <span style={{ color: '#fff', fontSize: 28, fontWeight: 900 }}>{sym}{finalPrice || selectedPack?.price}</span>
                 </div>
-                {(payData.pay_url || payData.payment_url) && (
-                  <a href={payData.pay_url || payData.payment_url} target="_blank" rel="noreferrer" style={{
+                {(payData.payment_url || payData.upi_intent) && (
+                  <a href={payData.payment_url || payData.upi_intent} style={{
                     display: 'block', width: '100%', padding: '14px 0', borderRadius: 12,
                     background: theme.grad, color: '#fff', fontWeight: 800, fontSize: 16,
-                    textDecoration: 'none', marginBottom: 16,
+                    textDecoration: 'none', marginBottom: 16, textAlign: 'center',
                   }}>
-                    Pay ₹{finalPrice || selectedPack?.price} via UPI →
+                    📱 Pay via UPI App →
                   </a>
                 )}
                 {payData.qr_code && (
