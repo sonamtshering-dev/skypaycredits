@@ -167,26 +167,18 @@ export default function Recharge() {
     }
   }, [payData?.payment_id])
 
-  // MLBB FinTopup game codes that support Smile name check
-  const MLBB_CODES = ['484','412','413','414','432','485','467','468','443']
+  const activeProvider   = region?.provider || packs[0]?.provider || ''
+  const isFintopup       = activeProvider === 'fintopup'
+  const showVerifyButton = !isFintopup && !game?.skipVerify
 
-  // Determine if verify button should be shown
-  const activeProvider    = region?.provider || packs[0]?.provider || ''
-  const activeGameCode    = region?.providerGameId || packs[0]?.providerGameId || ''
-  const isFintopupMLBB    = activeProvider === 'fintopup' && MLBB_CODES.includes(activeGameCode)
-  const isFintopupNonMLBB = activeProvider === 'fintopup' && !MLBB_CODES.includes(activeGameCode)
-  const showVerifyButton  = !isFintopupNonMLBB && !game?.skipVerify
-
-  // Auto-verify for non-MLBB FinTopup games
+  // Auto-verify for all FinTopup games (name shown after order)
   useEffect(() => {
-    if (isFintopupNonMLBB && playerData[fields[0]?.name]) {
+    if (isFintopup && playerData[fields[0]?.name]) {
       setVerified(true)
-      setUsername(`Player ${playerData[fields[0]?.name]}`)
-    } else if (isFintopupNonMLBB) {
+    } else if (isFintopup) {
       setVerified(false)
-      setUsername('')
     }
-  }, [isFintopupNonMLBB, playerData[fields[0]?.name]])
+  }, [isFintopup, playerData[fields[0]?.name]])
 
   const sym = settings.currencySymbol || '$'
 
@@ -355,7 +347,7 @@ export default function Recharge() {
               {verifying ? 'Verifying…' : verified ? `✓ Verified: ${username || 'Player Verified'}` : 'Verify Player'}
             </button>
             )}
-            {isFintopupNonMLBB && playerData[fields[0]?.name] && (
+            {isFintopup && playerData[fields[0]?.name] && (
               <div style={{ marginTop: 10, fontSize: 13, color: '#4ade80', fontWeight: 700 }}>
                 ✓ Account ID: {playerData[fields[0]?.name]}{playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : ''}
               </div>
