@@ -357,7 +357,7 @@ export default function Recharge() {
             )}
             {isFintopupNonMLBB && playerData[fields[0]?.name] && (
               <div style={{ marginTop: 10, fontSize: 13, color: '#4ade80', fontWeight: 700 }}>
-                ✓ Player ID: {playerData[fields[0]?.name]}
+                ✓ Account ID: {playerData[fields[0]?.name]}{playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : ''}
               </div>
             )}
           </div>
@@ -443,7 +443,12 @@ export default function Recharge() {
               background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)',
               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', marginBottom: 16,
             }}>
-              {[['Pack', selectedPack.title], ['Original Price', `${sym}${selectedPack.price}`]].map(([label, val]) => (
+              {[
+              ['Account ID', playerData[fields[0]?.name] + (playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : '')],
+              ...(username ? [['Player Name', username]] : []),
+              ['Pack', selectedPack.title],
+              ['Original Price', `${sym}${selectedPack.price}`]
+            ].map(([label, val]) => (
                 <div key={label} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
