@@ -98,7 +98,8 @@ function OrderCard({ order }) {
             {order.game?.name || order.gameName || 'Game'}
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {order.pack?.name || order.pack?.title || 'Pack'} · Player: {order.playerId || order.playerData?.userId || '—'}
+            {order.pack?.name || order.pack?.title || 'Pack'} · ID: {order.playerId || order.playerData?.userId || '—'}
+            {order.playerName && ` · ${order.playerName}`}
             {(order.region || order.playerData?.regionSlug) && ` · ${order.region || order.playerData?.regionSlug}`}
           </div>
         </div>

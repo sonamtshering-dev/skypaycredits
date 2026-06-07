@@ -47,10 +47,12 @@ async function triggerRechargeIfNeeded(paymentId) {
       await order.save()
       processRecharge(order, pack, game)
         .then(async (result) => {
-          await Order.findByIdAndUpdate(order._id, {
+          const update = {
             status: "Completed",
             providerOrderId: result.providerOrderId || "",
-          })
+          }
+          if (result.playerName) update.playerName = result.playerName
+          await Order.findByIdAndUpdate(order._id, update)
           console.log("[RECHARGE] Completed:", order._id, result.providerOrderId)
         })
         .catch(async (e) => {

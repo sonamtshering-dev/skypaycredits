@@ -44,6 +44,7 @@ const orderSchema = new mongoose.Schema(
     couponDiscount: { type: Number, default: 0 },
 
     providerTransactions: [providerTxSchema],
+    playerName: { type: String, default: "" },
     adminNote: { type: String, default: "" },
   },
   { timestamps: true }

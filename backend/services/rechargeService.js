@@ -121,9 +121,13 @@ async function processRecharge(order, pack, game) {
           zoneId:        zoneId || undefined,
           txnMerchantId: `${order._id}-${i}-${skuCode}`,
         })
+        console.log("[FINTOPUP] Order response:", JSON.stringify(result))
+        const extractedName = result.charName || result.character_name || result.player_name
+          || result.username || result.name || result.playerName || ""
         transactions.push({
           skuCode,
           providerOrderId: String(result.uuid || result.order_id || result.id || ""),
+          playerName: extractedName,
           status: "success"
         })
       }
@@ -163,6 +167,7 @@ async function processRecharge(order, pack, game) {
 
   return {
     providerOrderId: successful[0]?.providerOrderId || "",
+    playerName:      successful[0]?.playerName || "",
     status:          "PENDING",
     message:         `Delivered ${successful.length}/${allSkus.length} items`,
     transactions
