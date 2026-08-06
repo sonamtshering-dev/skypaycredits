@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     role:     { type: String, enum: ["user","admin"], default: "user" },
     status:   { type: String, enum: ["active","banned"], default: "active" },
     isEmailVerified: { type: Boolean, default: false },
+    isPhoneVerified: { type: Boolean, default: false },
   },
   { timestamps: true }
 )

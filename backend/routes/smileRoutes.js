@@ -5,8 +5,8 @@ const { protect, adminOnly } = require("../middlewares/authMiddleware")
 const axios  = require("axios")
 const { buildSmileRequestParams } = require("../services/smileSignatureUtil")
 
-// BASE = https://www.smile.one/ph  (no trailing slash)
-const BASE = (process.env.SMILE_BASE_URL || 'https://www.smile.one/ph').replace(/\/$/, '')
+// BASE = https://www.smile.one  (no trailing slash, no /ph — this account uses root /smilecoin/api)
+const BASE = (process.env.SMILE_BASE_URL || 'https://www.smile.one').replace(/\/$/, '')
 const ALLOWED_SMILE_HOSTS = ['www.smile.one', 'smile.one']
 function validateSmileUrl(url) {
   try {

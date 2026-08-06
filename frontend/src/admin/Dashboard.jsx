@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import api from '../api/axios'
 import { useSettings } from '../context/SettingsContext'
 import theme from '../theme'
+import { ClipboardList, CheckCircle, Clock, XCircle, IndianRupee, Users } from 'lucide-react'
 
 
 export default function Dashboard() {
@@ -21,12 +22,12 @@ export default function Dashboard() {
   if (loading) return <div style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div>
 
   const cards = [
-    { label: 'Total Orders', value: stats?.total ?? 0,     icon: '🧾', color: theme.primary },
-    { label: 'Completed',    value: stats?.completed ?? 0, icon: '✅', color: '#22c55e' },
-    { label: 'Pending',      value: stats?.pending ?? 0,   icon: '⏳', color: '#f59e0b' },
-    { label: 'Failed',       value: stats?.failed ?? 0,    icon: '❌', color: '#ef4444' },
-    { label: 'Revenue',      value: `${sym}${(stats?.revenue ?? 0).toLocaleString()}`, icon: '💰', color: '#60a5fa' },
-    { label: 'Users',        value: stats?.users ?? 0,     icon: '👤', color: theme.primary },
+    { label: 'Total Orders', value: stats?.total ?? 0,     icon: ClipboardList, color: theme.primary },
+    { label: 'Completed',    value: stats?.completed ?? 0, icon: CheckCircle,   color: '#22c55e' },
+    { label: 'Pending',      value: stats?.pending ?? 0,   icon: Clock,         color: '#f59e0b' },
+    { label: 'Failed',       value: stats?.failed ?? 0,    icon: XCircle,       color: '#ef4444' },
+    { label: 'Revenue',      value: `${sym}${(stats?.revenue ?? 0).toLocaleString()}`, icon: IndianRupee, color: '#60a5fa' },
+    { label: 'Users',        value: stats?.users ?? 0,     icon: Users,         color: theme.primary },
   ]
 
   const statusColor = { Pending: '#f59e0b', Processing: '#3b82f6', Completed: '#22c55e', Failed: '#ef4444' }
@@ -38,9 +39,9 @@ export default function Dashboard() {
 
       {/* Stats grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12, marginBottom: 32 }}>
-        {cards.map(({ label, value, icon, color }) => (
+        {cards.map(({ label, value, icon: Icon, color }) => (
           <div key={label} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 16, padding: '16px 14px' }}>
-            <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
+            <div style={{ marginBottom: 8 }}><Icon size={28} color={color} /></div>
             <div style={{ fontSize: 26, fontWeight: 900, color, marginBottom: 4 }}>{value}</div>
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>{label}</div>
           </div>

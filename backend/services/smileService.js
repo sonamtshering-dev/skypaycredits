@@ -14,7 +14,7 @@ const logger = {
 
 // ── 1. VERIFY PLAYER ─────────────────────────────────
 async function verifyPlayer({ productId, userId, zoneId, skuCode, baseUrl }) {
-  const API_BASE = (baseUrl || BASE || "https://www.smile.one/ph").replace(/\/+$/, "")
+  const API_BASE = (baseUrl || BASE || "https://www.smile.one").replace(/\/+$/, "")
   if (!userId) throw new Error("Player ID is required")
   if (!skuCode) throw new Error("No SKU code available for this region. Add packs with SKU codes first.")
 
@@ -46,7 +46,7 @@ async function verifyPlayer({ productId, userId, zoneId, skuCode, baseUrl }) {
 
 // ── 2. GET PRODUCT LIST ──────────────────────────────
 async function getProductList(productId, baseUrl) {
-  const API_BASE = (baseUrl || BASE || "https://www.smile.one/ph").replace(/\/+$/, "")
+  const API_BASE = (baseUrl || BASE || "https://www.smile.one").replace(/\/+$/, "")
   const params = buildSmileRequestParams({ product: productId })
   const res = await axios.post(`${API_BASE}/smilecoin/api/productlist`, new URLSearchParams(params), {
     timeout: 30000,
@@ -58,7 +58,7 @@ async function getProductList(productId, baseUrl) {
 
 // ── 3. PLACE ORDER ───────────────────────────────────
 async function placeOrder({ productId, skuCode, userId, zoneId, referenceId, baseUrl }) {
-  const API_BASE = (baseUrl || BASE || "https://www.smile.one/ph").replace(/\/+$/, "")
+  const API_BASE = (baseUrl || BASE || "https://www.smile.one").replace(/\/+$/, "")
   if (!userId || userId.trim() === "") throw new Error("Player ID is required")
   if (!skuCode || skuCode.trim() === "") throw new Error("SKU code is required")
 
@@ -96,7 +96,7 @@ async function placeOrder({ productId, skuCode, userId, zoneId, referenceId, bas
 
 // ── 4. CHECK ORDER STATUS ────────────────────────────
 async function checkOrderStatus(providerOrderId, baseUrl) {
-  const API_BASE = (baseUrl || BASE || "https://www.smile.one/ph").replace(/\/+$/, "")
+  const API_BASE = (baseUrl || BASE || "https://www.smile.one").replace(/\/+$/, "")
   if (!providerOrderId) throw new Error("Order ID is required")
 
   const params = buildSmileRequestParams({ orderid: providerOrderId.toString().trim() })

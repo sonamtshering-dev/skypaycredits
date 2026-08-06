@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
+import { Shield, Zap, Mail, Star } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import api from '../api/axios'
@@ -25,7 +26,7 @@ export default function ManualOrder() {
   const [note, setNote]       = useState('')
   const [paying, setPaying]   = useState(false)
   const [error, setError]     = useState('')
-  const sym = settings?.currencySymbol || '৳'
+  const sym = settings?.currencySymbol || '₹'
 
   useEffect(() => {
     Promise.all([
@@ -109,9 +110,9 @@ export default function ManualOrder() {
           <div>
             <div style={{ fontWeight: 800, fontSize: 18 }}>{game.name}</div>
             <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 4, display: 'flex', gap: 12 }}>
-              <span>🛡️ Safety Guarantee</span>
-              <span>⚡ Manual Delivery</span>
-              <span>📧 Email Delivery</span>
+              <span style={{ display:'flex', alignItems:'center', gap:4 }}><Shield size={12} /> Safety Guarantee</span>
+              <span style={{ display:'flex', alignItems:'center', gap:4 }}><Zap size={12} /> Manual Delivery</span>
+              <span style={{ display:'flex', alignItems:'center', gap:4 }}><Mail size={12} /> Email Delivery</span>
             </div>
           </div>
         </div>
@@ -151,8 +152,8 @@ export default function ManualOrder() {
           {Object.entries(sections).map(([section, sectionPacks]) => (
             <div key={section} style={{ marginBottom: 16 }}>
               <div style={{ textAlign: 'center', marginBottom: 12 }}>
-                <span style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 20, padding: '4px 16px', fontSize: 12, fontWeight: 800, color: theme.primary, letterSpacing: 1 }}>
-                  ⭐ {section.toUpperCase()}
+                <span style={{ display:'inline-flex', alignItems:'center', gap:5, background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 20, padding: '4px 16px', fontSize: 12, fontWeight: 800, color: theme.primary, letterSpacing: 1 }}>
+                  <Star size={10} fill={theme.primary} /> {section.toUpperCase()}
                 </span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>

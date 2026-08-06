@@ -14,17 +14,16 @@ router.post("/verify-player", protect, async (req, res) => {
     if (!gameId) return res.status(400).json({ message: "gameId required" })
     if (!playerData?.userId) return res.status(400).json({ message: "Player ID is required" })
 
-    const game = await Game.findById(gameId)
+    const isObjectId = /^[a-f\d]{24}$/i.test(gameId)
+    const game = isObjectId ? await Game.findById(gameId) : await Game.findOne({ slug: gameId })
     if (!game) return res.status(404).json({ message: "Game not found" })
 
-    // Get packs for this region to find SKU (needed for Smile verify)
+    // Always use the real ObjectId for Pack queries
+    const resolvedGameId = game._id.toString()
     const slug  = regionSlug || playerData.regionSlug || ""
-    let packs = await Pack.find({ gameId, regionSlug: slug, active: true })
-    // Fallback — if no packs found for region, try matching region by provider
+    let packs = await Pack.find({ gameId: resolvedGameId, active: true })
     if (packs.length === 0) {
-      const smileRegion = game.regions?.find(r => r.active && r.provider === 'smile')
-      const fallbackRegion = smileRegion || game.regions?.find(r => r.active)
-      if (fallbackRegion) packs = await Pack.find({ gameId, regionSlug: fallbackRegion.slug, active: true })
+      packs = await Pack.find({ gameId: resolvedGameId })
     }
 
     if (process.env.NODE_ENV !== 'production') {
@@ -41,7 +40,9 @@ router.post("/verify-player", protect, async (req, res) => {
 // Returns server dropdown list for games that need it
 router.get("/servers/:gameId", async (req, res) => {
   try {
-    const game = await Game.findById(req.params.gameId)
+    const raw = req.params.gameId
+    const isOid = /^[a-f\d]{24}$/i.test(raw)
+    const game = isOid ? await Game.findById(raw) : await Game.findOne({ slug: raw })
     if (!game) return res.status(404).json({ message: "Game not found" })
 
     const regionSlug = req.query.region || ""

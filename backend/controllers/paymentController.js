@@ -149,14 +149,23 @@ exports.handleWebhook = async (req, res) => {
       : JSON.stringify(req.body)
     const parsed = Buffer.isBuffer(req.body) ? JSON.parse(rawBody) : req.body
 
-    // Verify X-NovaPay-Signature
+    // Verify X-NovaPay-Signature — required in production
     const signature = req.headers["x-novapay-signature"] || ""
-    if (NOVAPAY_WEBHOOK_SECRET && signature) {
+    if (isProd && !NOVAPAY_WEBHOOK_SECRET) {
+      console.error("[WEBHOOK] NOVAPAY_WEBHOOK_SECRET not set — refusing all webhooks in production")
+      return res.status(500).json({ message: "Webhook not configured" })
+    }
+    if (NOVAPAY_WEBHOOK_SECRET) {
+      if (!signature) {
+        console.warn("[WEBHOOK] NovaPay signature header missing")
+        return res.status(401).json({ message: "Missing signature" })
+      }
       const expected = crypto
         .createHmac("sha256", NOVAPAY_WEBHOOK_SECRET)
         .update(rawBody)
         .digest("hex")
-      if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) {
+      if (expected.length !== signature.length ||
+          !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) {
         console.warn("[WEBHOOK] NovaPay signature mismatch")
         return res.status(401).json({ message: "Invalid signature" })
       }

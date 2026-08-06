@@ -9,32 +9,26 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Rely on the httpOnly cookie for auth — just verify the session is still valid
     const stored = localStorage.getItem('user')
-    const token  = localStorage.getItem('token')
-    if (stored && token) {
-      setUser(JSON.parse(stored))
-      api.get('/auth/me').then(r => {
-        setUser(r.data)
-        localStorage.setItem('user', JSON.stringify(r.data))
-      }).catch(() => {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        setUser(null)
-      }).finally(() => setLoading(false))
-    } else {
-      setLoading(false)
-    }
+    if (stored) setUser(JSON.parse(stored))
+    api.get('/auth/me').then(r => {
+      setUser(r.data)
+      localStorage.setItem('user', JSON.stringify(r.data))
+    }).catch(() => {
+      localStorage.removeItem('user')
+      setUser(null)
+    }).finally(() => setLoading(false))
   }, [])
 
-  const login = (token, userData) => {
-    localStorage.setItem('token', token)
+  const login = (_token, userData) => {
+    // Token is stored in httpOnly cookie by the server — we only cache user profile data
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
   }
 
   const logout = async () => {
     await api.post('/auth/logout').catch(() => {})
-    localStorage.removeItem('token')
     localStorage.removeItem('user')
     setUser(null)
   }

@@ -5,13 +5,22 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import api from '../api/axios'
 import theme from '../theme'
+import { Gamepad2, Gift, Globe, X } from 'lucide-react'
 
+
+const CATS = [
+  { key: 'all',     label: 'All' },
+  { key: 'game',    label: 'Games' },
+  { key: 'voucher', label: 'Gift Cards' },
+  { key: 'other',   label: 'Via Login' },
+]
 
 export default function Home() {
   const [games, setGames]     = useState([])
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
   const [picker, setPicker]   = useState(null)
+  const [activeCat, setActiveCat] = useState('all')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -37,6 +46,18 @@ export default function Home() {
   const vouchersList = games.filter(g => g.category === 'voucher')
   const otherList    = games.filter(g => g.category === 'other')
 
+  const visibleGames    = activeCat === 'all' || activeCat === 'game'    ? gamesList    : []
+  const visibleVouchers = activeCat === 'all' || activeCat === 'voucher' ? vouchersList : []
+  const visibleOthers   = activeCat === 'all' || activeCat === 'other'   ? otherList    : []
+
+  const availableCats = CATS.filter(c => {
+    if (c.key === 'all') return true
+    if (c.key === 'game')    return gamesList.length > 0
+    if (c.key === 'voucher') return vouchersList.length > 0
+    if (c.key === 'other')   return otherList.length > 0
+    return false
+  })
+
   const gridStyle = {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
@@ -49,40 +70,61 @@ export default function Home() {
       <div style={{ position: 'relative', zIndex: 1 }}>
         {banners.length > 0 && <BannerCarousel banners={banners} />}
         <div className="container" style={{ paddingTop: 12, paddingBottom: 60 }}>
+          {/* Category filter tabs */}
+          {!loading && games.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0 16px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+              <div style={{ display: 'flex', gap: 8, width: 'max-content' }}>
+                {availableCats.map(c => {
+                  const active = activeCat === c.key
+                  return (
+                    <button key={c.key} onClick={() => setActiveCat(c.key)} style={{
+                      padding: '8px 22px', borderRadius: 999, fontWeight: 700, fontSize: 13,
+                      border: active ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                      background: active ? theme.grad : 'rgba(255,255,255,0.06)',
+                      color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+                      cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
+                      boxShadow: active ? '0 4px 16px rgba(76,0,176,0.4)' : 'none',
+                    }}>{c.label}</button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div>
           ) : games.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 60, color: 'rgba(255,255,255,0.3)' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🎮</div>
+              <div style={{ marginBottom: 12 }}><Gamepad2 size={40} color="rgba(255,255,255,0.3)" /></div>
               No games found
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-              {gamesList.length > 0 && (
+              {visibleGames.length > 0 && (
                 <div>
-                  <SectionHeader icon="🎮" title="Games" count={gamesList.length} />
+                  <SectionHeader icon={<Gamepad2 size={20} color="#8b5cf6" />} title="Games" />
                   <div style={gridStyle}>
-                    {gamesList.map(game => (
+                    {visibleGames.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
                     ))}
                   </div>
                 </div>
               )}
-              {vouchersList.length > 0 && (
+              {visibleVouchers.length > 0 && (
                 <div>
-                  <SectionHeader icon="🎁" title="Gift Cards & Vouchers" count={vouchersList.length} />
+                  <SectionHeader icon="🎁" title="Gift Cards & Vouchers" />
                   <div style={gridStyle}>
-                    {vouchersList.map(game => (
+                    {visibleVouchers.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} isVoucher />
                     ))}
                   </div>
                 </div>
               )}
-              {otherList.length > 0 && (
+              {visibleOthers.length > 0 && (
                 <div>
-                  <SectionHeader icon="📦" title="Other" count={otherList.length} />
+                  <SectionHeader icon="📦" title="Via Login" />
                   <div style={gridStyle}>
-                    {otherList.map(game => (
+                    {visibleOthers.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
                     ))}
                   </div>
@@ -107,16 +149,11 @@ export default function Home() {
   )
 }
 
-function SectionHeader({ icon, title, count }) {
+function SectionHeader({ icon, title }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-      <span style={{ fontSize: 20 }}>{icon}</span>
+      <span style={{ display: 'flex', alignItems: 'center' }}>{icon}</span>
       <h2 style={{ fontWeight: 900, fontSize: 18, color: '#fff', margin: 0 }}>{title}</h2>
-      <span style={{
-        fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-        background: theme.alpha(0.15), color: theme.primary,
-        border: `1px solid ${theme.alpha(0.3)}`,
-      }}>{count}</span>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)', marginLeft: 4 }} />
     </div>
   )
@@ -190,8 +227,8 @@ function GameCard({ game, onClick, isVoucher }) {
           background: isVoucher
             ? 'linear-gradient(135deg,rgba(251,191,36,0.3),rgba(249,115,22,0.2))'
             : 'linear-gradient(135deg,rgba(100,60,255,0.4),rgba(40,100,255,0.2))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 52,
-        }}>{isVoucher ? '🎁' : '🎮'}</div>
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>{isVoucher ? <Gift size={52} color="rgba(251,191,36,0.8)" /> : <Gamepad2 size={52} color="rgba(100,80,255,0.8)" />}</div>
       )}
 
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 50%, transparent 100%)' }} />
@@ -243,9 +280,9 @@ function RegionPicker({ game, onClose, onSelect }) {
           {game.icon && <img src={game.icon} alt={game.name} style={{ width: 54, height: 54, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 900, fontSize: 17, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>{game.name}</div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 4 }}>🌐 Select your region</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 4, display: 'flex', alignItems: 'center', gap: 5 }}><Globe size={12} /> Select your region</div>
           </div>
-          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={16} /></button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: 16, maxHeight: '60vh', overflowY: 'auto' }}>
           {regions.map(region => (
@@ -274,7 +311,7 @@ function RegionCard({ region, onClick }) {
         {img ? (
           <img src={img} alt={region.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: hovered ? 'scale(1.06)' : 'scale(1)', transition: 'transform 0.4s ease' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,rgba(80,40,200,0.5),rgba(40,80,200,0.3))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🌐</div>
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,rgba(80,40,200,0.5),rgba(40,80,200,0.3))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Globe size={40} color="rgba(255,255,255,0.5)" /></div>
         )}
       </div>
       <div style={{ background: hovered ? '#1a1230' : '#0f0a1e', padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', transition: 'background 0.2s' }}>

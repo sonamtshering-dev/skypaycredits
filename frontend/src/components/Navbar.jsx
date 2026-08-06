@@ -4,29 +4,44 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import theme from '../theme'
+import { Zap, ClipboardList, User, Settings, LogOut, X, Home, ChevronRight } from 'lucide-react'
 
 
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth()
   const { settings } = useSettings()
   const navigate = useNavigate()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
   const handleLogout = async () => {
-    await logout(); navigate('/'); setMenuOpen(false); setProfileOpen(false)
+    await logout(); navigate('/'); setDrawerOpen(false); setProfileOpen(false)
   }
+
+  const navItems = [
+    { to: '/',        label: 'Home',       icon: Home },
+    { to: '/orders',  label: 'My Orders',  icon: ClipboardList },
+    { to: '/profile', label: 'Profile',    icon: User },
+    ...(isAdmin ? [{ to: '/admin', label: 'Admin Panel', icon: Settings }] : []),
+  ]
 
   return (
     <>
       <nav style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(6,6,18,0.85)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        padding: '10px 16px',
+        background: 'transparent',
       }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', height: 60, gap: 12 }}>
+        <div style={{
+          maxWidth: 1100, margin: '0 auto',
+          display: 'flex', alignItems: 'center', height: 52, gap: 12,
+          background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 999,
+          padding: '0 20px',
+        }}>
 
           {/* Logo */}
           <Link to="/" style={{
@@ -37,7 +52,7 @@ export default function Navbar() {
           }}>
             {settings.logo
               ? <img src={settings.logo} alt={settings.siteName} style={{ height: 32 }} />
-              : `⚡ ${settings.siteName || 'RechargeShop'}`}
+              : <><Zap size={15} color="#4c00b0" style={{ verticalAlign: 'middle', marginRight: 5 }} />{settings.siteName || 'Nitrogen Store'}</>}
           </Link>
 
           <div style={{ flex: 1 }} />
@@ -48,12 +63,18 @@ export default function Navbar() {
               <Link to="/orders" className="hide-mobile btn btn-ghost btn-sm">Orders</Link>
               {isAdmin && <Link to="/admin" className="hide-mobile btn btn-ghost btn-sm">Admin</Link>}
 
-              {/* Profile avatar */}
+              {/* Profile avatar — desktop dropdown */}
               <div style={{ position: 'relative' }}>
-                <button onClick={() => { setProfileOpen(v => !v); setMenuOpen(false) }} style={{
+                <button onClick={() => {
+                  if (window.innerWidth < 640) {
+                    setDrawerOpen(v => !v); setProfileOpen(false)
+                  } else {
+                    setProfileOpen(v => !v); setDrawerOpen(false)
+                  }
+                }} style={{
                   width: 36, height: 36, borderRadius: '50%',
                   background: theme.grad,
-                  border: '2px solid rgba(249,115,22,0.3)',
+                  border: '2px solid rgba(76,0,176,0.35)',
                   color: '#fff', fontWeight: 800, fontSize: 14,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                 }}>
@@ -65,7 +86,7 @@ export default function Navbar() {
                     <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setProfileOpen(false)} />
                     <div style={{
                       position: 'absolute', right: 0, top: 44, zIndex: 20,
-                      background: 'rgba(12,8,28,0.97)', backdropFilter: 'blur(20px)',
+                      background: 'rgba(0,0,0,0.97)', backdropFilter: 'blur(20px)',
                       border: '1px solid rgba(255,255,255,0.12)',
                       borderRadius: 14, minWidth: 200, overflow: 'hidden',
                     }}>
@@ -74,79 +95,208 @@ export default function Navbar() {
                         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{user.email}</div>
                       </div>
                       {[
-                        { to: '/orders', label: '📋 Orders' },
-                        { to: '/profile', label: '👤 Profile' },
-                        ...(isAdmin ? [{ to: '/admin', label: '⚙️ Admin Panel' }] : []),
-                      ].map(({ to, label }) => (
+                        { to: '/orders',  label: 'Orders',      icon: ClipboardList },
+                        { to: '/profile', label: 'Profile',     icon: User },
+                        ...(isAdmin ? [{ to: '/admin', label: 'Admin Panel', icon: Settings }] : []),
+                      ].map(({ to, label, icon: Icon }) => (
                         <Link key={to} to={to} onClick={() => setProfileOpen(false)} style={{
-                          display: 'block', padding: '11px 16px', fontSize: 14,
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', fontSize: 14,
                           color: 'rgba(255,255,255,0.75)', textDecoration: 'none',
                           borderBottom: '1px solid rgba(255,255,255,0.05)',
                         }}
                           onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.06)'}
                           onMouseLeave={e => e.currentTarget.style.background=''}
-                        >{label}</Link>
+                        ><Icon size={14} />{label}</Link>
                       ))}
                       <button onClick={handleLogout} style={{
-                        display: 'block', width: '100%', padding: '11px 16px',
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        width: '100%', padding: '11px 16px',
                         textAlign: 'left', fontSize: 14, background: 'none',
                         color: '#f87171', cursor: 'pointer',
                       }}
                         onMouseEnter={e => e.currentTarget.style.background='rgba(239,68,68,0.08)'}
                         onMouseLeave={e => e.currentTarget.style.background=''}
-                      >🚪 Logout</button>
+                      ><LogOut size={14} style={{ marginRight: 10 }} />Logout</button>
                     </div>
                   </>
                 )}
               </div>
 
-              {/* Hamburger (mobile) */}
-              <button
-                onClick={() => { setMenuOpen(v => !v); setProfileOpen(false) }}
-                style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: menuOpen ? theme.alpha(0.2) : 'rgba(255,255,255,0.07)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 5, cursor: 'pointer', padding: 8,
-                }}
-                className="show-mobile"
-              >
-                <span style={{ width: 18, height: 2, background: menuOpen ? theme.primary : '#fff', borderRadius: 2, transition: 'all 0.2s', transform: menuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' }} />
-                <span style={{ width: 18, height: 2, background: menuOpen ? 'transparent' : '#fff', borderRadius: 2, transition: 'all 0.2s' }} />
-                <span style={{ width: 18, height: 2, background: menuOpen ? theme.primary : '#fff', borderRadius: 2, transition: 'all 0.2s', transform: menuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' }} />
-              </button>
             </div>
           ) : (
             <Link to="/auth" className="btn btn-primary btn-sm">Login</Link>
           )}
         </div>
-
-        {/* Mobile dropdown menu */}
-        {menuOpen && user && (
-          <div style={{
-            background: 'rgba(10,6,24,0.98)', backdropFilter: 'blur(20px)',
-            borderTop: '1px solid rgba(255,255,255,0.07)',
-            padding: '8px 0 16px',
-          }}>
-            {[
-              { to: '/orders', label: '📋 My Orders' },
-              { to: '/profile', label: '👤 Profile' },
-              ...(isAdmin ? [{ to: '/admin', label: '⚙️ Admin Panel' }] : []),
-            ].map(({ to, label }) => (
-              <Link key={to} to={to} onClick={() => setMenuOpen(false)} style={{
-                display: 'block', padding: '13px 20px', fontSize: 15, fontWeight: 600,
-                color: 'rgba(255,255,255,0.8)', textDecoration: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-              }}>{label}</Link>
-            ))}
-            <button onClick={handleLogout} style={{
-              display: 'block', width: '100%', padding: '13px 20px', textAlign: 'left',
-              fontSize: 15, fontWeight: 600, background: 'none', color: '#f87171', cursor: 'pointer',
-            }}>🚪 Logout</button>
-          </div>
-        )}
       </nav>
+
+      {/* Left Drawer — mobile only */}
+      {user && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setDrawerOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 200,
+              background: 'rgba(0,0,0,0.65)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              opacity: drawerOpen ? 1 : 0,
+              pointerEvents: drawerOpen ? 'auto' : 'none',
+              transition: 'opacity 0.3s ease',
+            }}
+          />
+
+          {/* Drawer panel */}
+          <div style={{
+            position: 'fixed', top: 0, left: 0, bottom: 0,
+            width: 'min(300px, 82vw)',
+            zIndex: 201,
+            display: 'flex', flexDirection: 'column',
+            background: 'linear-gradient(180deg, rgba(8,4,22,0.99) 0%, rgba(4,2,14,0.99) 100%)',
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            borderRight: '1px solid rgba(255,255,255,0.08)',
+            transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            overflow: 'hidden',
+          }}>
+
+            {/* Purple glow accent top-left */}
+            <div style={{
+              position: 'absolute', top: -60, left: -60,
+              width: 200, height: 200,
+              background: 'radial-gradient(circle, rgba(76,0,176,0.35) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }} />
+
+            {/* Header — brand + close */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '20px 20px 16px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              position: 'relative',
+            }}>
+              <div style={{
+                fontWeight: 900, fontSize: 18, letterSpacing: '-0.5px',
+                background: theme.gradSoft,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                display: 'flex', alignItems: 'center', gap: 7,
+              }}>
+                <Zap size={15} color="#4c00b0" style={{ flexShrink: 0 }} />
+                {settings.siteName || 'Nitrogen Store'}
+              </div>
+              <button onClick={() => setDrawerOpen(false)} style={{
+                width: 30, height: 30, borderRadius: 8,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* User card */}
+            <div style={{
+              margin: '16px 16px 8px',
+              padding: '14px 16px',
+              borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(76,0,176,0.18) 0%, rgba(120,40,255,0.1) 100%)',
+              border: '1px solid rgba(120,40,255,0.25)',
+              display: 'flex', alignItems: 'center', gap: 12,
+              position: 'relative', overflow: 'hidden',
+            }}>
+              <div style={{
+                position: 'absolute', top: -20, right: -20,
+                width: 80, height: 80,
+                background: 'radial-gradient(circle, rgba(120,40,255,0.2) 0%, transparent 70%)',
+                pointerEvents: 'none',
+              }} />
+              <div style={{
+                width: 42, height: 42, borderRadius: '50%',
+                background: theme.grad,
+                border: '2px solid rgba(120,40,255,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 900, fontSize: 17, color: '#fff', flexShrink: 0,
+              }}>
+                {user.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: 14, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</div>
+              </div>
+            </div>
+
+            {/* Nav items */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', padding: '8px 8px 6px' }}>
+                Navigation
+              </div>
+              {navItems.map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setDrawerOpen(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 12px', borderRadius: 10, marginBottom: 2,
+                    fontSize: 14, fontWeight: 600,
+                    color: 'rgba(255,255,255,0.75)',
+                    textDecoration: 'none',
+                    transition: 'all 0.15s',
+                    position: 'relative',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+                    e.currentTarget.style.color = '#fff'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = ''
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.75)'
+                  }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Icon size={15} color="rgba(255,255,255,0.6)" />
+                  </div>
+                  <span style={{ flex: 1 }}>{label}</span>
+                  <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+                </Link>
+              ))}
+            </div>
+
+            {/* Logout at bottom */}
+            <div style={{ padding: '12px 12px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <button
+                onClick={handleLogout}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  width: '100%', padding: '12px 12px', borderRadius: 10,
+                  background: 'rgba(239,68,68,0.06)',
+                  border: '1px solid rgba(239,68,68,0.15)',
+                  color: '#f87171', cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.15)' }}
+              >
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: 'rgba(239,68,68,0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <LogOut size={15} color="#f87171" />
+                </div>
+                Logout
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       <style>{`
         .show-mobile { display: flex !important; }

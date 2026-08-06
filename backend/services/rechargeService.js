@@ -13,15 +13,15 @@ function cleanId(str) {
 
 // Smile verify config per FinTopup MLBB game code
 const SMILE_VERIFY_CONFIG = {
-  "484": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
-  "412": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
-  "413": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
-  "414": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
-  "432": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
-  "485": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
-  "467": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
-  "468": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
-  "443": { productId: "mobilelegends", baseUrl: "https://www.smile.one/ph" },
+  "484": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
+  "412": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
+  "413": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
+  "414": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
+  "432": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
+  "485": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
+  "467": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
+  "468": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
+  "443": { productId: "mobilelegends", baseUrl: "https://www.smile.one" },
 }
 
 // ── Verify Player ─────────────────────────────────
@@ -146,6 +146,10 @@ async function processRecharge(order, pack, game) {
           providerOrderId: String(result.order_id || result.orderId || ""),
           status: "success"
         })
+      }
+
+      else if (provider === "moogold") {
+        throw new Error("Moogold provider is not active. Reconfigure this game to use fintopup, smile, or manual.")
       }
 
       else {

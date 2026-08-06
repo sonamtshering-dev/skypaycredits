@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
+import { KeyRound, Lock, Zap } from 'lucide-react'
 import api from '../api/axios'
 import theme from '../theme'
 
@@ -22,8 +23,9 @@ export default function Auth() {
   const [error, setError]       = useState('')
 
   // OTP state
-  const [step, setStep]         = useState('form') // 'form' | 'otp' | 'forgot' | 'reset-otp' | 'new-password'
+  const [step, setStep]         = useState('form') // 'form' | 'otp' | 'phone-otp' | 'forgot' | 'reset-otp' | 'new-password'
   const [pendingEmail, setPendingEmail] = useState('')
+  const [pendingPhone, setPendingPhone] = useState('') // masked phone like "+91 98****1234"
   const [otp, setOtp]           = useState('')
   const [otpLoading, setOtpLoading] = useState(false)
   const [otpError, setOtpError] = useState('')
@@ -68,7 +70,9 @@ export default function Auth() {
 
   const handleRegister = async e => {
     e.preventDefault(); setError('')
-    if (!name || !email || !password) return setError('Fill in all fields')
+    if (!name || !email || !phone || !password) return setError('Fill in all fields')
+    const phone10 = phone.replace(/^\+?91/, '').replace(/\D/g, '').slice(-10)
+    if (!/^[6-9]\d{9}$/.test(phone10)) return setError('Enter a valid 10-digit Indian mobile number')
     if (password.length < 8) return setError('Password must be at least 8 characters')
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) return setError('Password needs uppercase, lowercase and a number')
     if (password !== confirm) return setError('Passwords do not match')
@@ -89,6 +93,14 @@ export default function Auth() {
     setOtpLoading(true)
     try {
       const { data } = await api.post('/auth/verify-otp', { email: pendingEmail, otp })
+      if (data.requiresPhoneVerification) {
+        setPendingPhone(data.phone || '')
+        setOtp('')
+        setOtpError('')
+        setStep('phone-otp')
+        startResendCooldown()
+        return
+      }
       login(data.token, data.user)
       navigate('/')
     } catch (err) {
@@ -100,6 +112,30 @@ export default function Auth() {
     if (resendCooldown > 0) return
     try {
       await api.post('/auth/resend-otp', { email: pendingEmail })
+      setOtpError('')
+      startResendCooldown()
+    } catch (err) {
+      setOtpError(err.response?.data?.message || 'Failed to resend')
+    }
+  }
+
+  const handleVerifyPhoneOTP = async e => {
+    e.preventDefault(); setOtpError('')
+    if (!otp || otp.length !== 6) return setOtpError('Enter the 6-digit code')
+    setOtpLoading(true)
+    try {
+      const { data } = await api.post('/auth/verify-phone-otp', { email: pendingEmail, otp })
+      login(data.token, data.user)
+      navigate('/')
+    } catch (err) {
+      setOtpError(err.response?.data?.message || 'Invalid code')
+    } finally { setOtpLoading(false) }
+  }
+
+  const handleResendPhoneOTP = async () => {
+    if (resendCooldown > 0) return
+    try {
+      await api.post('/auth/resend-phone-otp', { email: pendingEmail })
       setOtpError('')
       startResendCooldown()
     } catch (err) {
@@ -254,13 +290,73 @@ export default function Auth() {
     )
   }
 
+  // ── Phone OTP Screen ────────────────────────────────
+  if (step === 'phone-otp') {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
+        <div style={{ width: '100%', maxWidth: 420 }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <div style={{ fontSize: 48, marginBottom: 8 }}>📱</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Verify your phone</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+              We sent a 6-digit code to<br />
+              <span style={{ color: theme.primary, fontWeight: 700 }}>{pendingPhone || 'your phone'}</span>
+            </div>
+          </div>
+
+          <div style={card}>
+            <form onSubmit={handleVerifyPhoneOTP} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="form-group">
+                <label>Phone Verification Code</label>
+                <input
+                  style={{ ...inputStyle, fontSize: 28, fontWeight: 800, letterSpacing: 12, textAlign: 'center' }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000000"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  autoFocus
+                />
+              </div>
+
+              {otpError && (
+                <div style={{ color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>
+                  {otpError}
+                </div>
+              )}
+
+              <button type="submit" disabled={otpLoading || otp.length !== 6} style={{
+                width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
+                background: theme.grad, border: '1px solid rgba(76,0,176,0.3)',
+                color: '#fff', cursor: otp.length !== 6 ? 'not-allowed' : 'pointer',
+                opacity: otpLoading || otp.length !== 6 ? 0.6 : 1,
+              }}>
+                {otpLoading ? 'Verifying…' : 'Verify Phone'}
+              </button>
+
+              <div style={{ textAlign: 'center' }}>
+                <button type="button" onClick={handleResendPhoneOTP} disabled={resendCooldown > 0} style={{
+                  background: 'none', border: 'none', fontSize: 13, cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                  color: resendCooldown > 0 ? 'rgba(255,255,255,0.3)' : theme.primary,
+                }}>
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // ── Forgot Password — enter email ───────────────────
   if (step === 'forgot') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 8 }}>🔑</div>
+            <div style={{ marginBottom: 8 }}><KeyRound size={48} color="#8b5cf6" /></div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Forgot password?</div>
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Enter your email and we'll send a reset code</div>
           </div>
@@ -342,7 +438,7 @@ export default function Auth() {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 8 }}>🔒</div>
+            <div style={{ marginBottom: 8 }}><Lock size={48} color="#8b5cf6" /></div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Set new password</div>
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Choose a strong password</div>
           </div>
@@ -390,7 +486,7 @@ export default function Auth() {
             fontSize: 32, fontWeight: 900,
             background: theme.gradSoft,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          }}>⚡ {settings.siteName || 'RechargeShop'}</div>
+          }}><Zap size={20} color="#8b5cf6" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />{settings.siteName || 'Nitrogen Store'}</div>
           <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: 8, fontSize: 14 }}>
             {tab === 'login' ? 'Welcome back' : 'Create your account'}
           </div>
@@ -456,9 +552,19 @@ export default function Auth() {
                   onChange={e => setEmail(e.target.value)} />
               </div>
               <div className="form-group">
-                <label>Phone number <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>(optional)</span></label>
-                <input style={inputStyle} type="tel" placeholder="+880 1234 567890" value={phone}
-                  onChange={e => setPhone(e.target.value)} />
+                <label>Phone number</label>
+                <div style={{ display: 'flex', gap: 0 }}>
+                  <span style={{
+                    background: 'rgba(76,0,176,0.15)', border: '1px solid rgba(255,255,255,0.12)',
+                    borderRight: 'none', borderRadius: '10px 0 0 10px',
+                    padding: '12px 12px', color: 'rgba(255,255,255,0.7)', fontSize: 14,
+                    display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', userSelect: 'none',
+                  }}>🇮🇳 +91</span>
+                  <input style={{ ...inputStyle, borderRadius: '0 10px 10px 0', flex: 1 }}
+                    type="tel" inputMode="numeric" placeholder="98765 43210"
+                    value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,'').slice(0,10))}
+                    maxLength={10} />
+                </div>
               </div>
               <div className="form-group">
                 <label>Password</label>

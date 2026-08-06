@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import api from '../api/axios'
+import { CheckCircle, XCircle } from 'lucide-react'
 
 export default function PaymentSuccess() {
   const [params]   = useSearchParams()
@@ -45,7 +46,7 @@ export default function PaymentSuccess() {
 
           {status === 'checking' && (
             <>
-              <div style={{ width: 56, height: 56, border: '4px solid rgba(249,115,22,0.2)', borderTopColor: '#f97316', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 24px' }} />
+              <div style={{ width: 56, height: 56, border: '4px solid rgba(139,92,246,0.2)', borderTopColor: '#8b5cf6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 24px' }} />
               <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', marginBottom: 8 }}>Verifying Payment...</div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Please wait, this may take a few seconds</div>
               <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -54,16 +55,16 @@ export default function PaymentSuccess() {
 
           {status === 'paid' && (
             <>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
+              <div style={{ marginBottom: 16 }}><CheckCircle size={64} color="#22c55e" /></div>
               <div style={{ fontWeight: 900, fontSize: 24, color: '#fff', marginBottom: 8 }}>Payment Successful!</div>
               <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>Your diamonds are being delivered automatically</div>
-              <div style={{ fontSize: 13, color: '#f97316' }}>Redirecting to orders...</div>
+              <div style={{ fontSize: 13, color: '#8b5cf6' }}>Redirecting to orders...</div>
             </>
           )}
 
           {status === 'failed' && (
             <>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>❌</div>
+              <div style={{ marginBottom: 16 }}><XCircle size={64} color="#ef4444" /></div>
               <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', marginBottom: 20 }}>Payment Failed or Cancelled</div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 24 }}>
                 If you completed payment, please check your orders page. Contact support if diamonds were not delivered.

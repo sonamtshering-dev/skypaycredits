@@ -78,10 +78,14 @@ router.get("/all", protect, adminOnly, async (req, res) => {
   }
 })
 
-// GET /api/games/:id
-router.get("/:id", validateObjectId, async (req, res) => {
+// GET /api/games/:id  — accepts ObjectId or slug
+router.get("/:id", async (req, res) => {
   try {
-    const game = await Game.findById(req.params.id)
+    const { id } = req.params
+    const isObjectId = /^[a-f\d]{24}$/i.test(id)
+    const game = isObjectId
+      ? await Game.findById(id)
+      : await Game.findOne({ slug: id })
     if (!game) return res.status(404).json({ message: "Game not found" })
     res.json(game)
   } catch (err) {

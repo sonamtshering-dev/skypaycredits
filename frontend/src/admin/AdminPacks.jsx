@@ -4,6 +4,7 @@ import api from '../api/axios'
 import theme from '../theme'
 
 
+
 const EMPTY_PACK = {
   title: '', price: '', diamonds: '', bonus: '',
   provider: '', providerGameId: '', active: true, sortOrder: 0, skuCodes: [], sectionName: '', oldPrice: '',
@@ -311,7 +312,7 @@ fdB.append('active', b.active)
                   )}
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 2 }}>
-                  {pack.diamonds > 0 && `💎 ${pack.diamonds}${pack.bonus > 0 ? ` +${pack.bonus}` : ''} · `}
+                  {pack.diamonds > 0 && `${pack.diamonds}${pack.bonus > 0 ? ` +${pack.bonus}` : ''} · `}
                   {pack.provider || 'manual'}
                   {pack.skuCodes?.length > 0 && ` · ${pack.skuCodes.length} SKU`}
                   {` · sort: ${pack.sortOrder ?? i}`}
@@ -351,7 +352,6 @@ fdB.append('active', b.active)
 export default function AdminPacks() {
   const [games, setGames]           = useState([])
   const [selectedGame, setSelectedGame] = useState(null)
-  const [selectedRegion, setSelectedRegion] = useState('__none__')
   const [loading, setLoading]       = useState(true)
   const [categoryFilter, setCategoryFilter] = useState('all')
 
@@ -365,22 +365,15 @@ export default function AdminPacks() {
   const handleGameChange = gameId => {
     const game = games.find(g => g._id === gameId) || null
     setSelectedGame(game)
-    setSelectedRegion('__none__')
   }
 
   const filteredGames = games.filter(g => categoryFilter === 'all' || g.category === categoryFilter)
-  const regions = selectedGame?.regions?.filter(r => r.active) || []
-  const hasRegions = regions.length > 0
-  const activeRegionSlug = selectedRegion === '__none__' ? '' : selectedRegion
-  const activeRegionName = selectedRegion === '__none__'
-    ? (hasRegions ? 'No Region' : selectedGame?.name || 'Game')
-    : (regions.find(r => r.slug === selectedRegion)?.name || selectedRegion)
 
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 2 }}>Packs</h1>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Manage packs per game and region</p>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Manage packs per game</p>
       </div>
 
       {/* Category filter */}
@@ -392,7 +385,7 @@ export default function AdminPacks() {
               background: categoryFilter === c ? theme.grad : 'rgba(255,255,255,0.06)',
               border: categoryFilter === c ? '1px solid rgba(249,115,22,0.4)' : '1px solid rgba(255,255,255,0.09)',
               color: '#fff', transition: 'all 0.15s', textTransform: 'capitalize',
-            }}>{c === 'all' ? '🎮 All' : c === 'game' ? '🎮 Games' : c === 'voucher' ? '🎁 Vouchers' : '📦 Other'}</button>
+            }}>{c === 'all' ? 'All' : c === 'game' ? 'Games' : c === 'voucher' ? 'Vouchers' : 'Other'}</button>
         ))}
       </div>
 
@@ -421,42 +414,17 @@ export default function AdminPacks() {
         )}
       </div>
 
-      {/* Region tabs */}
       {selectedGame && (
-        <div>
-          {hasRegions && (
-            <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap' }}>
-              {regions.map(r => (
-                <button key={r.slug} onClick={() => setSelectedRegion(r.slug)} style={{
-                  padding: '10px 18px', fontSize: 13, fontWeight: 700, background: 'none', cursor: 'pointer',
-                  color: selectedRegion === r.slug ? theme.primary : 'rgba(255,255,255,0.4)',
-                  borderBottom: selectedRegion === r.slug ? '2px solid #a78bfa' : '2px solid transparent',
-                  transition: 'all 0.15s', whiteSpace: 'nowrap',
-                }}>
-                  🌐 {r.name}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 20 }}>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 800, color: '#fff', fontSize: 16 }}>
-                {selectedGame.name}{hasRegions ? ` — ${activeRegionName}` : ''}
-              </div>
-              {hasRegions && (
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginTop: 2 }}>
-                  Packs shown to users who selected <strong style={{ color: theme.primary }}>{activeRegionName}</strong>
-                </div>
-              )}
-            </div>
-            <RegionPackList
-              key={`${selectedGame._id}-${activeRegionSlug}`}
-              gameId={selectedGame._id}
-              regionSlug={activeRegionSlug}
-              regionName={activeRegionName}
-            />
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 20 }}>
+          <div style={{ fontWeight: 800, color: '#fff', fontSize: 16, marginBottom: 16 }}>
+            {selectedGame.name}
           </div>
+          <RegionPackList
+            key={selectedGame._id}
+            gameId={selectedGame._id}
+            regionSlug=""
+            regionName={selectedGame.name}
+          />
         </div>
       )}
 

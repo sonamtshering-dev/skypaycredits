@@ -1,4 +1,4 @@
-// server.js — Sky Pay Credits API
+// server.js — Nitrogen Store API
 const express      = require("express")
 const mongoose     = require("mongoose")
 const cors         = require("cors")
@@ -14,10 +14,12 @@ const app = express()
 app.set('trust proxy', 1)
 app.use(cookieParser())
 
-app.use((req, res, next) => {
-  res.setHeader('ngrok-skip-browser-warning', 'true')
-  next()
-})
+if (process.env.NODE_ENV !== "production") {
+  app.use((req, res, next) => {
+    res.setHeader('ngrok-skip-browser-warning', 'true')
+    next()
+  })
+}
 
 app.use(helmet({
   crossOriginOpenerPolicy: false,

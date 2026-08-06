@@ -2,125 +2,118 @@
 import { Link } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
 import { useEffect } from 'react'
-
-// ── Social links — update these ──
-const INSTAGRAM = 'https://www.instagram.com/bdcoins.insta?igsh=MTN2bXZmMjljYjFpMg=='
-const FACEBOOK  = 'https://www.facebook.com/share/189erMsnZ2'
+import { Zap, Lock, Globe, Gamepad2 } from 'lucide-react'
 
 export default function Footer() {
   const { settings } = useSettings()
   const year = new Date().getFullYear()
-  const siteName = settings.siteName || 'Sky Pay Credits'
+  const siteName = settings.siteName || 'Nitrogen Store'
 
-  // Update page title
   useEffect(() => {
     document.title = siteName
   }, [siteName])
 
   return (
-    <footer style={{
-      background: 'rgba(6,6,18,0.95)',
-      backdropFilter: 'blur(20px)',
-      borderTop: '1px solid rgba(255,255,255,0.07)',
-      marginTop: 'auto',
-      position: 'relative', zIndex: 1,
-    }}>
-      <div className="container" style={{ padding: '36px 16px 20px' }}>
+    <>
+      <footer style={{
+        background: 'rgba(0,0,0,0.97)',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255,255,255,0.07)',
+        marginTop: 'auto',
+        position: 'relative', zIndex: 1,
+      }}>
+        <div className="container" style={{ padding: '36px 16px 20px' }}>
 
-        {/* Top row */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: 32, marginBottom: 32,
-        }}>
-          {/* Brand */}
-          <div>
-            <div style={{
-              fontWeight: 900, fontSize: 20,
-              background: 'linear-gradient(135deg,#00aaff,#38bdf8)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text', marginBottom: 10,
-            }}>⚡ {siteName}</div>
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, lineHeight: 1.7, maxWidth: 200 }}>
-             {siteName} offers reliable game top-ups with fast and secure delivery. We are committed to providing smooth transactions and professional service for every gamer.
-            </p>
-            {/* Social icons */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-              <a href={INSTAGRAM} target="_blank" rel="noreferrer"
-                style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background='linear-gradient(135deg,#00aaff,#008ce6)'; e.currentTarget.style.border='1px solid transparent' }}
-                onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,0.06)'; e.currentTarget.style.border='1px solid rgba(255,255,255,0.1)' }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
-              </a>
-              <a href={FACEBOOK} target="_blank" rel="noreferrer"
-                style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background='#1877f2'; e.currentTarget.style.border='1px solid transparent' }}
-                onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,0.06)'; e.currentTarget.style.border='1px solid rgba(255,255,255,0.1)' }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
+          {/* Top row */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+            gap: 32, marginBottom: 32,
+          }}>
+            {/* Brand */}
+            <div>
+              <div style={{
+                fontWeight: 900, fontSize: 20,
+                background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text', marginBottom: 10,
+              }}><Zap size={16} color="#4c00b0" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} />{siteName}</div>
+              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, lineHeight: 1.7, maxWidth: 200 }}>
+                {siteName} offers reliable game top-ups with fast and secure delivery. Smooth transactions and professional service for every gamer.
+              </p>
+            </div>
+
+            {/* Why Us */}
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1.5 }}>Why Us</div>
+              {[
+                [Zap,      'Instant Delivery',  '#4c00b0'],
+                [Lock,     'Secure Payments',   '#22c55e'],
+                [Globe,    'Multiple Regions',  '#7c3aed'],
+                [Gamepad2, '15+ Games',         '#c4b5fd'],
+              ].map(([Icon, label, color]) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
+                  <Icon size={13} color={color} />
+                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>{label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Navigation */}
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1.5 }}>Navigation</div>
+              {[
+                { to: '/',        label: 'Home' },
+                { to: '/orders',  label: 'My Orders' },
+                { to: '/about',   label: 'About Us' },
+                { to: '/contact', label: 'Contact' },
+              ].map(({ to, label }) => (
+                <Link key={to} to={to} style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 13, textDecoration: 'none', marginBottom: 9, transition: 'color 0.15s' }}
+                  onMouseEnter={e => e.target.style.color = '#7c3aed'}
+                  onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.4)'}
+                >{label}</Link>
+              ))}
             </div>
           </div>
 
-          {/* Navigation */}
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1.5 }}>Navigation</div>
-            {[
-              { to: '/',        label: 'Home' },
-              { to: '/orders',  label: 'My Orders' },
-              { to: '/about',   label: 'About Us' },
-              { to: '/contact', label: 'Contact' },
-            ].map(({ to, label }) => (
-              <Link key={to} to={to} style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 13, textDecoration: 'none', marginBottom: 9, transition: 'color 0.15s' }}
-                onMouseEnter={e => e.target.style.color = '#00aaff'}
-                onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.4)'}
-              >{label}</Link>
-            ))}
-          </div>
-
-          {/* Why Us */}
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1.5 }}>Why Us</div>
-            {[
-              ['⚡', 'Instant Delivery'],
-              ['🔒', 'Secure Payments'],
-              ['🌐', 'Multiple Regions'],
-              ['🎮', '15+ Games'],
-            ].map(([icon, label]) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
-                <span style={{ fontSize: 13 }}>{icon}</span>
-                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>{label}</span>
-              </div>
-            ))}
+          {/* Bottom bar */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>© {year} {siteName}</span>
+              {[{ label: 'Privacy', to: '/privacy' }, { label: 'Terms', to: '/terms' }].map(({ label, to }) => (
+                <Link key={to} to={to} style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12, textDecoration: 'none' }}
+                  onMouseEnter={e => e.target.style.color = 'rgba(255,255,255,0.5)'}
+                  onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.2)'}
+                >{label}</Link>
+              ))}
+            </div>
+            <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 12 }}>All rights reserved.</span>
           </div>
         </div>
+      </footer>
 
-        {/* Bottom bar */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>© {year} {siteName}</span>
-            {[{ label: 'Privacy', to: '/privacy' }, { label: 'Terms', to: '/terms' }].map(({ label, to }) => (
-              <Link key={to} to={to} style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12, textDecoration: 'none' }}
-                onMouseEnter={e => e.target.style.color = 'rgba(255,255,255,0.5)'}
-                onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.2)'}
-              >{label}</Link>
-            ))}
-          </div>
-
-          <a href="https://wa.me/919907433384" target="_blank" rel="noreferrer"
-            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>Made with</span>
-            <span style={{ color: '#ef4444', fontSize: 14 }}>♥</span>
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>by</span>
-            <span style={{ fontSize: 12, fontWeight: 800, background: 'linear-gradient(135deg,#00aaff,#38bdf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Tshernova Studio</span>
-          </a>
-        </div>
-      </div>
-    </footer>
+      {/* WhatsApp sticky float button */}
+      <a
+        href="https://wa.me/917085396397"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Chat on WhatsApp"
+        style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+          width: 56, height: 56, borderRadius: '50%',
+          background: '#25d366',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(37,211,102,0.5)',
+          transition: 'transform 0.2s, box-shadow 0.2s',
+          textDecoration: 'none',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(37,211,102,0.7)' }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)';    e.currentTarget.style.boxShadow = '0 4px 20px rgba(37,211,102,0.5)' }}
+      >
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 2C8.268 2 2 8.268 2 16c0 2.478.676 4.797 1.853 6.785L2 30l7.44-1.82A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 25.5a11.44 11.44 0 01-5.82-1.587l-.418-.247-4.41 1.08 1.113-4.285-.272-.44A11.5 11.5 0 1116 27.5zm6.29-8.61c-.344-.172-2.036-1.005-2.352-1.12-.316-.114-.546-.172-.776.172-.23.344-.888 1.12-1.088 1.35-.2.23-.4.258-.744.086-.344-.172-1.452-.535-2.767-1.707-1.022-.912-1.713-2.037-1.913-2.38-.2-.344-.021-.53.15-.702.154-.154.344-.4.516-.602.172-.2.23-.344.344-.573.115-.23.058-.43-.029-.602-.086-.172-.776-1.872-1.063-2.563-.28-.672-.564-.58-.776-.59l-.66-.012c-.23 0-.602.086-.917.43-.315.344-1.203 1.176-1.203 2.867s1.232 3.326 1.403 3.555c.172.23 2.424 3.7 5.873 5.188.82.355 1.46.566 1.96.724.822.262 1.571.225 2.162.137.66-.099 2.036-.832 2.324-1.636.287-.803.287-1.49.2-1.636-.086-.144-.316-.23-.66-.4z"/>
+        </svg>
+      </a>
+    </>
   )
 }

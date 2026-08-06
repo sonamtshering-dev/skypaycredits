@@ -7,7 +7,7 @@ import { SettingsProvider } from './context/SettingsContext'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <BrowserRouter>
+  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
     <SettingsProvider>
       <AuthProvider>
         <App />

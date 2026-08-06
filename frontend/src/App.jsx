@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { Wrench, KeyRound } from 'lucide-react'
 import { useAuth } from './context/AuthContext'
 import { useSettings } from './context/SettingsContext'
 
@@ -73,10 +74,9 @@ export default function App() {
             width: 90, height: 90, borderRadius: 24, margin: '0 auto 28px',
             background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(79,70,229,0.2))',
             border: '2px solid rgba(124,58,237,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 44,
             boxShadow: '0 0 40px rgba(124,58,237,0.3)',
-          }}>🔧</div>
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}><Wrench size={40} color="rgba(124,58,237,0.9)" /></div>
 
           <h1 style={{
             fontSize: 32, fontWeight: 900, marginBottom: 14,
@@ -99,7 +99,7 @@ export default function App() {
             background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
             color: '#fff', textDecoration: 'none',
             boxShadow: '0 4px 24px rgba(124,58,237,0.5)',
-          }}>🔑 Admin Login</a>
+          }}><KeyRound size={15} style={{ marginRight: 6 }} />Admin Login</a>
         </div>
       </div>
     )

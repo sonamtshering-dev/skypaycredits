@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import api from '../api/axios'
+import { Gamepad2 } from 'lucide-react'
 
 const STATUS = {
   pending:    { label: 'Pending',    color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)' },
@@ -90,7 +91,7 @@ function OrderCard({ order }) {
         }}>
           {order.game?.icon
             ? <img src={order.game.icon} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : '🎮'}
+            : <Gamepad2 size={20} color="rgba(255,255,255,0.3)" />}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>

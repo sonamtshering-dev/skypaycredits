@@ -3,7 +3,7 @@ const mongoose = require("mongoose")
 
 const settingsSchema = new mongoose.Schema(
   {
-    siteName:    { type: String, default: "RechargeShop" },
+    siteName:    { type: String, default: "Nitrogen Store" },
     logo:        { type: String, default: "" },
     favicon:     { type: String, default: "" },
     primaryColor:{ type: String, default: "#6366f1" },

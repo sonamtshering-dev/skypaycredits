@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import api from '../api/axios'
 import theme from '../theme'
+import { Ticket } from 'lucide-react'
 
 const inp = {
   width: '100%', background: 'rgba(255,255,255,0.07)',
@@ -92,7 +93,7 @@ export default function AdminCoupons() {
     <div style={{ padding: '24px 16px', maxWidth: 900, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>🎟️ Coupons</div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}><Ticket size={20} /> Coupons</div>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>{coupons.length} total</div>
         </div>
         <button onClick={() => { setShowForm(!showForm); setEditing(null); setForm(emptyForm) }} style={{
@@ -182,7 +183,7 @@ export default function AdminCoupons() {
         <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.3)' }}>Loading…</div>
       ) : coupons.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 60, color: 'rgba(255,255,255,0.3)' }}>
-          <div style={{ fontSize: 48 }}>🎟️</div>
+          <div><Ticket size={48} color="rgba(255,255,255,0.3)" /></div>
           <div style={{ marginTop: 12 }}>No coupons yet</div>
         </div>
       ) : (

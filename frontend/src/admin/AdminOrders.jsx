@@ -111,7 +111,7 @@ export default function AdminOrders() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ color: theme.primary, fontWeight: 800, fontSize: 14 }}>৳{order.price || '—'}</div>
+                    <div style={{ color: theme.primary, fontWeight: 800, fontSize: 14 }}>₹{order.price || '—'}</div>
                     <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{new Date(order.createdAt).toLocaleDateString()}</div>
                   </div>
                   <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, flexShrink: 0 }}>{order.status}</span>
@@ -124,7 +124,7 @@ export default function AdminOrders() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px 20px', marginBottom: 14 }}>
                       {[
                         ['Order ID', '#' + order._id?.slice(-8).toUpperCase()],
-                        ['Amount', `৳${order.price || '—'}`],
+                        ['Amount', `₹${order.price || '—'}`],
                         ['Payment', order.paymentStatus || '—'],
 
                         ['Date', new Date(order.createdAt).toLocaleString()],

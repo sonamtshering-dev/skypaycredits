@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import api from '../api/axios'
 import theme from '../theme'
+import { CheckCircle, XCircle } from 'lucide-react'
 
 
 export default function AdminSettings() {
@@ -42,20 +43,16 @@ export default function AdminSettings() {
   }
 
   const CURRENCIES = [
-    { code: 'BDT', label: '🇧🇩 BDT — Bangladeshi Taka (৳)' },
-    { code: 'USD', label: '🇺🇸 USD — US Dollar ($)' },
-    { code: 'INR', label: '🇮🇳 INR — Indian Rupee (₹)' },
-    { code: 'EUR', label: '🇪🇺 EUR — Euro (€)' },
-    { code: 'GBP', label: '🇬🇧 GBP — British Pound (£)' },
-    { code: 'PHP', label: '🇵🇭 PHP — Philippine Peso (₱)' },
-    { code: 'MYR', label: '🇲🇾 MYR — Malaysian Ringgit (RM)' },
-    { code: 'IDR', label: '🇮🇩 IDR — Indonesian Rupiah (Rp)' },
-    { code: 'SGD', label: '🇸🇬 SGD — Singapore Dollar (S$)' },
-    { code: 'THB', label: '🇹🇭 THB — Thai Baht (฿)' },
-    { code: 'PKR', label: '🇵🇰 PKR — Pakistani Rupee (₨)' },
-    { code: 'NPR', label: '🇳🇵 NPR — Nepalese Rupee (₨)' },
-    { code: 'LKR', label: '🇱🇰 LKR — Sri Lankan Rupee (₨)' },
-    { code: 'MMK', label: '🇲🇲 MMK — Myanmar Kyat (K)' },
+    { code: 'INR', label: 'INR — Indian Rupee (₹)' },
+    { code: 'USD', label: 'USD — US Dollar ($)' },
+    { code: 'EUR', label: 'EUR — Euro (€)' },
+    { code: 'GBP', label: 'GBP — British Pound (£)' },
+    { code: 'PHP', label: 'PHP — Philippine Peso (₱)' },
+    { code: 'MYR', label: 'MYR — Malaysian Ringgit (RM)' },
+    { code: 'IDR', label: 'IDR — Indonesian Rupiah (Rp)' },
+    { code: 'SGD', label: 'SGD — Singapore Dollar (S$)' },
+    { code: 'THB', label: 'THB — Thai Baht (฿)' },
+    { code: 'NPR', label: 'NPR — Nepalese Rupee (₨)' },
   ]
 
   if (loading) return <div style={{ textAlign: 'center', padding: 60 }}><div className="spinner" /></div>
@@ -69,7 +66,7 @@ export default function AdminSettings() {
 
         <div className="form-group">
           <label>Site Name</label>
-          <input style={inp} value={form.siteName} onChange={e => set('siteName', e.target.value)} placeholder="RechargeShop" />
+          <input style={inp} value={form.siteName} onChange={e => set('siteName', e.target.value)} placeholder="Nitrogen Store" />
         </div>
 
         <div className="form-group">
@@ -118,8 +115,8 @@ export default function AdminSettings() {
 
 
 
-        {msg && <div style={{ color: '#4ade80', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', padding: '10px 14px', borderRadius: 10, fontSize: 13 }}>✅ {msg}</div>}
-        {err && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', padding: '10px 14px', borderRadius: 10, fontSize: 13 }}>❌ {err}</div>}
+        {msg && <div style={{ color: '#4ade80', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', padding: '10px 14px', borderRadius: 10, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle size={14} /> {msg}</div>}
+        {err && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', padding: '10px 14px', borderRadius: 10, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}><XCircle size={14} /> {err}</div>}
 
         <button type="submit" disabled={saving} style={{
           padding: '12px 32px', borderRadius: 10, fontWeight: 800, fontSize: 14,

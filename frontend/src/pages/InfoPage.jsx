@@ -5,14 +5,15 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useSettings } from '../context/SettingsContext'
 import theme from '../theme'
+import { Zap, Lock, ShieldCheck, Globe, Gamepad2 } from 'lucide-react'
 
 
-const WHATSAPP = '+91'//number
+const WHATSAPP = '+917085396397'
 
 const TABS = [
   { id: 'about',   label: '🏠 About' },
   { id: 'contact', label: '💬 Contact' },
-  { id: 'privacy', label: '🔒 Privacy Policy' },
+  { id: 'privacy', label: 'Privacy Policy' },
   { id: 'terms',   label: '📋 Terms & Conditions' },
 ]
 
@@ -20,7 +21,7 @@ export default function InfoPage({ defaultTab = 'about' }) {
   const [tab, setTab] = useState(defaultTab)
   const { settings }  = useSettings()
   const navigate      = useNavigate()
-  const site = settings.siteName || 'RechargeShop'
+  const site = settings.siteName || 'Nitrogen Store'
 
   const section = (title, children) => (
     <div style={{ marginBottom: 28 }}>
@@ -60,13 +61,13 @@ export default function InfoPage({ defaultTab = 'about' }) {
           {tab === 'about' && (
             <div>
               <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>⚡</div>
+                <div style={{ marginBottom: 12 }}><Zap size={48} color="#8b5cf6" /></div>
                 <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 8 }}>{site}</h1>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15 }}>Fast · Safe · Best Prices</p>
               </div>
 
               {section('Who We Are',
-                p(`${site} is a trusted game top-up platform providing instant delivery of in-game currencies, diamonds, credits and passes for popular games worldwide. We serve players across Bangladesh, Southeast Asia and globally with the fastest and most reliable recharge service.`)
+                p(`${site} is a trusted game top-up platform providing instant delivery of in-game currencies, diamonds, credits and passes for popular games worldwide. We serve players across India and globally with the fastest and most reliable recharge service.`)
               )}
 
               {section('Why Choose Us',
@@ -76,11 +77,11 @@ export default function InfoPage({ defaultTab = 'about' }) {
     gap: 10,
   }}>
     {[
-      { icon: '⚡', label: 'Instant Delivery',   desc: 'Credits delivered automatically within seconds of payment confirmation.', bg: 'rgba(249,115,22,0.12)', color: '#f97316' },
-      { icon: '🔒', label: 'Safe & Secure',       desc: 'Encrypted payments. We never store your payment details.', bg: 'rgba(34,197,94,0.12)', color: '#22c55e' },
+      { icon: Zap,        label: 'Instant Delivery',   desc: 'Credits delivered automatically within seconds of payment confirmation.', bg: 'rgba(139,92,246,0.12)', color: '#8b5cf6' },
+      { icon: Lock,       label: 'Safe & Secure',       desc: 'Encrypted payments. We never store your payment details.', bg: 'rgba(34,197,94,0.12)', color: '#22c55e' },
       { icon: '💰', label: 'Best Prices',         desc: 'Competitive prices with regular bonus offers and discounts across all game packs.', bg: 'rgba(59,130,246,0.12)', color: '#3b82f6' },
-      { icon: '🌐', label: 'Multiple Regions',    desc: 'All regional servers supported — always top up the correct account.', bg: 'rgba(168,85,247,0.12)', color: '#a855f7' },
-      { icon: '🎮', label: 'Wide Selection',      desc: 'MLBB, Free Fire, PUBG, Genshin Impact and more — all covered.', bg: 'rgba(236,72,153,0.12)', color: '#ec4899' },
+      { icon: Globe,      label: 'Multiple Regions',    desc: 'All regional servers supported — always top up the correct account.', bg: 'rgba(168,85,247,0.12)', color: '#a855f7' },
+      { icon: Gamepad2,   label: 'Wide Selection',      desc: 'MLBB, Free Fire, PUBG, Genshin Impact and more — all covered.', bg: 'rgba(236,72,153,0.12)', color: '#ec4899' },
       { icon: '📞', label: '24/7 Support',        desc: 'Support team available via WhatsApp to assist with any issues.', bg: 'rgba(20,184,166,0.12)', color: '#14b8a6' },
     ].map(({ icon, label, desc, bg }) => (
       <div key={label} style={{
@@ -96,8 +97,7 @@ export default function InfoPage({ defaultTab = 'about' }) {
           width: 38, height: 38, borderRadius: 10,
           background: bg,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18,
-        }}>{icon}</div>
+        }}>{(() => { const I = icon; return <I size={18} color={color} /> })()}</div>
         <div style={{ fontWeight: 700, color: '#fff', fontSize: 13 }}>{label}</div>
         <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, lineHeight: 1.6 }}>{desc}</div>
       </div>

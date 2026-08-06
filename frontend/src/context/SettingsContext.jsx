@@ -7,7 +7,7 @@ const SettingsContext = createContext({})
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState({
-    siteName: 'RechargeShop',
+    siteName: 'Nitrogen Store',
     primaryColor: theme.primaryDark,
     currencySymbol: '₹',
     whatsapp: '',

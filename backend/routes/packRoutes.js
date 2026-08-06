@@ -6,7 +6,15 @@ const multer  = require("multer")
 const path    = require("path")
 const fs      = require("fs")
 const Pack    = require("../models/Pack")
+const Game    = require("../models/Game")
 const { protect, adminOnly, validateObjectId } = require("../middlewares/authMiddleware")
+
+async function resolveGameId(raw) {
+  if (!raw) return null
+  if (/^[a-f\d]{24}$/i.test(raw)) return raw
+  const g = await Game.findOne({ slug: raw }, '_id')
+  return g ? g._id.toString() : raw
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -35,7 +43,7 @@ const upload = multer({
 router.get("/", async (req, res) => {
   try {
     const filter = { active: true }
-    if (req.query.gameId) filter.gameId = req.query.gameId
+    if (req.query.gameId) filter.gameId = await resolveGameId(req.query.gameId)
     const regionSlug = req.query.region || ""
     if (regionSlug) {
       const regionPacks = await Pack.find({ ...filter, regionSlug }).sort({ sortOrder: 1, price: 1 })

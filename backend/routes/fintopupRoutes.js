@@ -1,12 +1,39 @@
 // routes/fintopupRoutes.js
-const express = require("express")
-const router  = express.Router()
+const express  = require("express")
+const router   = express.Router()
 const mongoose = require("mongoose")
+const crypto   = require("crypto")
 const { mapStatus } = require("../services/fintopupService")
+
+const FINTOPUP_CALLBACK_SECRET = process.env.FINTOPUP_CALLBACK_SECRET
+const ALLOWED_IPS = (process.env.FINTOPUP_ALLOWED_IPS || "").split(",").map(s => s.trim()).filter(Boolean)
+
+function verifyFintopupCallback(req, res, next) {
+  // IP allowlist (optional — set FINTOPUP_ALLOWED_IPS as comma-separated list)
+  if (ALLOWED_IPS.length > 0) {
+    const ip = req.ip || req.socket?.remoteAddress || ""
+    if (!ALLOWED_IPS.includes(ip)) {
+      console.warn("[FINTOPUP] Callback rejected — IP not in allowlist:", ip)
+      return res.status(403).json({ received: false, message: "Forbidden" })
+    }
+  }
+  // Shared-secret check (optional — set FINTOPUP_CALLBACK_SECRET)
+  if (FINTOPUP_CALLBACK_SECRET) {
+    const sig = req.headers["x-fintopup-secret"] || ""
+    if (!sig || !crypto.timingSafeEqual(
+      Buffer.from(FINTOPUP_CALLBACK_SECRET),
+      Buffer.from(sig.padEnd(FINTOPUP_CALLBACK_SECRET.length, "\0").slice(0, FINTOPUP_CALLBACK_SECRET.length))
+    )) {
+      console.warn("[FINTOPUP] Callback rejected — invalid secret")
+      return res.status(401).json({ received: false, message: "Invalid secret" })
+    }
+  }
+  next()
+}
 
 // POST /api/fintopup/callback
 // FinTopup POSTs here when an order status changes
-router.post("/callback", async (req, res) => {
+router.post("/callback", verifyFintopupCallback, async (req, res) => {
   try {
     const { success, message, response, error } = req.body
     console.log("[FINTOPUP] Callback received:", JSON.stringify(req.body))

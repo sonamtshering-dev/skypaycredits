@@ -1,5 +1,6 @@
 // src/pages/Recharge.jsx
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { CheckCircle, XCircle, Smartphone, ArrowRight, Shield, Zap, Globe, Gem, Ticket, Star, Lock, Gamepad2 } from 'lucide-react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
@@ -31,8 +32,10 @@ export default function Recharge() {
 
   const packSectionRef   = useRef(null)
   const checkoutRef      = useRef(null)
+  const verifyTimerRef   = useRef(null)
 
   const [servers, setServers]       = useState([])
+  const [verifyError, setVerifyError]     = useState('')
   const [paying, setPaying]               = useState(false)
   const [couponCode, setCouponCode]       = useState('')
   const [couponApplied, setCouponApplied] = useState(null)
@@ -70,30 +73,37 @@ export default function Recharge() {
     .finally(() => setLoading(false))
   }, [gameId, regionSlug])
 
-  const verifyPlayer = async () => {
-    if (!playerData[fields[0]?.name]) return setError('Enter your Player ID first')
-    if (!user) { navigate('/auth'); return }
-    setError(''); setVerifying(true)
+  const doVerify = async (pd) => {
+    if (!pd[fields[0]?.name]) return
+    setVerifying(true); setVerifyError('')
     try {
       const { data } = await api.post('/recharge/verify-player', {
         gameId,
         regionSlug: regionSlug || '',
         playerData: {
-          userId:     playerData[fields[0]?.name] || '',
-          zoneId:     playerData[fields[1]?.name] || '',
-          serverId:   playerData[fields[2]?.name] || '',
+          userId:     pd[fields[0]?.name] || '',
+          zoneId:     pd[fields[1]?.name] || '',
+          serverId:   pd[fields[2]?.name] || '',
           regionSlug: regionSlug || '',
         }
       })
       setVerified(true)
       setUsername(data.username || '')
-      // Auto scroll to pack section
-      setTimeout(() => {
-        packSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 300)
     } catch (err) {
-      setError(typeof err.response?.data?.message === 'string' ? err.response.data.message : (err.message || 'Verification failed'))
+      setVerified(false)
+      if (err.response?.status !== 401) {
+        setVerifyError(typeof err.response?.data?.message === 'string' ? err.response.data.message : 'Player not found. Check your ID and Zone ID.')
+      }
     } finally { setVerifying(false) }
+  }
+
+  const scheduleVerify = (nextPd) => {
+    if (verifyTimerRef.current) clearTimeout(verifyTimerRef.current)
+    const userId = nextPd[fields[0]?.name]
+    if (!userId) { setVerified(false); setUsername(''); setVerifyError(''); return }
+    if (!user) return
+    setVerified(false); setUsername('')
+    verifyTimerRef.current = setTimeout(() => doVerify(nextPd), 800)
   }
 
   const handlePay = async () => {
@@ -169,16 +179,6 @@ export default function Recharge() {
 
   const activeProvider   = region?.provider || packs[0]?.provider || ''
   const isFintopup       = activeProvider === 'fintopup'
-  const showVerifyButton = !isFintopup && !game?.skipVerify
-
-  // Auto-verify for all FinTopup games (name shown after order)
-  useEffect(() => {
-    if (isFintopup && playerData[fields[0]?.name]) {
-      setVerified(true)
-    } else if (isFintopup) {
-      setVerified(false)
-    }
-  }, [isFintopup, playerData[fields[0]?.name]])
 
   const sym = settings.currencySymbol || '$'
 
@@ -200,14 +200,14 @@ export default function Recharge() {
           }}>
             {payStatus === 'paid' ? (
               <>
-                <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
+                <div style={{ marginBottom: 16 }}><CheckCircle size={64} color="#22c55e" /></div>
                 <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', marginBottom: 8 }}>Payment Successful!</div>
                 <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>Recharge is being processed automatically</div>
                 <div style={{ fontSize: 13, color: theme.primary }}>Redirecting to orders…</div>
               </>
             ) : payStatus === 'failed' ? (
               <>
-                <div style={{ fontSize: 64, marginBottom: 16 }}>❌</div>
+                <div style={{ marginBottom: 16 }}><XCircle size={64} color="#ef4444" /></div>
                 <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', marginBottom: 20 }}>Payment Failed</div>
                 <button className="btn btn-primary" onClick={() => { setPayData(null); setPayStatus('') }}>Try Again</button>
               </>
@@ -223,7 +223,7 @@ export default function Recharge() {
                     background: theme.grad, color: '#fff', fontWeight: 800, fontSize: 16,
                     textDecoration: 'none', marginBottom: 16, textAlign: 'center',
                   }}>
-                    📱 Pay via UPI App →
+                    <Smartphone size={16} style={{ marginRight: 8 }} /> Pay via UPI App <ArrowRight size={16} style={{ marginLeft: 8 }} />
                   </a>
                 )}
                 {payData.qr_code && (
@@ -264,14 +264,14 @@ export default function Recharge() {
             <img src={game.icon || game.banner} alt={game.name}
               style={{ width: 70, height: 70, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }} />
           ) : (
-            <div style={{ width: 70, height: 70, borderRadius: 14, background: theme.alpha(0.2), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0 }}>🎮</div>
+            <div style={{ width: 70, height: 70, borderRadius: 14, background: theme.alpha(0.2), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Gamepad2 size={32} color="rgba(249,115,22,0.8)" /></div>
           )}
           <div>
             <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 6 }}>{displayName}</div>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>🛡️ Safety Guarantee</span>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>⚡ Instant Delivery</span>
-              {region && <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>🌐 {region.name} Region</span>}
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}><Shield size={12} /> Safety Guarantee</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}><Zap size={12} /> Instant Delivery</span>
+              {region && <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={12} /> {region.name} Region</span>}
             </div>
           </div>
         </div>
@@ -308,8 +308,9 @@ export default function Recharge() {
                     className="form-input"
                     value={playerData[field.name] || ''}
                     onChange={e => {
-                      setPlayerData(p => ({ ...p, [field.name]: e.target.value }))
-                      setVerified(false); setUsername('')
+                      const next = { ...playerData, [field.name]: e.target.value }
+                      setPlayerData(next)
+                      scheduleVerify(next)
                     }}
                   >
                     <option value="">Select {field.label}</option>
@@ -324,32 +325,33 @@ export default function Recharge() {
                     placeholder={field.label}
                     value={playerData[field.name] || ''}
                     onChange={e => {
-                      setPlayerData(p => ({ ...p, [field.name]: e.target.value }))
-                      setVerified(false); setUsername('')
+                      const next = { ...playerData, [field.name]: e.target.value }
+                      setPlayerData(next)
+                      scheduleVerify(next)
                     }}
                   />
                 )
               ))}
             </div>
 
-            {showVerifyButton && (
-            <button
-              onClick={verifyPlayer}
-              disabled={verifying || !playerData[fields[0]?.name]}
-              style={{
-                marginTop: 12, padding: '10px 20px', borderRadius: 10, fontWeight: 700, fontSize: 13,
-                background: verified ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.08)',
-                border: verified ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(255,255,255,0.12)',
-                color: verified ? '#4ade80' : '#fff', cursor: 'pointer',
-                opacity: verifying || !playerData[fields[0]?.name] ? 0.5 : 1,
-              }}
-            >
-              {verifying ? 'Verifying…' : verified ? `✓ Verified: ${username || 'Player Verified'}` : 'Verify Player'}
-            </button>
+            {verifying && (
+              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>
+                <div style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                Verifying player…
+              </div>
             )}
-            {isFintopup && playerData[fields[0]?.name] && (
-              <div style={{ marginTop: 10, fontSize: 13, color: '#4ade80', fontWeight: 700 }}>
-                ✓ Account ID: {playerData[fields[0]?.name]}{playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : ''}
+            {!verifying && verified && (
+              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: '#4ade80' }}>
+                <CheckCircle size={15} />
+                {username
+                  ? <span>{username}</span>
+                  : <span>ID: {playerData[fields[0]?.name]}{playerData[fields[1]?.name] ? ` · ${playerData[fields[1]?.name]}` : ''}</span>
+                }
+              </div>
+            )}
+            {!verifying && verifyError && (
+              <div style={{ marginTop: 12, fontSize: 12, color: '#f87171', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <XCircle size={13} /> {verifyError}
               </div>
             )}
           </div>
@@ -389,11 +391,12 @@ export default function Recharge() {
                   }}>
                     <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.07)' }} />
                     <span style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
                       fontSize: 11, fontWeight: 800, color: '#fbbf24',
                       textTransform: 'uppercase', letterSpacing: 1,
                       background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)',
                       padding: '3px 12px', borderRadius: 20,
-                    }}>⭐ {sec}</span>
+                    }}><Star size={10} fill="#fbbf24" /> {sec}</span>
                     <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.07)' }} />
                   </div>
                 )}
@@ -436,7 +439,7 @@ export default function Recharge() {
               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', marginBottom: 16,
             }}>
               {[
-              ['Account ID', playerData[fields[0]?.name] + (playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : '')],
+              ['Account ID', (playerData[fields[0]?.name] || '—') + (playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : '')],
               ...(username ? [['Player Name', username]] : []),
               ['Pack', selectedPack.title],
               ['Original Price', `${sym}${selectedPack.price}`]
@@ -455,7 +458,7 @@ export default function Recharge() {
                   padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
                   background: 'rgba(34,197,94,0.06)',
                 }}>
-                  <span style={{ color: '#4ade80', fontSize: 14 }}>🎟️ Coupon ({couponApplied.code})</span>
+                  <span style={{ color: '#4ade80', fontSize: 14, display: 'flex', alignItems: 'center', gap: 5 }}><Ticket size={13} /> Coupon ({couponApplied.code})</span>
                   <span style={{ color: '#4ade80', fontWeight: 700, fontSize: 14 }}>-{sym}{couponApplied.discount}</span>
                 </div>
               )}
@@ -520,10 +523,10 @@ export default function Recharge() {
                 boxShadow: '0 0 30px rgba(249,115,22,0.4)',
               }}
             >
-              {paying ? 'Processing…' : !user ? '🔒 Login to Checkout' : '→ Proceed to Checkout'}
+              {paying ? 'Processing…' : !user ? <><Lock size={14} style={{ marginRight: 6 }} />Login to Checkout</> : <>Proceed to Checkout <ArrowRight size={14} style={{ marginLeft: 6 }} /></>}
             </button>
-            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 10 }}>
-              🔒 Secure payment
+            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+              <Lock size={11} /> Secure payment
             </div>
           </div>
         )}
@@ -581,7 +584,7 @@ function PackCard({ pack, sym, selected, onClick }) {
             objectFit: 'contain', display: 'inline-block',
           }} />
         ) : (
-          <span style={{ fontSize: pack.diamonds >= 1000 ? 32 : pack.diamonds >= 300 ? 28 : 24 }}>💎</span>
+          <Gem size={pack.diamonds >= 1000 ? 32 : pack.diamonds >= 300 ? 28 : 24} color="#a78bfa" />
         )}
       </div>
 
@@ -602,21 +605,16 @@ function PackCard({ pack, sym, selected, onClick }) {
         </div>
       </div>
 
-      {/* Diamond count - big bold */}
+      {/* Pack title — set by admin */}
       <div style={{ fontWeight: 900, color: '#fff', fontSize: 13, marginBottom: 2, lineHeight: 1.3 }}>
-        {pack.diamonds > 0 ? `${pack.diamonds} Dias` : pack.title}
+        {pack.title}
       </div>
 
-      {/* Base + bonus breakdown */}
-      {pack.diamonds > 0 && pack.bonus > 0 && (
+      {/* Bonus */}
+      {pack.bonus > 0 && (
         <div style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700, marginBottom: 2 }}>
           +{pack.bonus} Bonus
         </div>
-      )}
-
-      {/* Title */}
-      {pack.diamonds > 0 && (
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>{pack.title}</div>
       )}
 
       {/* Selected checkmark */}
