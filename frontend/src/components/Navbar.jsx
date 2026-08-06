@@ -43,16 +43,22 @@ export default function Navbar() {
           padding: '0 20px',
         }}>
 
-          {/* Logo */}
+          {/* Logo + Site Name */}
           <Link to="/" style={{
-            fontWeight: 900, fontSize: 20, letterSpacing: '-0.5px',
-            background: theme.gradSoft,
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text', flexShrink: 0, textDecoration: 'none',
+            display: 'flex', alignItems: 'center', gap: 8,
+            flexShrink: 0, textDecoration: 'none',
           }}>
             {settings.logo
-              ? <img src={settings.logo} alt={settings.siteName} style={{ height: 32 }} />
-              : <><Zap size={15} color="#4c00b0" style={{ verticalAlign: 'middle', marginRight: 5 }} />{settings.siteName || 'Nitrogen Store'}</>}
+              ? <img src={settings.logo} alt={settings.siteName} style={{ height: 32, flexShrink: 0 }} />
+              : <Zap size={15} color="#4c00b0" />}
+            <span style={{
+              fontWeight: 900, fontSize: 16, letterSpacing: '-0.3px',
+              background: theme.gradSoft,
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text', whiteSpace: 'nowrap',
+            }}>
+              {settings.siteName || 'Nitrogen Store'}
+            </span>
           </Link>
 
           <div style={{ flex: 1 }} />
