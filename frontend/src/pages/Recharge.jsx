@@ -101,10 +101,10 @@ export default function Recharge() {
   const scheduleVerify = (nextPd) => {
     if (verifyTimerRef.current) clearTimeout(verifyTimerRef.current)
     const userId = nextPd[fields[0]?.name]
-    if (!userId) { setVerified(false); setUsername(''); setVerifyError(''); return }
+    if (!userId || userId.length < 4) { setVerified(false); setUsername(''); setVerifyError(''); return }
     if (!user) return
     setVerified(false); setUsername(''); setVerifyError('')
-    verifyTimerRef.current = setTimeout(() => doVerify(nextPd), 800)
+    verifyTimerRef.current = setTimeout(() => doVerify(nextPd), 1500)
   }
 
   const handlePay = async () => {
