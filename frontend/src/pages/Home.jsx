@@ -60,17 +60,13 @@ export default function Home() {
 
   const gridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(var(--game-cols, 3), 1fr)',
-    gap: 'clamp(10px, 1.5vw, 18px)',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+    gap: 'clamp(10px, 1.5vw, 16px)',
   }
 
   return (
     <>
       <style>{`
-        :root { --game-cols: 2; }
-        @media (min-width: 540px)  { :root { --game-cols: 3; } }
-        @media (min-width: 900px)  { :root { --game-cols: 4; } }
-        @media (min-width: 1200px) { :root { --game-cols: 5; } }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(4px); }
           to   { opacity: 1; transform: translateY(0); }
