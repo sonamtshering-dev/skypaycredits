@@ -60,12 +60,23 @@ export default function Home() {
 
   const gridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: 12,
+    gridTemplateColumns: 'repeat(var(--game-cols, 3), 1fr)',
+    gap: 'clamp(10px, 1.5vw, 18px)',
   }
 
   return (
     <>
+      <style>{`
+        :root { --game-cols: 2; }
+        @media (min-width: 540px)  { :root { --game-cols: 3; } }
+        @media (min-width: 900px)  { :root { --game-cols: 4; } }
+        @media (min-width: 1200px) { :root { --game-cols: 5; } }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .game-card { will-change: transform; }
+      `}</style>
       <Navbar />
       <div style={{ position: 'relative', zIndex: 1 }}>
         {banners.length > 0 && <BannerCarousel banners={banners} />}
@@ -208,54 +219,74 @@ function GameCard({ game, onClick, isVoucher }) {
 
   return (
     <div onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      className="game-card"
       style={{
-        borderRadius: 16, overflow: 'hidden', cursor: 'pointer', position: 'relative',
-        border: `1.5px solid ${hovered ? theme.alpha(0.7) : 'rgba(255,255,255,0.08)'}`,
-        transform: hovered ? 'translateY(-5px)' : 'none',
-        transition: 'all 0.2s cubic-bezier(.4,0,.2,1)',
-        boxShadow: hovered ? '0 16px 48px rgba(249,115,22,0.3)' : '0 2px 12px rgba(0,0,0,0.4)',
+        borderRadius: 'clamp(12px,1.5vw,20px)', overflow: 'hidden', cursor: 'pointer', position: 'relative',
+        border: `1.5px solid ${hovered ? 'rgba(139,92,246,0.7)' : 'rgba(255,255,255,0.08)'}`,
+        transform: hovered ? 'translateY(-6px) scale(1.01)' : 'none',
+        transition: 'all 0.22s cubic-bezier(.4,0,.2,1)',
+        boxShadow: hovered ? '0 20px 56px rgba(76,0,176,0.45), 0 0 0 1px rgba(139,92,246,0.3)' : '0 2px 14px rgba(0,0,0,0.5)',
         aspectRatio: '3/4',
+        background: '#0a0a14',
       }}>
       {img ? (
         <img src={img} alt={game.name} style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-          transform: hovered ? 'scale(1.06)' : 'scale(1)', transition: 'transform 0.4s ease',
+          transform: hovered ? 'scale(1.07)' : 'scale(1)', transition: 'transform 0.45s ease',
         }} />
       ) : (
         <div style={{
           position: 'absolute', inset: 0,
           background: isVoucher
-            ? 'linear-gradient(135deg,rgba(251,191,36,0.3),rgba(249,115,22,0.2))'
-            : 'linear-gradient(135deg,rgba(100,60,255,0.4),rgba(40,100,255,0.2))',
+            ? 'linear-gradient(135deg,rgba(251,191,36,0.25),rgba(249,115,22,0.15))'
+            : 'linear-gradient(135deg,rgba(76,0,176,0.5),rgba(40,100,255,0.2))',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>{isVoucher ? <Gift size={52} color="rgba(251,191,36,0.8)" /> : <Gamepad2 size={52} color="rgba(100,80,255,0.8)" />}</div>
+        }}>{isVoucher ? <Gift size={52} color="rgba(251,191,36,0.8)" /> : <Gamepad2 size={52} color="rgba(139,92,246,0.8)" />}</div>
       )}
 
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 50%, transparent 100%)' }} />
+      {/* gradient overlay */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.2) 45%, transparent 100%)' }} />
+
+      {/* hover shimmer */}
+      {hovered && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />}
 
       {activeRegions.length > 1 && (
         <div style={{
           position: 'absolute', top: 8, right: 8,
-          background: theme.alpha(0.9), backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(249,115,22,0.5)',
-          borderRadius: 20, padding: '3px 8px', fontSize: 10, fontWeight: 800, color: '#fff',
+          background: 'rgba(76,0,176,0.85)', backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(139,92,246,0.5)',
+          borderRadius: 20, padding: '3px 9px', fontSize: 10, fontWeight: 800, color: '#fff',
         }}>{activeRegions.length} regions</div>
       )}
 
       {isVoucher && (
         <div style={{
           position: 'absolute', top: 8, left: 8,
-          background: 'rgba(251,191,36,0.85)', backdropFilter: 'blur(8px)',
+          background: 'rgba(251,191,36,0.9)', backdropFilter: 'blur(8px)',
           borderRadius: 20, padding: '3px 8px', fontSize: 10, fontWeight: 800, color: '#000',
         }}>🎁 Gift Card</div>
       )}
 
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px' }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(10px,1.5vw,16px)' }}>
         <div style={{
-          fontWeight: 900, fontSize: 14, color: '#fff',
-          textShadow: '0 2px 8px rgba(0,0,0,0.9)',
+          fontWeight: 900,
+          fontSize: 'clamp(12px,1.2vw,15px)',
+          color: '#fff',
+          textShadow: '0 2px 10px rgba(0,0,0,1)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          letterSpacing: 0.2,
         }}>{game.name}</div>
+        {hovered && (
+          <div style={{
+            marginTop: 6,
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'linear-gradient(135deg,#4c00b0,#7c3aed)',
+            borderRadius: 8, padding: '4px 12px',
+            fontSize: 11, fontWeight: 800, color: '#fff',
+            boxShadow: '0 4px 14px rgba(76,0,176,0.5)',
+            animation: 'fadeUp 0.18s ease',
+          }}>Top Up →</div>
+        )}
       </div>
     </div>
   )
