@@ -107,4 +107,18 @@ async function checkOrderStatus(providerOrderId, baseUrl) {
   return res.data
 }
 
-module.exports = { verifyPlayer, getProductList, placeOrder, checkOrderStatus }
+// ── 5. GET BALANCE ───────────────────────────────────
+async function getBalance(baseUrl) {
+  const API_BASE = (baseUrl || BASE || "https://www.smile.one/br").replace(/\/+$/, "")
+  const params = buildSmileRequestParams({})
+  const res = await axios.post(`${API_BASE}/smilecoin/api/getsmilecoin`, new URLSearchParams(params), {
+    timeout: 15000,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" }
+  })
+  if (res.data?.status === 200 || res.data?.status === "200") {
+    return { balance: res.data.smilecoin ?? res.data.balance ?? res.data.coin ?? 0, raw: res.data }
+  }
+  throw new Error(res.data?.message || `Balance check failed (status ${res.data?.status})`)
+}
+
+module.exports = { verifyPlayer, getProductList, placeOrder, checkOrderStatus, getBalance }

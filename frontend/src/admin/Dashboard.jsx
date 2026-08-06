@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import api from '../api/axios'
 import { useSettings } from '../context/SettingsContext'
 import theme from '../theme'
-import { ClipboardList, CheckCircle, Clock, XCircle, IndianRupee, Users } from 'lucide-react'
+import { ClipboardList, CheckCircle, Clock, XCircle, IndianRupee, Users, RefreshCw, Smile } from 'lucide-react'
 
 
 export default function Dashboard() {
@@ -12,11 +12,24 @@ export default function Dashboard() {
   const { settings } = useSettings()
   const sym = settings.currencySymbol || '$'
 
+  const [smileBal, setSmileBal]       = useState(null)
+  const [smileLoading, setSmileLoading] = useState(false)
+  const [smileError, setSmileError]   = useState('')
+
+  const fetchSmileBalance = () => {
+    setSmileLoading(true); setSmileError('')
+    api.get('/smile/balance?url=https://www.smile.one/br')
+      .then(r => setSmileBal(r.data.balance))
+      .catch(e => setSmileError(e.response?.data?.message || 'Failed to fetch balance'))
+      .finally(() => setSmileLoading(false))
+  }
+
   useEffect(() => {
     api.get('/orders/stats')
       .then(r => setStats(r.data))
       .catch(() => setStats({}))
       .finally(() => setLoading(false))
+    fetchSmileBalance()
   }, [])
 
   if (loading) return <div style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div>
@@ -46,6 +59,39 @@ export default function Dashboard() {
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>{label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Smile.One Balance */}
+      <div style={{ marginBottom: 28, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 16, padding: '18px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#f97316,#fb923c)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Smile size={17} color="#fff" />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Smile.One Balance</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Brazil (BR) account</div>
+            </div>
+          </div>
+          <button onClick={fetchSmileBalance} disabled={smileLoading} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8,
+            background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+            color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          }}>
+            <RefreshCw size={13} style={{ animation: smileLoading ? 'spin 1s linear infinite' : 'none' }} />
+            Refresh
+          </button>
+        </div>
+        {smileLoading ? (
+          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>Fetching balance…</div>
+        ) : smileError ? (
+          <div style={{ color: '#f87171', fontSize: 13 }}>{smileError}</div>
+        ) : smileBal !== null ? (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontSize: 36, fontWeight: 900, color: '#fb923c' }}>{Number(smileBal).toLocaleString()}</span>
+            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>SmileCoins</span>
+          </div>
+        ) : null}
       </div>
 
       {/* Recent orders */}
