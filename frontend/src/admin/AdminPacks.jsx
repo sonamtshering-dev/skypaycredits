@@ -13,18 +13,27 @@ const EMPTY_PACK = {
 // SKU input row
 function SkuList({ skuCodes, onChange }) {
   const [input, setInput] = useState('')
+  const [qty, setQty]     = useState(1)
   const add = () => {
     if (!input.trim()) return
-    onChange([...skuCodes, { skuCode: input.trim(), quantity: 1 }])
-    setInput('')
+    onChange([...skuCodes, { skuCode: input.trim(), quantity: Math.max(1, parseInt(qty) || 1) }])
+    setInput(''); setQty(1)
   }
   const remove = i => onChange(skuCodes.filter((_, j) => j !== i))
+  const setQuantity = (i, val) => {
+    const updated = skuCodes.map((s, j) => j === i ? { ...s, quantity: Math.max(1, parseInt(val) || 1) } : s)
+    onChange(updated)
+  }
   const inp = { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '7px 10px', color: '#fff', fontSize: 13, outline: 'none' }
   return (
     <div>
       {skuCodes.map((s, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, background: 'rgba(255,255,255,0.05)', borderRadius: 7, padding: '5px 10px' }}>
           <span style={{ flex: 1, color: '#fff', fontSize: 12, fontFamily: 'monospace' }}>{s.skuCode}</span>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>qty</span>
+          <input type="number" min="1" max="99" value={s.quantity || 1}
+            onChange={e => setQuantity(i, e.target.value)}
+            style={{ ...inp, width: 48, padding: '4px 6px', textAlign: 'center' }} />
           <button type="button" onClick={() => remove(i)} style={{ background: 'none', color: '#f87171', fontSize: 14, cursor: 'pointer' }}>✕</button>
         </div>
       ))}
@@ -32,6 +41,8 @@ function SkuList({ skuCodes, onChange }) {
         <input style={{ ...inp, flex: 1 }} placeholder="Enter SKU / product code"
           value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), add())} />
+        <input type="number" min="1" max="99" value={qty} onChange={e => setQty(e.target.value)}
+          style={{ ...inp, width: 52, padding: '6px 8px', textAlign: 'center' }} title="Quantity" />
         <button type="button" onClick={add} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}>Add</button>
       </div>
     </div>

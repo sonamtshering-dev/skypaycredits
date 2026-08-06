@@ -176,6 +176,13 @@ router.post("/", protect, async (req, res) => {
         allowed.forEach(k => { if (pd[k] !== undefined) clean[k] = String(pd[k]).slice(0, 100) })
         return clean
       })(),
+      packSnapshot: {
+        title:          pack.title,
+        price:          pack.price,
+        provider:       pack.provider || '',
+        providerGameId: pack.providerGameId || '',
+        skuCodes:       (pack.skuCodes || []).map(s => ({ skuCode: s.skuCode, quantity: s.quantity || 1 })),
+      },
       couponCode:     appliedCode,
       couponDiscount: couponDiscount,
     })
@@ -191,11 +198,17 @@ router.post("/:id/recharge", protect, adminOnly, validateObjectId, async (req, r
     const order = await Order.findById(req.params.id)
     if (!order) return res.status(404).json({ message: "Order not found" })
     if (order.paymentStatus !== 'paid') return res.status(400).json({ message: "Cannot recharge — order is not paid" })
-    const [game, pack] = await Promise.all([Game.findById(order.gameId), Pack.findById(order.packId)])
+    const game = await Game.findById(order.gameId)
+    const pack = order.packSnapshot?.skuCodes?.length > 0
+      ? order.packSnapshot
+      : await Pack.findById(order.packId)
     if (!game || !pack) return res.status(404).json({ message: "Game or pack not found" })
     order.status = "Processing"
     await order.save()
     const result = await processRecharge(order, pack, game)
+    if (result.transactions?.length > 0) {
+      await Order.findByIdAndUpdate(order._id, { providerTransactions: result.transactions })
+    }
     res.json({ success: true, result })
   } catch (err) {
     res.status(500).json({ message: safeError(err) })

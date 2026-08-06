@@ -41,7 +41,11 @@ async function triggerRechargeIfNeeded(paymentId) {
   )
   if (!order) return null
   if (order.status === "Pending") {
-    const [game, pack] = await Promise.all([Game.findById(order.gameId), Pack.findById(order.packId)])
+    const game = await Game.findById(order.gameId)
+    // Prefer the snapshot saved at order time; fall back to live pack for old orders
+    const pack = order.packSnapshot?.skuCodes?.length > 0
+      ? order.packSnapshot
+      : await Pack.findById(order.packId)
     if (game && pack) {
       order.status = "Processing"
       await order.save()
@@ -51,7 +55,8 @@ async function triggerRechargeIfNeeded(paymentId) {
             status: "Completed",
             providerOrderId: result.providerOrderId || "",
           }
-          if (result.playerName) update.playerName = result.playerName
+          if (result.playerName)              update.playerName = result.playerName
+          if (result.transactions?.length > 0) update.providerTransactions = result.transactions
           await Order.findByIdAndUpdate(order._id, update)
           console.log("[RECHARGE] Completed:", order._id, result.providerOrderId)
         })
@@ -59,6 +64,9 @@ async function triggerRechargeIfNeeded(paymentId) {
           console.error("[RECHARGE] Failed:", e.message)
           await Order.findByIdAndUpdate(order._id, { status: "Failed" })
         })
+    } else {
+      console.error("[RECHARGE] Cannot process — game or pack not found for order:", order._id)
+      await Order.findByIdAndUpdate(order._id, { status: "Failed" })
     }
   }
   return order

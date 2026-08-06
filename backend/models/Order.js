@@ -43,6 +43,15 @@ const orderSchema = new mongoose.Schema(
     couponCode:     { type: String, default: "" },
     couponDiscount: { type: Number, default: 0 },
 
+    // Snapshot of pack at order time — so recharge works even if pack is edited/deleted later
+    packSnapshot: {
+      title:          { type: String, default: "" },
+      price:          { type: Number, default: 0 },
+      provider:       { type: String, default: "" },
+      providerGameId: { type: String, default: "" },
+      skuCodes:       [{ skuCode: String, quantity: { type: Number, default: 1 } }],
+    },
+
     providerTransactions: [providerTxSchema],
     playerName: { type: String, default: "" },
     adminNote: { type: String, default: "" },
