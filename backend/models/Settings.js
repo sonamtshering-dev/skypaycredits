@@ -12,7 +12,8 @@ const settingsSchema = new mongoose.Schema(
     whatsapp:    { type: String, default: "" },
     email:       { type: String, default: "" },
     footerText:  { type: String, default: "" },
-    maintenanceMode: { type: Boolean, default: false },
+    maintenanceMode:   { type: Boolean, default: false },
+    purchasesEnabled:  { type: Boolean, default: true },
     // Payment gateway toggle
     paymentGateway: { type: String, enum: ["novapay","manual"], default: "novapay" },
   },

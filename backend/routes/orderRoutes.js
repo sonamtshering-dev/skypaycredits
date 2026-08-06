@@ -112,6 +112,10 @@ router.post("/", protect, async (req, res) => {
     if (req.user.status === "banned")       return res.status(403).json({ message: "Account has been banned" })
     if (!req.user.isEmailVerified)          return res.status(403).json({ message: "Please verify your email before placing an order" })
 
+    const settings = await require('../models/Settings').findOne()
+    if (settings?.purchasesEnabled === false)
+      return res.status(503).json({ message: "Purchases are currently disabled. Please check back soon." })
+
     const { gameId, packId, playerData, couponCode } = req.body
     if (!gameId || !packId)                 return res.status(400).json({ message: "gameId and packId are required" })
     if (!mongoose.isValidObjectId(gameId) || !mongoose.isValidObjectId(packId))

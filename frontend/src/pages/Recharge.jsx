@@ -512,20 +512,30 @@ export default function Recharge() {
               </div>
             )}
 
-            <button
-              onClick={handlePay}
-              disabled={!playerData[fields[0]?.name] || paying}
-              style={{
-                width: '100%', padding: '16px', borderRadius: 14, cursor: 'pointer',
-                fontWeight: 900, fontSize: 17, letterSpacing: 0.5,
-                background: theme.grad,
-                border: '1px solid rgba(249,115,22,0.3)', color: '#fff',
-                opacity: (!playerData[fields[0]?.name] || paying) ? 0.5 : 1,
-                boxShadow: '0 0 30px rgba(249,115,22,0.4)',
-              }}
-            >
-              {paying ? 'Processing…' : !user ? <><Lock size={14} style={{ marginRight: 6 }} />Login to Checkout</> : <>Proceed to Checkout <ArrowRight size={14} style={{ marginLeft: 6 }} /></>}
-            </button>
+            {settings.purchasesEnabled === false ? (
+              <div style={{
+                width: '100%', padding: '16px', borderRadius: 14, textAlign: 'center',
+                fontWeight: 800, fontSize: 15, color: '#f87171',
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+              }}>
+                Purchases are temporarily disabled. Please check back soon.
+              </div>
+            ) : (
+              <button
+                onClick={handlePay}
+                disabled={!playerData[fields[0]?.name] || paying}
+                style={{
+                  width: '100%', padding: '16px', borderRadius: 14, cursor: 'pointer',
+                  fontWeight: 900, fontSize: 17, letterSpacing: 0.5,
+                  background: theme.grad,
+                  border: '1px solid rgba(249,115,22,0.3)', color: '#fff',
+                  opacity: (!playerData[fields[0]?.name] || paying) ? 0.5 : 1,
+                  boxShadow: '0 0 30px rgba(249,115,22,0.4)',
+                }}
+              >
+                {paying ? 'Processing…' : !user ? <><Lock size={14} style={{ marginRight: 6 }} />Login to Checkout</> : <>Proceed to Checkout <ArrowRight size={14} style={{ marginLeft: 6 }} /></>}
+              </button>
+            )}
             <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
               <Lock size={11} /> Secure payment
             </div>

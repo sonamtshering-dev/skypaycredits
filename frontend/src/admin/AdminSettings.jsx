@@ -113,6 +113,36 @@ export default function AdminSettings() {
           </label>
         </div>
 
+        {/* Purchases toggle */}
+        <div style={{
+          background: 'rgba(255,255,255,0.04)', border: `1px solid ${form.purchasesEnabled === false ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)'}`,
+          borderRadius: 12, padding: '14px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 2 }}>Purchases</div>
+            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>
+              {form.purchasesEnabled === false ? '🔴 Purchases are disabled — customers cannot buy' : '🟢 Customers can place orders'}
+            </div>
+          </div>
+          <label style={{ position: 'relative', width: 44, height: 24, flexShrink: 0, cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.purchasesEnabled !== false}
+              onChange={e => set('purchasesEnabled', e.target.checked)}
+              style={{ opacity: 0, width: 0, height: 0 }} />
+            <span style={{
+              position: 'absolute', inset: 0, borderRadius: 24,
+              background: form.purchasesEnabled !== false ? '#22c55e' : 'rgba(255,255,255,0.15)',
+              transition: 'all 0.2s',
+            }} />
+            <span style={{
+              position: 'absolute', top: 3,
+              left: form.purchasesEnabled !== false ? 23 : 3,
+              width: 18, height: 18, borderRadius: '50%', background: '#fff',
+              transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+            }} />
+          </label>
+        </div>
+
 
 
         {msg && <div style={{ color: '#4ade80', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', padding: '10px 14px', borderRadius: 10, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle size={14} /> {msg}</div>}
