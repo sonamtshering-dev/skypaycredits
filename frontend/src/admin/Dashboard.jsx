@@ -18,7 +18,7 @@ export default function Dashboard() {
 
   const fetchSmileBalance = () => {
     setSmileLoading(true); setSmileError('')
-    api.get('/smile/balance?url=https://www.smile.one/br')
+    api.get('/smile/balance')
       .then(r => setSmileBal(r.data.balance))
       .catch(e => setSmileError(e.response?.data?.message || 'Failed to fetch balance'))
       .finally(() => setSmileLoading(false))
@@ -70,7 +70,7 @@ export default function Dashboard() {
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Smile.One Balance</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Brazil (BR) account</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Smile.One account</div>
             </div>
           </div>
           <button onClick={fetchSmileBalance} disabled={smileLoading} style={{
@@ -89,7 +89,7 @@ export default function Dashboard() {
         ) : smileBal !== null ? (
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontSize: 36, fontWeight: 900, color: '#fb923c' }}>{Number(smileBal).toLocaleString()}</span>
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>SmileCoins</span>
+            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Smile Points</span>
           </div>
         ) : null}
       </div>
