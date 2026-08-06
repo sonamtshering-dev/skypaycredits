@@ -89,6 +89,7 @@ export default function Recharge() {
       })
       setVerified(true)
       setUsername(data.username || '')
+      setVerifyError('')
     } catch (err) {
       setVerified(false)
       if (err.response?.status !== 401) {
@@ -102,7 +103,7 @@ export default function Recharge() {
     const userId = nextPd[fields[0]?.name]
     if (!userId) { setVerified(false); setUsername(''); setVerifyError(''); return }
     if (!user) return
-    setVerified(false); setUsername('')
+    setVerified(false); setUsername(''); setVerifyError('')
     verifyTimerRef.current = setTimeout(() => doVerify(nextPd), 800)
   }
 
