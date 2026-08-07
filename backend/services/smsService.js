@@ -7,7 +7,7 @@ function stripCountryCode(phone) {
 
 async function sendSMSOTP(phone, otp, siteName = 'SkyPay') {
   const apiKey = process.env.ONEAPI_KEY
-  const number = '91' + stripCountryCode(phone)
+  const number = stripCountryCode(phone)
 
   if (!apiKey) {
     console.log(`[SMS DEV] OTP for ${number}: ${otp}  (set ONEAPI_KEY to enable real SMS)`)
