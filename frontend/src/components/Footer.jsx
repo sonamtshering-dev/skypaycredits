@@ -18,6 +18,64 @@ export default function Footer() {
 
   return (
     <>
+      {/* Follow Us banner */}
+      {hasSocial && (
+        <div style={{
+          background: '#000',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          padding: '56px 16px',
+          textAlign: 'center',
+          position: 'relative', zIndex: 1,
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 10 }}>Follow Us!</div>
+          <div style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, color: '#fff', marginBottom: 36, letterSpacing: '-0.5px' }}>For Every Latest News.</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+            {settings.instagram && (
+              <a href={settings.instagram} target="_blank" rel="noopener noreferrer"
+                style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r="1" fill="#000" stroke="none"/>
+                </svg>
+              </a>
+            )}
+            {settings.facebook && (
+              <a href={settings.facebook} target="_blank" rel="noopener noreferrer"
+                style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="#000">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                </svg>
+              </a>
+            )}
+            {settings.whatsapp && (
+              <a href={waLink(settings.whatsapp)} target="_blank" rel="noopener noreferrer"
+                style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="#000">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                </svg>
+              </a>
+            )}
+            {settings.email && (
+              <a href={`mailto:${settings.email}`}
+                style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <polyline points="2,4 12,13 22,4"/>
+                </svg>
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
       <footer style={{
         background: 'rgba(0,0,0,0.97)',
