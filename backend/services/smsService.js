@@ -24,7 +24,7 @@ async function sendSMSOTP(phone, otp, siteName = 'SkyPay') {
         number:       parseInt(number),
         otp,
       },
-      { headers: { 'Content-Type': 'application/json' } }
+      { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
     )
 
     if (!response.data?.success) {

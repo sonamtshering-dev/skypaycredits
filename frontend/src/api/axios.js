@@ -3,7 +3,8 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: '/api',
-  withCredentials: true, // sends httpOnly cookie automatically — no manual token needed
+  withCredentials: true,
+  timeout: 15000,
 })
 
 // Auto logout on 401
