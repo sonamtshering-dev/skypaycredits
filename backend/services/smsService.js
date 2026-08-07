@@ -1,42 +1,42 @@
 // services/smsService.js — OneAPI (oneapi.in)
-const https = require('https')
+const axios = require('axios')
 
 function stripCountryCode(phone) {
   return phone.replace(/^\+?91/, '').replace(/\D/g, '').slice(-10)
 }
 
-async function sendSMSOTP(phone, otp, siteName = 'Nitrogen Store') {
+async function sendSMSOTP(phone, otp, siteName = 'SkyPay') {
   const apiKey = process.env.ONEAPI_KEY
-  const number = stripCountryCode(phone)
+  const number = '91' + stripCountryCode(phone)
 
   if (!apiKey) {
     console.log(`[SMS DEV] OTP for ${number}: ${otp}  (set ONEAPI_KEY to enable real SMS)`)
     return
   }
 
-  const message = encodeURIComponent(`${otp} is your ${siteName} verification code. Valid for 5 minutes. Do not share with anyone.`)
-  const url = `https://backend.oneapi.in/sms/send?apiKey=${apiKey}&mobile=${number}&message=${message}`
+  try {
+    const response = await axios.post(
+      'https://backend.oneapi.in/sms/sendotp',
+      {
+        apiKey,
+        brandName:    siteName,
+        customerName: 'User',
+        number:       parseInt(number),
+        otp,
+      },
+      { headers: { 'Content-Type': 'application/json' } }
+    )
 
-  return new Promise((resolve, reject) => {
-    const req = https.get(url, { headers: { 'cache-control': 'no-cache' } }, res => {
-      let body = ''
-      res.on('data', d => { body += d })
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(body)
-          if (json.status === true || json.success === true) resolve(json)
-          else {
-            console.warn('[SMS] OneAPI response:', json)
-            resolve(json) // still resolve — don't block registration if SMS fails
-          }
-        } catch (e) { resolve({ raw: body }) }
-      })
-    })
-    req.on('error', err => {
-      console.error('[SMS] OneAPI request failed:', err.message)
-      resolve() // non-fatal
-    })
-  })
+    if (!response.data?.success) {
+      console.warn('[SMS] OneAPI error:', response.data)
+      throw new Error(response.data?.msg || 'SMS failed')
+    }
+
+    console.log(`[SMS] OTP sent to ${number}`)
+  } catch (err) {
+    console.error('[SMS] Request failed:', err.response?.data || err.message)
+    throw new Error(err.response?.data?.msg || err.message)
+  }
 }
 
 function maskPhone(phone) {
