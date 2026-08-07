@@ -7,6 +7,8 @@ const { sendSMSOTP, maskPhone } = require("../services/smsService")
 
 const isProd = process.env.NODE_ENV === 'production'
 const makeToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" })
+const SITE_URL = process.env.SITE_URL || 'https://nitrogenstore.in'
+const logoUrl  = (settings) => settings?.logo ? `${SITE_URL}${settings.logo}` : ''
 
 // ── Register ──────────────────────────────────────────
 // Supports two modes:
@@ -70,7 +72,7 @@ exports.register = async (req, res) => {
     await OTP.create({ email, otp })
     try {
       const settings = await require("../models/Settings").findOne()
-      await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store')
+      await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
     } catch (emailErr) {
       console.error("[EMAIL] Failed to send OTP:", emailErr.message)
       await User.deleteOne({ email })
@@ -216,7 +218,7 @@ exports.resendOTP = async (req, res) => {
     await OTP.create({ email, otp })
 
     const settings = await require("../models/Settings").findOne()
-    await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store')
+    await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
 
     res.json({ message: "New verification code sent" })
   } catch (err) {
@@ -269,7 +271,7 @@ exports.login = async (req, res) => {
       const otp = generateOTP()
       await OTP.create({ email, otp })
       const settings = await require("../models/Settings").findOne()
-      await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store').catch(() => {})
+      await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings)).catch(() => {})
       return res.status(403).json({
         message: "Email not verified. A new code has been sent.",
         requiresVerification: true,
@@ -324,7 +326,7 @@ exports.forgotPassword = async (req, res) => {
     await OTP.create({ email, otp, purpose: 'reset' })
 
     const settings = await require('../models/Settings').findOne()
-    await sendPasswordResetEmail(email, otp, settings?.siteName || 'Nitrogen Store').catch(err => {
+    await sendPasswordResetEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings)).catch(err => {
       console.error('[EMAIL] Failed to send reset OTP:', err.message)
     })
 
@@ -379,7 +381,7 @@ exports.sendEmailOTPPre = async (req, res) => {
     await OTP.deleteMany({ email, purpose: 'pre-email' })
     await OTP.create({ email, otp, purpose: 'pre-email' })
     const settings = await require("../models/Settings").findOne()
-    await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store')
+    await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
     res.json({ message: "OTP sent to your email" })
   } catch (err) {
     res.status(500).json({ message: "Failed to send OTP. Please try again." })

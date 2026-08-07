@@ -13,7 +13,26 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
-function emailWrapper(siteName, content) {
+function brandHeader(siteName, logoUrl) {
+  const parts = siteName.trim().split(' ')
+  const first = parts[0]
+  const rest  = parts.slice(1).join(' ')
+  const nameHtml = rest
+    ? `<span style="color:#ffffff;">${first}</span> <span style="color:#6366f1;">${rest}</span>`
+    : `<span style="color:#ffffff;">${first}</span>`
+
+  const logoHtml = logoUrl
+    ? `<img src="${logoUrl}" alt="${siteName}" width="52" style="display:block;margin:0 auto 12px;border-radius:8px;height:auto;" />`
+    : ''
+
+  return `
+    <td style="padding:32px 36px 28px;border-bottom:1px solid rgba(255,255,255,0.05);text-align:center;">
+      ${logoHtml}
+      <div style="font-size:22px;font-weight:900;letter-spacing:-0.3px;">${nameHtml}</div>
+    </td>`
+}
+
+function emailWrapper(siteName, logoUrl, content) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -22,14 +41,10 @@ function emailWrapper(siteName, content) {
 <body style="margin:0;padding:0;background:#09090b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#09090b;padding:40px 16px;">
     <tr><td align="center">
-      <table width="520" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;width:100%;background:#0f0f12;border-radius:16px;overflow:hidden;border:1px solid rgba(124,58,237,0.2);">
+      <table width="520" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;width:100%;background:#0f0f14;border-radius:16px;overflow:hidden;border:1px solid rgba(99,102,241,0.2);">
 
         <!-- Header -->
-        <tr>
-          <td style="padding:32px 36px 28px;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <div style="display:inline-block;background:linear-gradient(135deg,#6d28d9,#4c00b0);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:800;color:#ffffff;letter-spacing:0.5px;">${siteName}</div>
-          </td>
-        </tr>
+        <tr>${brandHeader(siteName, logoUrl)}</tr>
 
         <!-- Body -->
         <tr>
@@ -40,8 +55,8 @@ function emailWrapper(siteName, content) {
 
         <!-- Footer -->
         <tr>
-          <td style="padding:20px 36px 28px;border-top:1px solid rgba(255,255,255,0.05);">
-            <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.2);text-align:center;line-height:1.8;">
+          <td style="padding:18px 36px 26px;border-top:1px solid rgba(255,255,255,0.05);">
+            <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.18);text-align:center;line-height:1.8;">
               Sent by ${siteName} &nbsp;·&nbsp; If you didn't request this, ignore this email.<br>
               Never share your code — our team will never ask for it.
             </p>
@@ -55,28 +70,27 @@ function emailWrapper(siteName, content) {
 </html>`
 }
 
-async function sendOTPEmail(email, otp, siteName = 'SkyPay') {
+async function sendOTPEmail(email, otp, siteName = 'Nitrogen Store', logoUrl = '') {
   const content = `
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">Verify your email</h2>
     <p style="margin:0 0 32px;font-size:14px;color:rgba(255,255,255,0.4);line-height:1.7;">
       Enter the code below to complete sign-up. It expires in <strong style="color:rgba(255,255,255,0.7);">5 minutes</strong>.
     </p>
 
-    <!-- OTP Box -->
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
       <tr>
-        <td align="center" style="background:#0a0a0d;border:1px solid rgba(109,40,217,0.4);border-radius:12px;padding:32px 24px;">
+        <td align="center" style="background:#0a0a0d;border:1px solid rgba(99,102,241,0.35);border-radius:12px;padding:32px 24px;">
           <div style="font-size:44px;font-weight:900;letter-spacing:16px;color:#ffffff;font-family:'Courier New',Courier,monospace;padding-left:16px;">${otp}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:12px;letter-spacing:2px;text-transform:uppercase;">One-time verification code</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.22);margin-top:12px;letter-spacing:2px;text-transform:uppercase;">One-time verification code</div>
         </td>
       </tr>
     </table>
 
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="background:rgba(109,40,217,0.07);border:1px solid rgba(109,40,217,0.15);border-radius:8px;padding:14px 16px;">
-          <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.35);line-height:1.6;">
-            This code is valid for one use only and expires in 5 minutes. Do not share it with anyone.
+        <td style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:8px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.32);line-height:1.6;">
+            This code is valid for one use only. Do not share it with anyone.
           </p>
         </td>
       </tr>
@@ -86,31 +100,30 @@ async function sendOTPEmail(email, otp, siteName = 'SkyPay') {
     from: `"${siteName}" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: `${otp} is your ${siteName} verification code`,
-    html: emailWrapper(siteName, content),
+    html: emailWrapper(siteName, logoUrl, content),
   })
 }
 
-async function sendPasswordResetEmail(email, otp, siteName = 'SkyPay') {
+async function sendPasswordResetEmail(email, otp, siteName = 'Nitrogen Store', logoUrl = '') {
   const content = `
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">Reset your password</h2>
     <p style="margin:0 0 32px;font-size:14px;color:rgba(255,255,255,0.4);line-height:1.7;">
       Use the code below to reset your password. It expires in <strong style="color:rgba(255,255,255,0.7);">5 minutes</strong>.
     </p>
 
-    <!-- OTP Box -->
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
       <tr>
-        <td align="center" style="background:#0a0a0d;border:1px solid rgba(109,40,217,0.4);border-radius:12px;padding:32px 24px;">
+        <td align="center" style="background:#0a0a0d;border:1px solid rgba(99,102,241,0.35);border-radius:12px;padding:32px 24px;">
           <div style="font-size:44px;font-weight:900;letter-spacing:16px;color:#ffffff;font-family:'Courier New',Courier,monospace;padding-left:16px;">${otp}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:12px;letter-spacing:2px;text-transform:uppercase;">Password reset code</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.22);margin-top:12px;letter-spacing:2px;text-transform:uppercase;">Password reset code</div>
         </td>
       </tr>
     </table>
 
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="background:rgba(109,40,217,0.07);border:1px solid rgba(109,40,217,0.15);border-radius:8px;padding:14px 16px;">
-          <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.35);line-height:1.6;">
+        <td style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:8px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.32);line-height:1.6;">
             Didn't request this? Your password won't change unless you use this code. You can safely ignore this email.
           </p>
         </td>
@@ -121,7 +134,7 @@ async function sendPasswordResetEmail(email, otp, siteName = 'SkyPay') {
     from: `"${siteName}" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: `Reset your ${siteName} password`,
-    html: emailWrapper(siteName, content),
+    html: emailWrapper(siteName, logoUrl, content),
   })
 }
 
