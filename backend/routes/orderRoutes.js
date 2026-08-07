@@ -16,6 +16,10 @@ const Pack      = require("../models/Pack")
 const Coupon    = require("../models/Coupon")
 const { processRecharge } = require("../services/rechargeService")
 const { protect, adminOnly, validateObjectId } = require("../middlewares/authMiddleware")
+const { sendOrderConfirmationEmail } = require("../services/emailService")
+const Settings = require("../models/Settings")
+const User     = require("../models/User")
+const SITE_URL = process.env.SITE_URL || 'https://nitrogenstore.in'
 
 // GET /api/orders/my
 router.get("/my", protect, async (req, res) => {
@@ -234,6 +238,28 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
     const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true })
     if (!order) return res.status(404).json({ message: "Order not found" })
     securityLog.adminAction(req.user._id, `update_order:${JSON.stringify(update)}`, req.params.id)
+
+    // Send billing email on completion
+    if (status === 'Completed') {
+      try {
+        const [settings, user] = await Promise.all([
+          Settings.findOne(),
+          User.findById(order.userId).select('email'),
+        ])
+        if (user?.email) {
+          const logoUrl = settings?.logo ? `${SITE_URL}${settings.logo}` : ''
+          await sendOrderConfirmationEmail(
+            user.email, order,
+            settings?.siteName || 'Nitrogen Store',
+            logoUrl,
+            settings?.currencySymbol || '₹'
+          )
+        }
+      } catch (emailErr) {
+        console.error('[EMAIL] Order confirmation failed:', emailErr.message)
+      }
+    }
+
     res.json(order)
   } catch (err) {
     res.status(400).json({ message: err.message })

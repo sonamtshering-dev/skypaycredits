@@ -138,4 +138,59 @@ async function sendPasswordResetEmail(email, otp, siteName = 'Nitrogen Store', l
   })
 }
 
-module.exports = { generateOTP, sendOTPEmail, sendPasswordResetEmail }
+async function sendOrderConfirmationEmail(email, order, siteName = 'Nitrogen Store', logoUrl = '', currencySymbol = '₹') {
+  const orderId   = order._id?.toString().slice(-8).toUpperCase()
+  const date      = new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  const playerInfo = order.playerInfo || {}
+  const discount  = order.couponDiscount > 0
+    ? `<tr><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;color:rgba(255,255,255,0.4);">Coupon Discount</td><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;color:#4ade80;text-align:right;">- ${currencySymbol}${order.couponDiscount}</td></tr>`
+    : ''
+
+  const rows = [
+    ['Game',    order.gameName || '—'],
+    ['Pack',    order.packName || order.packSnapshot?.title || '—'],
+    ['Player ID', playerInfo.userId || '—'],
+    playerInfo.zoneId ? ['Zone ID', playerInfo.zoneId] : null,
+    ['Amount Paid', `${currencySymbol}${order.price}`],
+    ['Date',    date],
+    ['Order ID', `#${orderId}`],
+  ].filter(Boolean)
+
+  const tableRows = rows.map(([label, val]) => `
+    <tr>
+      <td style="padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;color:rgba(255,255,255,0.4);">${label}</td>
+      <td style="padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;color:#ffffff;text-align:right;font-weight:600;">${val}</td>
+    </tr>`).join('')
+
+  const content = `
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="display:inline-block;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3);border-radius:50%;width:56px;height:56px;line-height:56px;font-size:26px;margin-bottom:14px;">✓</div>
+      <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">Order Completed!</h2>
+      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.4);">Your top-up has been delivered successfully.</p>
+    </div>
+
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+      ${tableRows}
+      ${discount}
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:8px;padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.32);line-height:1.6;">
+            If you did not receive your top-up or have any issues, please contact our support with your Order ID <strong style="color:rgba(255,255,255,0.5);">#${orderId}</strong>.
+          </p>
+        </td>
+      </tr>
+    </table>
+  `
+
+  await transporter.sendMail({
+    from:    `"${siteName}" <${process.env.EMAIL_USER}>`,
+    to:      email,
+    subject: `Order #${orderId} Completed — ${order.gameName || 'Top-up'} delivered`,
+    html:    emailWrapper(siteName, logoUrl, content),
+  })
+}
+
+module.exports = { generateOTP, sendOTPEmail, sendPasswordResetEmail, sendOrderConfirmationEmail }
