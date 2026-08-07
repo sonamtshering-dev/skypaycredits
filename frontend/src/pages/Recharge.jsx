@@ -1,6 +1,6 @@
 // src/pages/Recharge.jsx
 import { useState, useEffect, useRef } from 'react'
-import { CheckCircle, XCircle, ArrowRight, Shield, Zap, Globe, Gem, Ticket, Star, Lock, Gamepad2 } from 'lucide-react'
+import { CheckCircle, XCircle, ArrowRight, Shield, Zap, Globe, Gem, Ticket, Lock, Gamepad2 } from 'lucide-react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
@@ -301,18 +301,13 @@ export default function Recharge() {
             return sections.map(sec => (
               <div key={sec || '__default'} style={{ marginBottom: 8 }}>
                 {sec && (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
-                  }}>
-                    <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.07)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.06)' }} />
                     <span style={{
-                      display: 'flex', alignItems: 'center', gap: 5,
-                      fontSize: 11, fontWeight: 800, color: '#fbbf24',
-                      textTransform: 'uppercase', letterSpacing: 1,
-                      background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)',
-                      padding: '3px 12px', borderRadius: 20,
-                    }}><Star size={10} fill="#fbbf24" /> {sec}</span>
-                    <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.07)' }} />
+                      fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)',
+                      textTransform: 'uppercase', letterSpacing: 2,
+                    }}>{sec}</span>
+                    <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.06)' }} />
                   </div>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
