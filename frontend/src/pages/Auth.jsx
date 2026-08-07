@@ -525,6 +525,9 @@ export default function Auth() {
                       <button type="button" onClick={handleVerifyEmailOtp} disabled={emailOtpLoading || emailOtp.replace(/\s/g,'').length !== 6} style={btn(emailOtpLoading || emailOtp.replace(/\s/g,'').length !== 6)}>
                         {emailOtpLoading ? 'Verifying…' : 'Verify Email'}
                       </button>
+                      <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
+                        📭 Not seeing it? Check your <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Spam</span> or <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Junk</span> folder.
+                      </div>
                     </div>
                   )}
 
