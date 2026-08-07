@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
 import { useEffect } from 'react'
-import { Lock, Globe, Gamepad2 } from 'lucide-react'
+import { Zap, Lock, Globe, Gamepad2 } from 'lucide-react'
 
 export default function Footer() {
   const { settings } = useSettings()
