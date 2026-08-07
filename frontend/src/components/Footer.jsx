@@ -29,13 +29,13 @@ export default function Footer() {
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 10 }}>Follow Us!</div>
           <div style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, color: '#fff', marginBottom: 36, letterSpacing: '-0.5px' }}>For Every Latest News.</div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
             {settings.instagram && (
               <a href={settings.instagram} target="_blank" rel="noopener noreferrer"
-                style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
+                style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                   <circle cx="12" cy="12" r="4"/>
                   <circle cx="17.5" cy="6.5" r="1" fill="#000" stroke="none"/>
@@ -44,30 +44,30 @@ export default function Footer() {
             )}
             {settings.facebook && (
               <a href={settings.facebook} target="_blank" rel="noopener noreferrer"
-                style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
+                style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="#000">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="#000">
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
                 </svg>
               </a>
             )}
             {settings.whatsapp && (
               <a href={waLink(settings.whatsapp)} target="_blank" rel="noopener noreferrer"
-                style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
+                style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="#000">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                <svg viewBox="0 0 32 32" width="24" height="24" fill="#000">
+                  <path d="M16 2C8.268 2 2 8.268 2 16c0 2.478.676 4.797 1.853 6.785L2 30l7.44-1.82A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 25.5a11.44 11.44 0 01-5.82-1.587l-.418-.247-4.41 1.08 1.113-4.285-.272-.44A11.5 11.5 0 1116 27.5zm6.29-8.61c-.344-.172-2.036-1.005-2.352-1.12-.316-.114-.546-.172-.776.172-.23.344-.888 1.12-1.088 1.35-.2.23-.4.258-.744.086-.344-.172-1.452-.535-2.767-1.707-1.022-.912-1.713-2.037-1.913-2.38-.2-.344-.021-.53.15-.702.154-.154.344-.4.516-.602.172-.2.23-.344.344-.573.115-.23.058-.43-.029-.602-.086-.172-.776-1.872-1.063-2.563-.28-.672-.564-.58-.776-.59l-.66-.012c-.23 0-.602.086-.917.43-.315.344-1.203 1.176-1.203 2.867s1.232 3.326 1.403 3.555c.172.23 2.424 3.7 5.873 5.188.82.355 1.46.566 1.96.724.822.262 1.571.225 2.162.137.66-.099 2.036-.832 2.324-1.636.287-.803.287-1.49.2-1.636-.086-.144-.316-.23-.66-.4z"/>
                 </svg>
               </a>
             )}
             {settings.email && (
               <a href={`mailto:${settings.email}`}
-                style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
+                style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="4" width="20" height="16" rx="2"/>
                   <polyline points="2,4 12,13 22,4"/>
                 </svg>
