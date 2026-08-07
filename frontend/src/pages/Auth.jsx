@@ -553,22 +553,18 @@ export default function Auth() {
                     </div>
                   )}
 
-                  {/* Password (show after both verified) */}
-                  {emailOtpVerified && phoneOtpVerified && (
-                    <>
-                      <div className="form-group">
-                        <label>Create password</label>
-                        <div style={{ position: 'relative' }}>
-                          <input style={{ ...inp, paddingRight: 44 }} type={showPw ? 'text' : 'password'} placeholder="Min. 8 chars, uppercase & number" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
-                          <button type="button" onClick={() => setShowPw(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>{showPw ? '🙈' : '👁️'}</button>
-                        </div>
-                      </div>
-                      <div className="form-group">
-                        <label>Confirm password</label>
-                        <input style={inp} type={showPw ? 'text' : 'password'} placeholder="Repeat password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" />
-                      </div>
-                    </>
-                  )}
+                  {/* Password — always visible */}
+                  <div className="form-group">
+                    <label>Create password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input style={{ ...inp, paddingRight: 44 }} type={showPw ? 'text' : 'password'} placeholder="Min. 8 chars, uppercase & number" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
+                      <button type="button" onClick={() => setShowPw(v => !v)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>{showPw ? '🙈' : '👁️'}</button>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Confirm password</label>
+                    <input style={inp} type={showPw ? 'text' : 'password'} placeholder="Repeat password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" />
+                  </div>
 
                   {error && <div style={errBox}>{error}</div>}
 
