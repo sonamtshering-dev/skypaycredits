@@ -242,14 +242,21 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
     // Send billing email on completion
     if (status === 'Completed') {
       try {
-        const [settings, user] = await Promise.all([
+        const [settings, user, game] = await Promise.all([
           Settings.findOne(),
           User.findById(order.userId).select('email'),
+          Game.findById(order.gameId).select('icon'),
         ])
         if (user?.email) {
-          const logoUrl = settings?.logo ? `${SITE_URL}${settings.logo}` : ''
+          const logoUrl     = settings?.logo   ? `${SITE_URL}${settings.logo}`  : ''
+          const gameIconUrl = game?.icon        ? `${SITE_URL}${game.icon}`      : ''
+          const emailOrder  = {
+            ...order.toObject(),
+            gameIcon:   gameIconUrl,
+            playerInfo: order.playerData || {},
+          }
           await sendOrderConfirmationEmail(
-            user.email, order,
+            user.email, emailOrder,
             settings?.siteName || 'Nitrogen Store',
             logoUrl,
             settings?.currencySymbol || '₹'
