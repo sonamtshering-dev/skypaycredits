@@ -43,18 +43,15 @@ export default function Navbar() {
   return (
     <>
       <nav style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        padding: '10px 16px',
-        background: 'transparent',
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
         <div style={{
           maxWidth: 1100, margin: '0 auto',
-          display: 'flex', alignItems: 'center', height: 52, gap: 12,
-          background: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 999,
+          display: 'flex', alignItems: 'center', height: 56, gap: 12,
           padding: '0 20px',
         }}>
 
@@ -140,6 +137,9 @@ export default function Navbar() {
           )}
         </div>
       </nav>
+
+      {/* Spacer so page content isn't hidden under fixed nav */}
+      <div style={{ height: 56 }} />
 
       {/* Left Drawer — mobile only */}
       {user && (
