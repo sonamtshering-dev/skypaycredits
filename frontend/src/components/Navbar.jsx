@@ -4,7 +4,22 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import theme from '../theme'
-import { Zap, ClipboardList, User, Settings, LogOut, X, Home, ChevronRight } from 'lucide-react'
+import { ClipboardList, User, Settings, LogOut, X, Home, ChevronRight } from 'lucide-react'
+
+function BrandName({ name, fontSize = 16 }) {
+  const parts = (name || 'Nitrogen Store').split(' ')
+  const first = parts[0]
+  const rest = parts.slice(1).join(' ')
+  return (
+    <span style={{ fontWeight: 900, fontSize, letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>
+      <span style={{ color: '#fff' }}>{first}</span>
+      {rest && <span style={{
+        background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
+        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+      }}>{' '}{rest}</span>}
+    </span>
+  )
+}
 
 
 export default function Navbar() {
@@ -48,17 +63,8 @@ export default function Navbar() {
             display: 'flex', alignItems: 'center', gap: 8,
             flexShrink: 0, textDecoration: 'none',
           }}>
-            {settings.logo
-              ? <img src={settings.logo} alt={settings.siteName} style={{ height: 32, flexShrink: 0 }} />
-              : <Zap size={15} color="#4c00b0" />}
-            <span style={{
-              fontWeight: 900, fontSize: 16, letterSpacing: '-0.3px',
-              background: theme.gradSoft,
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text', whiteSpace: 'nowrap',
-            }}>
-              {settings.siteName || 'Nitrogen Store'}
-            </span>
+            {settings.logo && <img src={settings.logo} alt={settings.siteName} style={{ height: 32, flexShrink: 0 }} />}
+            <BrandName name={settings.siteName} fontSize={16} />
           </Link>
 
           <div style={{ flex: 1 }} />
@@ -182,14 +188,9 @@ export default function Navbar() {
               borderBottom: '1px solid rgba(255,255,255,0.06)',
               position: 'relative',
             }}>
-              <div style={{
-                fontWeight: 900, fontSize: 18, letterSpacing: '-0.5px',
-                background: theme.gradSoft,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                display: 'flex', alignItems: 'center', gap: 7,
-              }}>
-                <Zap size={15} color="#4c00b0" style={{ flexShrink: 0 }} />
-                {settings.siteName || 'Nitrogen Store'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {settings.logo && <img src={settings.logo} alt={settings.siteName} style={{ height: 28, flexShrink: 0 }} />}
+                <BrandName name={settings.siteName} fontSize={18} />
               </div>
               <button onClick={() => setDrawerOpen(false)} style={{
                 width: 30, height: 30, borderRadius: 8,

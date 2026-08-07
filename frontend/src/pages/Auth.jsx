@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
-import { KeyRound, Lock, Zap } from 'lucide-react'
+import { KeyRound, Lock } from 'lucide-react'
 import api from '../api/axios'
 import theme from '../theme'
 
@@ -482,11 +482,17 @@ export default function Auth() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            fontSize: 32, fontWeight: 900,
-            background: theme.gradSoft,
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          }}><Zap size={20} color="#8b5cf6" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />{settings.siteName || 'Nitrogen Store'}</div>
+          <div style={{ fontSize: 32, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            {settings.logo && <img src={settings.logo} alt={settings.siteName} style={{ height: 40, flexShrink: 0 }} />}
+            <span>
+              <span style={{ color: '#fff' }}>{(settings.siteName || 'Nitrogen Store').split(' ')[0]}</span>
+              {(settings.siteName || 'Nitrogen Store').split(' ').slice(1).join(' ') && (
+                <span style={{ background: theme.gradSoft, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  {' '}{(settings.siteName || 'Nitrogen Store').split(' ').slice(1).join(' ')}
+                </span>
+              )}
+            </span>
+          </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: 8, fontSize: 14 }}>
             {tab === 'login' ? 'Welcome back' : 'Create your account'}
           </div>

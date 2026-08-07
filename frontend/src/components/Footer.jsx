@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
 import { useEffect } from 'react'
-import { Zap, Lock, Globe, Gamepad2 } from 'lucide-react'
+import { Lock, Globe, Gamepad2 } from 'lucide-react'
 
 export default function Footer() {
   const { settings } = useSettings()
@@ -28,18 +28,16 @@ export default function Footer() {
 
           {/* Brand — full width on top */}
           <div style={{ marginBottom: 32 }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
-            }}>
-              {settings.logo
-                ? <img src={settings.logo} alt={siteName} style={{ height: 36, flexShrink: 0, borderRadius: 6 }} />
-                : <Zap size={20} color="#4c00b0" />}
-              <span style={{
-                fontWeight: 900, fontSize: 24,
-                background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>{siteName}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              {settings.logo && <img src={settings.logo} alt={siteName} style={{ height: 36, flexShrink: 0, borderRadius: 6 }} />}
+              <span style={{ fontWeight: 900, fontSize: 24, whiteSpace: 'nowrap' }}>
+                <span style={{ color: '#fff' }}>{siteName.split(' ')[0]}</span>
+                {siteName.split(' ').slice(1).join(' ') && (
+                  <span style={{ background: 'linear-gradient(135deg,#7c3aed,#4c00b0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                    {' '}{siteName.split(' ').slice(1).join(' ')}
+                  </span>
+                )}
+              </span>
             </div>
             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, lineHeight: 1.75, maxWidth: 340 }}>
               {siteName} offers reliable game top-ups with fast and secure delivery. Smooth transactions and professional service for every gamer.

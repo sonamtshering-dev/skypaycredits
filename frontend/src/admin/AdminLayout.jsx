@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useState } from 'react'
 import theme from '../theme'
-import { LayoutDashboard, Gamepad2, Package, ClipboardList, Users, Ticket, Image, Settings, Zap, Menu, ArrowLeft } from 'lucide-react'
+import { LayoutDashboard, Gamepad2, Package, ClipboardList, Users, Ticket, Image, Settings, Menu, ArrowLeft } from 'lucide-react'
 
 const NAV = [
   { to: '/admin',          label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -27,8 +27,7 @@ export default function AdminLayout() {
     <>
       {/* Logo */}
       <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
-          <Zap size={16} color="#8b5cf6" />
+        <div style={{ marginBottom: 2 }}>
           <span style={{ fontWeight: 900, fontSize: 17, background: theme.gradSoft, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Admin Panel</span>
         </div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{user?.email}</div>
@@ -83,7 +82,6 @@ export default function AdminLayout() {
         padding: '12px 16px', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Zap size={15} color="#8b5cf6" />
           <span style={{ fontWeight: 900, fontSize: 15, background: theme.gradSoft, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Admin Panel</span>
         </div>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#fff', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Menu size={16} /></button>

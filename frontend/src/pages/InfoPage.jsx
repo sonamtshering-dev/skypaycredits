@@ -61,8 +61,14 @@ export default function InfoPage({ defaultTab = 'about' }) {
           {tab === 'about' && (
             <div>
               <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                <div style={{ marginBottom: 12 }}><Zap size={48} color="#8b5cf6" /></div>
-                <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 8 }}>{site}</h1>
+                <h1 style={{ fontSize: 26, fontWeight: 900, marginBottom: 8 }}>
+                  <span style={{ color: '#fff' }}>{site.split(' ')[0]}</span>
+                  {site.split(' ').slice(1).join(' ') && (
+                    <span style={{ background: 'linear-gradient(135deg,#7c3aed,#4c00b0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                      {' '}{site.split(' ').slice(1).join(' ')}
+                    </span>
+                  )}
+                </h1>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15 }}>Fast · Safe · Best Prices</p>
               </div>
 
