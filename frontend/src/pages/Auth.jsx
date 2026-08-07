@@ -516,16 +516,16 @@ export default function Auth() {
                   </button>
                 </form>
               ) : (
-                <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 14 }} autoComplete="off">
                   <div className="form-group">
                     <label>Your name</label>
                     <input style={inputStyle} placeholder="Display name" value={name}
-                      onChange={e => setName(e.target.value)} autoFocus autoComplete="name" />
+                      onChange={e => setName(e.target.value)} autoFocus autoComplete="off" />
                   </div>
                   <div className="form-group">
                     <label>Email address</label>
-                    <input style={inputStyle} type="email" placeholder="you@example.com" value={email}
-                      onChange={e => setEmail(e.target.value)} autoComplete="email" />
+                    <input style={inputStyle} type="text" inputMode="email" placeholder="you@example.com" value={email}
+                      onChange={e => setEmail(e.target.value)} autoComplete="off" />
                   </div>
                   <div className="form-group">
                     <label>Phone number</label>
@@ -539,7 +539,7 @@ export default function Auth() {
                       <input style={{ ...inputStyle, borderRadius: '0 10px 10px 0', flex: 1 }}
                         type="tel" inputMode="numeric" placeholder="98765 43210"
                         value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        maxLength={10} autoComplete="tel" />
+                        maxLength={10} autoComplete="off" />
                     </div>
                   </div>
                   <div className="form-group">
@@ -562,8 +562,11 @@ export default function Auth() {
                   </div>
                   {error && <div style={errStyle}>{error}</div>}
                   <button type="submit" disabled={loading} style={submitBtn(loading)}>
-                    {loading ? 'Creating account…' : 'Create Account'}
+                    {loading ? 'Sending verification code…' : 'Continue →'}
                   </button>
+                  <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: -6 }}>
+                    📧 A verification code will be sent to your email
+                  </div>
                 </form>
               )}
             </>
