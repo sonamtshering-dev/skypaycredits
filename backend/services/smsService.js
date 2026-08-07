@@ -5,7 +5,7 @@ function stripCountryCode(phone) {
   return phone.replace(/^\+?91/, '').replace(/\D/g, '').slice(-10)
 }
 
-async function sendSMSOTP(phone, otp, siteName = 'SkyPay') {
+async function sendSMSOTP(phone, otp, siteName = 'Nitrogen Store') {
   const apiKey = process.env.ONEAPI_KEY
   const number = stripCountryCode(phone)
 
