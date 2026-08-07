@@ -83,6 +83,28 @@ export default function AdminSettings() {
           </select>
         </div>
 
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12 }}>Social Links</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="form-group">
+              <label>WhatsApp Number</label>
+              <input style={inp} value={form.whatsapp || ''} onChange={e => set('whatsapp', e.target.value)} placeholder="919876543210" />
+            </div>
+            <div className="form-group">
+              <label>Instagram URL</label>
+              <input style={inp} value={form.instagram || ''} onChange={e => set('instagram', e.target.value)} placeholder="https://instagram.com/yourpage" />
+            </div>
+            <div className="form-group">
+              <label>Facebook URL</label>
+              <input style={inp} value={form.facebook || ''} onChange={e => set('facebook', e.target.value)} placeholder="https://facebook.com/yourpage" />
+            </div>
+            <div className="form-group">
+              <label>Support Email</label>
+              <input style={inp} value={form.email || ''} onChange={e => set('email', e.target.value)} placeholder="support@yourdomain.com" />
+            </div>
+          </div>
+        </div>
+
 
 
         {/* Maintenance Mode toggle */}

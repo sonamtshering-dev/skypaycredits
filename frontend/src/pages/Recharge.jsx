@@ -1,6 +1,6 @@
 // src/pages/Recharge.jsx
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { CheckCircle, XCircle, Smartphone, ArrowRight, Shield, Zap, Globe, Gem, Ticket, Star, Lock, Gamepad2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { CheckCircle, XCircle, ArrowRight, Shield, Zap, Globe, Gem, Ticket, Star, Lock, Gamepad2 } from 'lucide-react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
@@ -41,8 +41,6 @@ export default function Recharge() {
   const [couponApplied, setCouponApplied] = useState(null)
   const [couponError, setCouponError]     = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
-  const [payData, setPayData]     = useState(null)
-  const [payStatus, setPayStatus] = useState('')
 
   const rawFields = region?.fields?.length ? region.fields : game?.fields
   const fields = (rawFields && rawFields.length > 0) ? rawFields : [
@@ -126,10 +124,16 @@ export default function Recharge() {
       const { data: pay } = await api.post('/payment/create', {
         orderId: ord._id, amount: ord.price, customerName: user?.name || 'Customer',
       })
-      setPayData(pay)
+      if (pay.payment_url) {
+        window.location.href = pay.payment_url
+      } else {
+        setError('Could not get payment URL. Please try again.')
+        setPaying(false)
+      }
     } catch (err) {
       setError(typeof err.response?.data?.message === 'string' ? err.response.data.message : (err.message || 'Failed to create order'))
-    } finally { setPaying(false) }
+      setPaying(false)
+    }
   }
 
   const handleApplyCoupon = async () => {
@@ -150,34 +154,6 @@ export default function Recharge() {
 
   const finalPrice = couponApplied ? couponApplied.finalPrice : selectedPack?.price
 
-  const pollStatus = useCallback((paymentId) => {
-    const iv = setInterval(async () => {
-      try {
-        const { data } = await api.get(`/payment/status/${paymentId}`)
-        if (data.status === 'paid') {
-          clearInterval(iv); setPayStatus('paid')
-          setTimeout(() => navigate('/orders'), 2500)
-        } else if (data.status === 'failed' || data.status === 'expired') {
-          clearInterval(iv); setPayStatus('failed')
-        }
-      } catch {}
-    }, 4000)
-    return iv
-  }, [navigate])
-
-  useEffect(() => {
-    if (payData?.payment_url) {
-      window.open(payData.payment_url, '_blank')
-    }
-  }, [payData?.payment_url])
-
-  useEffect(() => {
-    if (payData?.payment_id) {
-      const iv = pollStatus(payData.payment_id)
-      return () => clearInterval(iv)
-    }
-  }, [payData?.payment_id])
-
   const activeProvider   = region?.provider || packs[0]?.provider || ''
   const isFintopup       = activeProvider === 'fintopup'
 
@@ -186,69 +162,7 @@ export default function Recharge() {
   if (loading) return <><Navbar /><div style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div></>
   if (!game)   return <><Navbar /><div style={{ textAlign: 'center', padding: 80, color: 'rgba(255,255,255,0.3)' }}>Game not found</div></>
 
-  const displayName = region ? `${game.name} — ${region.name}` : game.name
-
-  // Payment overlay
-  if (payData) {
-    return (
-      <>
-        <Navbar />
-        <div className="container" style={{ paddingTop: 40, paddingBottom: 64, maxWidth: 480, position: 'relative', zIndex: 1 }}>
-          <div style={{
-            background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.11)', borderRadius: 20,
-            padding: 32, textAlign: 'center',
-          }}>
-            {payStatus === 'paid' ? (
-              <>
-                <div style={{ marginBottom: 16 }}><CheckCircle size={64} color="#22c55e" /></div>
-                <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', marginBottom: 8 }}>Payment Successful!</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>Recharge is being processed automatically</div>
-                <div style={{ fontSize: 13, color: theme.primary }}>Redirecting to orders…</div>
-              </>
-            ) : payStatus === 'failed' ? (
-              <>
-                <div style={{ marginBottom: 16 }}><XCircle size={64} color="#ef4444" /></div>
-                <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', marginBottom: 20 }}>Payment Failed</div>
-                <button className="btn btn-primary" onClick={() => { setPayData(null); setPayStatus('') }}>Try Again</button>
-              </>
-            ) : (
-              <>
-                <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 8 }}>Complete Payment</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
-                  Amount: <span style={{ color: '#fff', fontSize: 28, fontWeight: 900 }}>{sym}{finalPrice || selectedPack?.price}</span>
-                </div>
-                {(payData.payment_url || payData.upi_intent) && (
-                  <a href={payData.payment_url || payData.upi_intent} style={{
-                    display: 'block', width: '100%', padding: '14px 0', borderRadius: 12,
-                    background: theme.grad, color: '#fff', fontWeight: 800, fontSize: 16,
-                    textDecoration: 'none', marginBottom: 16, textAlign: 'center',
-                  }}>
-                    <Smartphone size={16} style={{ marginRight: 8 }} /> Pay via UPI App <ArrowRight size={16} style={{ marginLeft: 8 }} />
-                  </a>
-                )}
-                {payData.qr_code && (
-                  <div style={{ marginBottom: 20 }}>
-                    <img
-                      src={payData.qr_code.startsWith('data:') ? payData.qr_code : `data:image/png;base64,${payData.qr_code}`}
-                      alt="QR Code"
-                      style={{ width: 200, height: 200, borderRadius: 12, background: '#fff', padding: 8 }}
-                      onError={e => { e.target.style.display = 'none' }}
-                    />
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>Scan with any UPI app</div>
-                  </div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
-                  <div style={{ width: 14, height: 14, border: '2px solid #a78bfa', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                  Waiting for payment…
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </>
-    )
-  }
+  const displayName = region?.displayTitle || (region ? `${game.name} — ${region.name}` : game.name)
 
   return (
     <>

@@ -15,6 +15,7 @@ const regionSchema = new mongoose.Schema({
     smileRegionUrl: { type: String, default: '' }, // where to get servers
   staticServers:  [{ serverId: String, serverName: String }], // manual server list
   fields:         [{ name: String, label: String }],
+  displayTitle:   { type: String, default: "" },
 })
 
 const gameSchema = new mongoose.Schema(

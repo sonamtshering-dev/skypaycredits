@@ -13,6 +13,8 @@ export default function Footer() {
     document.title = siteName
   }, [siteName])
 
+  const hasSocial = settings.whatsapp || settings.instagram || settings.facebook || settings.email
+
   return (
     <>
       <footer style={{
@@ -22,25 +24,50 @@ export default function Footer() {
         marginTop: 'auto',
         position: 'relative', zIndex: 1,
       }}>
-        <div className="container" style={{ padding: '36px 16px 20px' }}>
+        <div className="container" style={{ padding: '40px 16px 20px' }}>
 
-          {/* Top row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: 32, marginBottom: 32,
-          }}>
-            {/* Brand */}
-            <div>
-              <div style={{
-                fontWeight: 900, fontSize: 20,
+          {/* Brand — full width on top */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
+            }}>
+              {settings.logo
+                ? <img src={settings.logo} alt={siteName} style={{ height: 36, flexShrink: 0, borderRadius: 6 }} />
+                : <Zap size={20} color="#4c00b0" />}
+              <span style={{
+                fontWeight: 900, fontSize: 24,
                 background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text', marginBottom: 10,
-              }}><Zap size={16} color="#4c00b0" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} />{siteName}</div>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, lineHeight: 1.7, maxWidth: 200 }}>
-                {siteName} offers reliable game top-ups with fast and secure delivery. Smooth transactions and professional service for every gamer.
-              </p>
+                backgroundClip: 'text',
+              }}>{siteName}</span>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, lineHeight: 1.75, maxWidth: 340 }}>
+              {siteName} offers reliable game top-ups with fast and secure delivery. Smooth transactions and professional service for every gamer.
+            </p>
+          </div>
+
+          {/* Nav + Why Us side by side */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 24,
+            marginBottom: hasSocial ? 28 : 0,
+          }}>
+            {/* Navigation */}
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1.5 }}>Navigation</div>
+              {[
+                { to: '/',        label: 'Home' },
+                { to: '/orders',  label: 'My Orders' },
+                { to: '/about',   label: 'About Us' },
+                { to: '/contact', label: 'Contact' },
+              ].map(({ to, label }) => (
+                <Link key={to} to={to}
+                  style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 13, textDecoration: 'none', marginBottom: 9, transition: 'color 0.15s' }}
+                  onMouseEnter={e => e.target.style.color = '#7c3aed'}
+                  onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.4)'}
+                >{label}</Link>
+              ))}
             </div>
 
             {/* Why Us */}
@@ -58,23 +85,48 @@ export default function Footer() {
                 </div>
               ))}
             </div>
-
-            {/* Navigation */}
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1.5 }}>Navigation</div>
-              {[
-                { to: '/',        label: 'Home' },
-                { to: '/orders',  label: 'My Orders' },
-                { to: '/about',   label: 'About Us' },
-                { to: '/contact', label: 'Contact' },
-              ].map(({ to, label }) => (
-                <Link key={to} to={to} style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: 13, textDecoration: 'none', marginBottom: 9, transition: 'color 0.15s' }}
-                  onMouseEnter={e => e.target.style.color = '#7c3aed'}
-                  onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.4)'}
-                >{label}</Link>
-              ))}
-            </div>
           </div>
+
+          {/* Social icons */}
+          {hasSocial && (
+            <div style={{ marginBottom: 24, paddingTop: 8 }}>
+              <div style={{ fontWeight: 800, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1.5 }}>Follow Us</div>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                {settings.instagram && (
+                  <a href={settings.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram"
+                    style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', textDecoration: 'none' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(225,48,108,0.2)'; e.currentTarget.style.borderColor = 'rgba(225,48,108,0.4)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
+                    <InstagramIcon />
+                  </a>
+                )}
+                {settings.facebook && (
+                  <a href={settings.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook"
+                    style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', textDecoration: 'none' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(24,119,242,0.2)'; e.currentTarget.style.borderColor = 'rgba(24,119,242,0.4)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
+                    <FacebookIcon />
+                  </a>
+                )}
+                {settings.whatsapp && (
+                  <a href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"
+                    style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', textDecoration: 'none' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,211,102,0.2)'; e.currentTarget.style.borderColor = 'rgba(37,211,102,0.4)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
+                    <WhatsAppIcon />
+                  </a>
+                )}
+                {settings.email && (
+                  <a href={`mailto:${settings.email}`} aria-label="Email"
+                    style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', textDecoration: 'none' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.2)'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.4)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
+                    <EmailIcon />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
@@ -93,27 +145,62 @@ export default function Footer() {
       </footer>
 
       {/* WhatsApp sticky float button */}
-      <a
-        href="https://wa.me/917085396397"
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Chat on WhatsApp"
-        style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
-          width: 56, height: 56, borderRadius: '50%',
-          background: '#25d366',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 20px rgba(37,211,102,0.5)',
-          transition: 'transform 0.2s, box-shadow 0.2s',
-          textDecoration: 'none',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(37,211,102,0.7)' }}
-        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)';    e.currentTarget.style.boxShadow = '0 4px 20px rgba(37,211,102,0.5)' }}
-      >
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="#fff" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 2C8.268 2 2 8.268 2 16c0 2.478.676 4.797 1.853 6.785L2 30l7.44-1.82A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 25.5a11.44 11.44 0 01-5.82-1.587l-.418-.247-4.41 1.08 1.113-4.285-.272-.44A11.5 11.5 0 1116 27.5zm6.29-8.61c-.344-.172-2.036-1.005-2.352-1.12-.316-.114-.546-.172-.776.172-.23.344-.888 1.12-1.088 1.35-.2.23-.4.258-.744.086-.344-.172-1.452-.535-2.767-1.707-1.022-.912-1.713-2.037-1.913-2.38-.2-.344-.021-.53.15-.702.154-.154.344-.4.516-.602.172-.2.23-.344.344-.573.115-.23.058-.43-.029-.602-.086-.172-.776-1.872-1.063-2.563-.28-.672-.564-.58-.776-.59l-.66-.012c-.23 0-.602.086-.917.43-.315.344-1.203 1.176-1.203 2.867s1.232 3.326 1.403 3.555c.172.23 2.424 3.7 5.873 5.188.82.355 1.46.566 1.96.724.822.262 1.571.225 2.162.137.66-.099 2.036-.832 2.324-1.636.287-.803.287-1.49.2-1.636-.086-.144-.316-.23-.66-.4z"/>
-        </svg>
-      </a>
+      {settings.whatsapp && (
+        <a
+          href={`https://wa.me/${settings.whatsapp}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Chat on WhatsApp"
+          style={{
+            position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+            width: 56, height: 56, borderRadius: '50%',
+            background: '#25d366',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 20px rgba(37,211,102,0.5)',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            textDecoration: 'none',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(37,211,102,0.7)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)';    e.currentTarget.style.boxShadow = '0 4px 20px rgba(37,211,102,0.5)' }}
+        >
+          <WhatsAppIcon size={30} color="#fff" />
+        </a>
+      )}
     </>
+  )
+}
+
+function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#e1306c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="17.5" cy="6.5" r="0.5" fill="#e1306c" stroke="none"/>
+    </svg>
+  )
+}
+
+function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="#1877f2">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+    </svg>
+  )
+}
+
+function WhatsAppIcon({ size = 18, color = '#25d366' }) {
+  return (
+    <svg viewBox="0 0 32 32" width={size} height={size} fill={color}>
+      <path d="M16 2C8.268 2 2 8.268 2 16c0 2.478.676 4.797 1.853 6.785L2 30l7.44-1.82A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 25.5a11.44 11.44 0 01-5.82-1.587l-.418-.247-4.41 1.08 1.113-4.285-.272-.44A11.5 11.5 0 1116 27.5zm6.29-8.61c-.344-.172-2.036-1.005-2.352-1.12-.316-.114-.546-.172-.776.172-.23.344-.888 1.12-1.088 1.35-.2.23-.4.258-.744.086-.344-.172-1.452-.535-2.767-1.707-1.022-.912-1.713-2.037-1.913-2.38-.2-.344-.021-.53.15-.702.154-.154.344-.4.516-.602.172-.2.23-.344.344-.573.115-.23.058-.43-.029-.602-.086-.172-.776-1.872-1.063-2.563-.28-.672-.564-.58-.776-.59l-.66-.012c-.23 0-.602.086-.917.43-.315.344-1.203 1.176-1.203 2.867s1.232 3.326 1.403 3.555c.172.23 2.424 3.7 5.873 5.188.82.355 1.46.566 1.96.724.822.262 1.571.225 2.162.137.66-.099 2.036-.832 2.324-1.636.287-.803.287-1.49.2-1.636-.086-.144-.316-.23-.66-.4z"/>
+    </svg>
+  )
+}
+
+function EmailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/>
+      <polyline points="2,4 12,13 22,4"/>
+    </svg>
   )
 }

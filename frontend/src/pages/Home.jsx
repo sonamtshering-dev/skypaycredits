@@ -60,8 +60,8 @@ export default function Home() {
 
   const gridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-    gap: 'clamp(10px, 1.5vw, 16px)',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 'clamp(8px, 1.5vw, 16px)',
   }
 
   return (
@@ -72,6 +72,10 @@ export default function Home() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .game-card { will-change: transform; }
+        .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(8px, 1.5vw, 16px); }
+        @media (min-width: 540px)  { .game-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 768px)  { .game-grid { grid-template-columns: repeat(5, 1fr); } }
+        @media (min-width: 1024px) { .game-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
       `}</style>
       <Navbar />
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -110,7 +114,7 @@ export default function Home() {
               {visibleGames.length > 0 && (
                 <div>
                   <SectionHeader icon={<Gamepad2 size={20} color="#8b5cf6" />} title="Games" />
-                  <div style={gridStyle}>
+                  <div className="game-grid">
                     {visibleGames.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
                     ))}
@@ -120,7 +124,7 @@ export default function Home() {
               {visibleVouchers.length > 0 && (
                 <div>
                   <SectionHeader icon="🎁" title="Gift Cards & Vouchers" />
-                  <div style={gridStyle}>
+                  <div className="game-grid">
                     {visibleVouchers.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} isVoucher />
                     ))}
@@ -130,7 +134,7 @@ export default function Home() {
               {visibleOthers.length > 0 && (
                 <div>
                   <SectionHeader icon="📦" title="Via Login" />
-                  <div style={gridStyle}>
+                  <div className="game-grid">
                     {visibleOthers.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
                     ))}

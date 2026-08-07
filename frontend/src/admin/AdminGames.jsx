@@ -71,6 +71,16 @@ export default function AdminGames() {
     setFieldInput({ name: '', label: '' })
   }
 
+  const addRegion = () => setForm(f => ({
+    ...f, regions: [...f.regions, { name: '', slug: '', active: true, provider: '', providerGameId: '', smileRegionUrl: '', displayTitle: '' }]
+  }))
+  const updateRegion = (i, updated) => setForm(f => ({
+    ...f, regions: f.regions.map((r, j) => j === i ? updated : r)
+  }))
+  const removeRegion = (i) => setForm(f => ({
+    ...f, regions: f.regions.filter((_, j) => j !== i)
+  }))
+
   const moveGame = async (id, direction) => {
     const idx = games.findIndex(g => g._id === id)
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1
@@ -208,13 +218,87 @@ export default function AdminGames() {
                 </div>
               </div>
 
-              {error && <div style={{ color: '#f87171', fontSize: 13, margin: '0 22px 8px', background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>{error}</div>}
+                {/* Regions */}
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: 'var(--text3)', textTransform: 'uppercase' }}>Regions</div>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={addRegion}>+ Add Region</button>
+                  </div>
+                  {form.regions.length === 0 && (
+                    <div style={{ color: 'var(--text3)', fontSize: 12 }}>No regions — uses game-level settings</div>
+                  )}
+                  {form.regions.map((r, i) => (
+                    <RegionRow key={i} region={r}
+                      onChange={updated => updateRegion(i, updated)}
+                      onRemove={() => removeRegion(i)}
+                    />
+                  ))}
+                </div>
+
+              {error && <div style={{ color: '#f87171', fontSize: 13, margin: '0 0 8px', background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>{error}</div>}
 
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', padding: '14px 22px', borderTop: '1px solid var(--border)' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Game'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RegionRow({ region, onChange, onRemove }) {
+  const [open, setOpen] = useState(false)
+  const inp = {
+    width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)',
+    borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none',
+  }
+  return (
+    <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 8, overflow: 'hidden' }}>
+      <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', userSelect: 'none' }}>
+        <span style={{ flex: 1, fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{region.name || '(unnamed region)'}</span>
+        {region.displayTitle && <span style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>{region.displayTitle}</span>}
+        <span className={`badge badge-${region.active ? 'success' : 'danger'}`} style={{ fontSize: 10 }}>{region.active ? 'Active' : 'Hidden'}</span>
+        <button type="button" onClick={e => { e.stopPropagation(); onRemove() }}
+          style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 15, cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}>✕</button>
+        <span style={{ color: 'var(--text3)', fontSize: 11 }}>{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div style={{ borderTop: '1px solid var(--border)', padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Region Name</label>
+              <input style={inp} value={region.name} onChange={e => onChange({ ...region, name: e.target.value })} placeholder="e.g. Brazil (BR)" />
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Slug</label>
+              <input style={inp} value={region.slug} onChange={e => onChange({ ...region, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} placeholder="e.g. br" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Recharge Page Title <span style={{ color: 'var(--text3)', fontWeight: 400 }}>(optional — replaces auto "Game — Region" title)</span></label>
+            <input style={inp} value={region.displayTitle || ''} onChange={e => onChange({ ...region, displayTitle: e.target.value })} placeholder={`e.g. MLBB Brazil`} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Status</label>
+              <select style={inp} value={region.active ? 'true' : 'false'} onChange={e => onChange({ ...region, active: e.target.value === 'true' })}>
+                <option value="true">Active</option>
+                <option value="false">Hidden</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Smile Region URL</label>
+              <input style={inp} value={region.smileRegionUrl || ''} onChange={e => onChange({ ...region, smileRegionUrl: e.target.value })} placeholder="https://www.smile.one/br" />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Provider Game ID</label>
+              <input style={inp} value={region.providerGameId || ''} onChange={e => onChange({ ...region, providerGameId: e.target.value })} />
+            </div>
           </div>
         </div>
       )}

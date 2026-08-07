@@ -11,6 +11,8 @@ const settingsSchema = new mongoose.Schema(
     currencySymbol: { type: String, default: "₹" },
     whatsapp:    { type: String, default: "" },
     email:       { type: String, default: "" },
+    instagram:   { type: String, default: "" },
+    facebook:    { type: String, default: "" },
     footerText:  { type: String, default: "" },
     maintenanceMode:   { type: Boolean, default: false },
     purchasesEnabled:  { type: Boolean, default: true },
