@@ -83,7 +83,7 @@ export default function InfoPage({ defaultTab = 'about' }) {
       { icon: Globe,      label: 'Multiple Regions',    desc: 'All regional servers supported — always top up the correct account.', bg: 'rgba(168,85,247,0.12)', color: '#a855f7' },
       { icon: Gamepad2,   label: 'Wide Selection',      desc: 'MLBB, Free Fire, PUBG, Genshin Impact and more — all covered.', bg: 'rgba(236,72,153,0.12)', color: '#ec4899' },
       { icon: '📞', label: '24/7 Support',        desc: 'Support team available via WhatsApp to assist with any issues.', bg: 'rgba(20,184,166,0.12)', color: '#14b8a6' },
-    ].map(({ icon, label, desc, bg }) => (
+    ].map(({ icon, label, desc, bg, color }) => (
       <div key={label} style={{
         background: 'rgba(255,255,255,0.04)',
         border: '1px solid rgba(255,255,255,0.08)',
@@ -97,7 +97,8 @@ export default function InfoPage({ defaultTab = 'about' }) {
           width: 38, height: 38, borderRadius: 10,
           background: bg,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>{(() => { const I = icon; return <I size={18} color={color} /> })()}</div>
+          fontSize: 20,
+        }}>{typeof icon === 'string' ? icon : (() => { const I = icon; return <I size={18} color={color} /> })()}</div>
         <div style={{ fontWeight: 700, color: '#fff', fontSize: 13 }}>{label}</div>
         <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, lineHeight: 1.6 }}>{desc}</div>
       </div>
