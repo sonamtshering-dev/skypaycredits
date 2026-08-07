@@ -20,12 +20,12 @@ export default function PaymentSuccess() {
       try {
         attempts++
         const { data } = await api.get(`/payment/status-by-order/${orderId}`)
-        if (data.status === 'COMPLETED') {
+        if (data.status === 'PAID' || data.status === 'COMPLETED') {
           setStatus('paid')
           setTimeout(() => navigate('/orders'), 3000)
         } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
           setStatus('failed')
-        } else if (attempts < 15) {
+        } else if (attempts < 20) {
           setTimeout(check, 3000)
         } else {
           setStatus('failed')
