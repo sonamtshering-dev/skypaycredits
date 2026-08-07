@@ -14,6 +14,7 @@ export default function Footer() {
   }, [siteName])
 
   const hasSocial = settings.whatsapp || settings.instagram || settings.facebook || settings.email
+  const waLink = val => val?.startsWith('http') ? val : `https://wa.me/${val}`
 
   return (
     <>
@@ -52,7 +53,7 @@ export default function Footer() {
               </a>
             )}
             {settings.whatsapp && (
-              <a href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noopener noreferrer"
+              <a href={{waLink(settings.whatsapp)}} target="_blank" rel="noopener noreferrer"
                 style={{ width: 64, height: 64, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, opacity 0.2s', textDecoration: 'none' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.opacity = '0.85' }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1' }}>
@@ -166,7 +167,7 @@ export default function Footer() {
                   </a>
                 )}
                 {settings.whatsapp && (
-                  <a href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"
+                  <a href={{waLink(settings.whatsapp)}} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"
                     style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', textDecoration: 'none' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,211,102,0.2)'; e.currentTarget.style.borderColor = 'rgba(37,211,102,0.4)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
@@ -204,7 +205,7 @@ export default function Footer() {
       {/* WhatsApp sticky float button */}
       {settings.whatsapp && (
         <a
-          href={`https://wa.me/${settings.whatsapp}`}
+          href={{waLink(settings.whatsapp)}}
           target="_blank"
           rel="noopener noreferrer"
           title="Chat on WhatsApp"
