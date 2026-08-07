@@ -8,18 +8,22 @@ const { sendSMSOTP, maskPhone } = require("../services/smsService")
 const isProd = process.env.NODE_ENV === 'production'
 const makeToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" })
 
-// ── Register — creates unverified account + sends OTP ──
+// ── Register ──────────────────────────────────────────
+// Supports two modes:
+//   1. Pre-verified: emailVerifiedToken + phoneVerifiedToken passed → create account immediately
+//   2. Legacy: no tokens → create unverified account + send email OTP
 exports.register = async (req, res) => {
   try {
     const name     = req.body.name?.trim()
     const email    = req.body.email?.trim().toLowerCase()
     const rawPhone = req.body.phone?.trim()
     const password = req.body.password
+    const emailToken = req.body.emailVerifiedToken
+    const phoneToken = req.body.phoneVerifiedToken
 
     if (!name || !email || !password || !rawPhone)
       return res.status(400).json({ message: "Name, email, phone and password are required" })
 
-    // Validate Indian phone — strip +91/91 prefix, must be 10 digits starting 6-9
     const phone10 = rawPhone.replace(/^\+?91/, '').replace(/\D/g, '').slice(-10)
     if (!/^[6-9]\d{9}$/.test(phone10))
       return res.status(400).json({ message: "Enter a valid 10-digit Indian mobile number" })
@@ -36,27 +40,34 @@ exports.register = async (req, res) => {
     const exists = await User.findOne({ email })
     if (exists && exists.isEmailVerified)
       return res.status(400).json({ message: "An account with this email already exists" })
-
-    // Check if phone already taken by another verified account
     const phoneTaken = await User.findOne({ phone, isEmailVerified: true })
     if (phoneTaken) return res.status(400).json({ message: "This phone number is already registered" })
-
-    // Delete unverified account if exists (re-registration)
     if (exists && !exists.isEmailVerified) await User.deleteOne({ email })
 
-    // Create unverified user
-    const user = await User.create({
-      name, email, password,
-      ...(phone ? { phone } : {}),
-      isEmailVerified: false,
-    })
+    // ── Mode 1: pre-verified tokens provided ──────────
+    if (emailToken && phoneToken) {
+      try {
+        const emailPayload = jwt.verify(emailToken, process.env.JWT_SECRET)
+        const phonePayload = jwt.verify(phoneToken, process.env.JWT_SECRET)
+        if (emailPayload.type !== 'email-verified' || emailPayload.email !== email)
+          return res.status(400).json({ message: "Email verification expired. Please verify again." })
+        if (phonePayload.type !== 'phone-verified' || phonePayload.phone !== phone)
+          return res.status(400).json({ message: "Phone verification expired. Please verify again." })
+      } catch {
+        return res.status(400).json({ message: "Verification expired. Please verify email and phone again." })
+      }
+      const user = await User.create({ name, email, password, phone, isEmailVerified: true })
+      const token = makeToken(user._id)
+      res.cookie("token", token, { httpOnly: true, secure: isProd, sameSite: "strict", maxAge: 7*24*60*60*1000 })
+      securityLog.loginSuccess(user._id, req.ip)
+      return res.status(201).json({ token, user: { _id: user._id, name: user.name, email: user.email, role: user.role } })
+    }
 
-    // Generate and store OTP
-    await OTP.deleteMany({ email }) // clear old OTPs
+    // ── Mode 2: legacy flow — create user + send email OTP ──
+    const user = await User.create({ name, email, password, ...(phone ? { phone } : {}), isEmailVerified: false })
+    await OTP.deleteMany({ email })
     const otp = generateOTP()
     await OTP.create({ email, otp })
-
-    // Send email
     try {
       const settings = await require("../models/Settings").findOne()
       await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store')
@@ -66,12 +77,7 @@ exports.register = async (req, res) => {
       await OTP.deleteMany({ email })
       return res.status(500).json({ message: "Failed to send verification email. Please try again." })
     }
-
-    res.status(201).json({
-      message: "Verification code sent to your email",
-      email,
-      requiresVerification: true,
-    })
+    res.status(201).json({ message: "Verification code sent to your email", email, requiresVerification: true })
   } catch (err) {
     console.error("register error:", err.message)
     res.status(500).json({ message: isProd ? "Registration failed" : err.message })
@@ -358,6 +364,82 @@ exports.resetPassword = async (req, res) => {
   } catch (err) {
     console.error('resetPassword error:', err.message)
     res.status(500).json({ message: isProd ? 'Reset failed' : err.message })
+  }
+}
+
+// ── Pre-registration: send email OTP ─────────────────
+exports.sendEmailOTPPre = async (req, res) => {
+  try {
+    const email = req.body.email?.trim().toLowerCase()
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return res.status(400).json({ message: "Valid email required" })
+    const exists = await User.findOne({ email, isEmailVerified: true })
+    if (exists) return res.status(400).json({ message: "Email already registered" })
+    const otp = generateOTP()
+    await OTP.deleteMany({ email, purpose: 'pre-email' })
+    await OTP.create({ email, otp, purpose: 'pre-email' })
+    const settings = await require("../models/Settings").findOne()
+    await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store')
+    res.json({ message: "OTP sent to your email" })
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send OTP. Please try again." })
+  }
+}
+
+// ── Pre-registration: verify email OTP ───────────────
+exports.verifyEmailOTPPre = async (req, res) => {
+  try {
+    const email = req.body.email?.trim().toLowerCase()
+    const otp   = req.body.otp?.trim()
+    if (!email || !otp) return res.status(400).json({ message: "Email and OTP required" })
+    const record = await OTP.findOne({ email, purpose: 'pre-email' })
+    if (!record) return res.status(400).json({ message: "OTP expired. Request a new code." })
+    if (record.otp !== otp) return res.status(400).json({ message: "Incorrect code" })
+    await OTP.deleteMany({ email, purpose: 'pre-email' })
+    const token = jwt.sign({ email, type: 'email-verified' }, process.env.JWT_SECRET, { expiresIn: '15m' })
+    res.json({ verified: true, token })
+  } catch (err) {
+    res.status(500).json({ message: "Verification failed" })
+  }
+}
+
+// ── Pre-registration: send phone OTP ─────────────────
+exports.sendPhoneOTPPre = async (req, res) => {
+  try {
+    const rawPhone = req.body.phone?.trim()
+    const phone10  = rawPhone?.replace(/^\+?91/, '').replace(/\D/g, '').slice(-10)
+    if (!phone10 || !/^[6-9]\d{9}$/.test(phone10))
+      return res.status(400).json({ message: "Valid 10-digit Indian mobile number required" })
+    const phone = `91${phone10}`
+    const taken = await User.findOne({ phone, isEmailVerified: true })
+    if (taken) return res.status(400).json({ message: "Phone number already registered" })
+    const otp = generateOTP()
+    await OTP.deleteMany({ phone, purpose: 'pre-phone' })
+    await OTP.create({ phone, otp, purpose: 'pre-phone' })
+    const settings = await require("../models/Settings").findOne()
+    await sendSMSOTP(phone, otp, settings?.siteName || 'Nitrogen Store')
+    res.json({ message: "OTP sent to your phone" })
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send OTP. Please try again." })
+  }
+}
+
+// ── Pre-registration: verify phone OTP ───────────────
+exports.verifyPhoneOTPPre = async (req, res) => {
+  try {
+    const rawPhone = req.body.phone?.trim()
+    const phone10  = rawPhone?.replace(/^\+?91/, '').replace(/\D/g, '').slice(-10)
+    const phone    = `91${phone10}`
+    const otp      = req.body.otp?.trim()
+    if (!phone10 || !otp) return res.status(400).json({ message: "Phone and OTP required" })
+    const record = await OTP.findOne({ phone, purpose: 'pre-phone' })
+    if (!record) return res.status(400).json({ message: "OTP expired. Request a new code." })
+    if (record.otp !== otp) return res.status(400).json({ message: "Incorrect code" })
+    await OTP.deleteMany({ phone, purpose: 'pre-phone' })
+    const token = jwt.sign({ phone, type: 'phone-verified' }, process.env.JWT_SECRET, { expiresIn: '15m' })
+    res.json({ verified: true, token })
+  } catch (err) {
+    res.status(500).json({ message: "Verification failed" })
   }
 }
 

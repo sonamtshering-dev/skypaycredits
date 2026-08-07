@@ -1,7 +1,7 @@
 const express = require("express")
 const router  = express.Router()
 const rateLimit = require("express-rate-limit")
-const { register, login, getMe, logout, verifyOTP, resendOTP, verifyPhoneOTP, resendPhoneOTP, forgotPassword, resetPassword } = require("../controllers/authController")
+const { register, login, getMe, logout, verifyOTP, resendOTP, verifyPhoneOTP, resendPhoneOTP, forgotPassword, resetPassword, sendEmailOTPPre, verifyEmailOTPPre, sendPhoneOTPPre, verifyPhoneOTPPre } = require("../controllers/authController")
 const { protect } = require("../middlewares/authMiddleware")
 
 // Rate limit OTP endpoints
@@ -23,6 +23,10 @@ const loginLimiter = rateLimit({
   message: { message: "Too many login attempts, try again later" }
 })
 
+router.post("/send-email-otp",   otpLimiter, sendEmailOTPPre)
+router.post("/verify-email-otp", otpLimiter, verifyEmailOTPPre)
+router.post("/send-phone-otp",   otpLimiter, sendPhoneOTPPre)
+router.post("/verify-phone-otp-pre", otpLimiter, verifyPhoneOTPPre)
 router.post("/register",         registerLimiter, register)
 router.post("/verify-otp",       otpLimiter, verifyOTP)
 router.post("/resend-otp",       otpLimiter, resendOTP)

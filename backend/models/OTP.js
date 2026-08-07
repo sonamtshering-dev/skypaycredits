@@ -5,7 +5,7 @@ const otpSchema = new mongoose.Schema({
   email:     { type: String },
   phone:     { type: String },
   otp:       { type: String, required: true },
-  purpose:   { type: String, enum: ['verify', 'reset', 'phone'], default: 'verify' },
+  purpose:   { type: String, enum: ['verify', 'reset', 'phone', 'pre-email', 'pre-phone'], default: 'verify' },
   createdAt: { type: Date, default: Date.now, expires: 300 }, // auto-delete after 5 min
 })
 
