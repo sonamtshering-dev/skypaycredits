@@ -532,7 +532,7 @@ export default function Auth() {
                   <div className="form-group">
                     <label>Phone (+91…)</label>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <input style={{ ...inp, flex: 1 }} type="tel" inputMode="numeric" placeholder="98765 43210"
+                      <input style={{ ...inp, flex: 1 }} type="tel" inputMode="numeric" placeholder="Enter 10-digit number"
                         value={phone} onChange={e => { setPhone(e.target.value.replace(/\D/g,'').slice(0,10)); setPhoneOtpSent(false); setPhoneOtpVerified(false); setPhoneVerifiedToken('') }}
                         disabled={phoneOtpVerified} autoComplete="off" maxLength={10} />
                       {!phoneOtpVerified && (
