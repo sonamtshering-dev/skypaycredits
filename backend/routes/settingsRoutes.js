@@ -44,6 +44,11 @@ router.get("/", async (req, res) => {
       currency:        settings.currency,
       currencySymbol:  settings.currencySymbol,
       maintenanceMode: settings.maintenanceMode,
+      whatsapp:        settings.whatsapp,
+      email:           settings.email,
+      instagram:       settings.instagram,
+      facebook:        settings.facebook,
+      purchasesEnabled: settings.purchasesEnabled,
     }
     res.json(safe)
   } catch (err) {
