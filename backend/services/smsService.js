@@ -21,7 +21,7 @@ async function sendSMSOTP(phone, otp, siteName = 'Nitrogen Store') {
         apiKey,
         brandName:    siteName,
         customerName: 'User',
-        number:       parseInt(number),
+        number:       number,
         otp,
       },
       { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }

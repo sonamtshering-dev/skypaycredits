@@ -89,10 +89,18 @@ async function sendOTPEmail(email, otp, siteName = 'Nitrogen Store', logoUrl = '
       </tr>
     </table>
 
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">
       <tr>
         <td bgcolor="#fffbeb" style="background-color:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;font-size:13px;color:#92400e;line-height:1.6;">
           &#9888; This code is valid for one use only. Do not share it with anyone.
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="font-size:12px;color:#9ca3af;text-align:center;padding-top:4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;line-height:1.6;">
+          Can't find this email? Check your <strong style="color:#6b7280;">Spam</strong> or <strong style="color:#6b7280;">Junk</strong> folder.
         </td>
       </tr>
     </table>
