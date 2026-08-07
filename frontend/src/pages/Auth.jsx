@@ -25,7 +25,7 @@ export default function Auth() {
   // OTP state
   const [step, setStep]         = useState('form') // 'form' | 'otp' | 'phone-otp' | 'forgot' | 'reset-otp' | 'new-password'
   const [pendingEmail, setPendingEmail] = useState('')
-  const [pendingPhone, setPendingPhone] = useState('') // masked phone like "+91 98****1234"
+  const [pendingPhone, setPendingPhone] = useState('')
   const [otp, setOtp]           = useState('')
   const [otpLoading, setOtpLoading] = useState(false)
   const [otpError, setOtpError] = useState('')
@@ -162,7 +162,6 @@ export default function Auth() {
     e.preventDefault(); setForgotError('')
     if (!resetOtp || resetOtp.length !== 6) return setForgotError('Enter the 6-digit code')
     setForgotLoading(true)
-    // Just move to new password step; actual verify happens on submit
     setForgotLoading(false)
     setStep('new-password')
   }
@@ -182,7 +181,7 @@ export default function Auth() {
       setError('Password reset! Please log in with your new password.')
     } catch (err) {
       setForgotError(err.response?.data?.message || 'Reset failed')
-      if (err.response?.status === 400) setStep('reset-otp') // bad OTP, go back
+      if (err.response?.status === 400) setStep('reset-otp')
     } finally { setForgotLoading(false) }
   }
 
@@ -196,7 +195,6 @@ export default function Auth() {
       setForgotError(err.response?.data?.message || 'Failed to resend')
     }
   }
-
 
   const startResendCooldown = () => {
     setResendCooldown(60)
@@ -223,137 +221,35 @@ export default function Auth() {
     borderRadius: 20, padding: 28,
   }
 
-  // ── OTP Screen ──────────────────────────────────────
-  if (step === 'otp') {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
-        <div style={{ width: '100%', maxWidth: 420 }}>
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 8 }}>📧</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Check your email</div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
-              We sent a 6-digit code to<br />
-              <span style={{ color: theme.primary, fontWeight: 700 }}>{pendingEmail}</span>
-            </div>
-          </div>
+  const outerWrap = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }
 
-          <div style={card}>
-            <form onSubmit={handleVerifyOTP} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="form-group">
-                <label>Verification Code</label>
-                <input
-                  style={{ ...inputStyle, fontSize: 28, fontWeight: 800, letterSpacing: 12, textAlign: 'center' }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  value={otp}
-                  onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  autoFocus
-                />
-              </div>
+  const submitBtn = (disabled) => ({
+    width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
+    background: theme.grad, border: '1px solid rgba(249,115,22,0.3)',
+    color: '#fff', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1,
+  })
 
-              {otpError && (
-                <div style={{ color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>
-                  {otpError}
-                </div>
-              )}
-
-              <button type="submit" disabled={otpLoading || otp.length !== 6} style={{
-                width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
-                background: theme.grad, border: '1px solid rgba(249,115,22,0.3)',
-                color: '#fff', cursor: otp.length !== 6 ? 'not-allowed' : 'pointer',
-                opacity: otpLoading || otp.length !== 6 ? 0.6 : 1,
-              }}>
-                {otpLoading ? 'Verifying…' : 'Verify Email'}
-              </button>
-
-              <div style={{ textAlign: 'center' }}>
-                <button type="button" onClick={handleResendOTP} disabled={resendCooldown > 0} style={{
-                  background: 'none', border: 'none', fontSize: 13, cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
-                  color: resendCooldown > 0 ? 'rgba(255,255,255,0.3)' : theme.primary,
-                }}>
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
-                </button>
-              </div>
-
-              <button type="button" onClick={() => { setStep('form'); setOtp(''); setOtpError('') }} style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
-                fontSize: 13, cursor: 'pointer', textAlign: 'center',
-              }}>
-                ← Back
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    )
+  const ghostBtn = {
+    background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+    fontSize: 13, cursor: 'pointer', padding: 0,
   }
 
-  // ── Phone OTP Screen ────────────────────────────────
-  if (step === 'phone-otp') {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
-        <div style={{ width: '100%', maxWidth: 420 }}>
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 8 }}>📱</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Verify your phone</div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
-              We sent a 6-digit code to<br />
-              <span style={{ color: theme.primary, fontWeight: 700 }}>{pendingPhone || 'your phone'}</span>
-            </div>
-          </div>
+  const resendBtnStyle = (disabled) => ({
+    background: 'none', border: 'none', fontSize: 13,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    color: disabled ? 'rgba(255,255,255,0.3)' : theme.primary,
+    fontWeight: 600,
+  })
 
-          <div style={card}>
-            <form onSubmit={handleVerifyPhoneOTP} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="form-group">
-                <label>Phone Verification Code</label>
-                <input
-                  style={{ ...inputStyle, fontSize: 28, fontWeight: 800, letterSpacing: 12, textAlign: 'center' }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  value={otp}
-                  onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  autoFocus
-                />
-              </div>
-
-              {otpError && (
-                <div style={{ color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>
-                  {otpError}
-                </div>
-              )}
-
-              <button type="submit" disabled={otpLoading || otp.length !== 6} style={{
-                width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
-                background: theme.grad, border: '1px solid rgba(76,0,176,0.3)',
-                color: '#fff', cursor: otp.length !== 6 ? 'not-allowed' : 'pointer',
-                opacity: otpLoading || otp.length !== 6 ? 0.6 : 1,
-              }}>
-                {otpLoading ? 'Verifying…' : 'Verify Phone'}
-              </button>
-
-              <div style={{ textAlign: 'center' }}>
-                <button type="button" onClick={handleResendPhoneOTP} disabled={resendCooldown > 0} style={{
-                  background: 'none', border: 'none', fontSize: 13, cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
-                  color: resendCooldown > 0 ? 'rgba(255,255,255,0.3)' : theme.primary,
-                }}>
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    )
+  const errStyle = {
+    color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.1)',
+    padding: '8px 12px', borderRadius: 8,
   }
 
   // ── Forgot Password — enter email ───────────────────
   if (step === 'forgot') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
+      <div style={outerWrap}>
         <div style={{ width: '100%', maxWidth: 420 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <div style={{ marginBottom: 8 }}><KeyRound size={48} color="#8b5cf6" /></div>
@@ -365,17 +261,15 @@ export default function Auth() {
               <div className="form-group">
                 <label>Email address</label>
                 <input style={inputStyle} type="email" placeholder="you@example.com" value={forgotEmail}
-                  onChange={e => setForgotEmail(e.target.value)} autoFocus />
+                  onChange={e => setForgotEmail(e.target.value)} autoFocus autoComplete="email" />
               </div>
-              {forgotError && <div style={{ color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>{forgotError}</div>}
-              <button type="submit" disabled={forgotLoading} style={{
-                width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
-                background: theme.grad, border: '1px solid rgba(249,115,22,0.3)',
-                color: '#fff', cursor: 'pointer', opacity: forgotLoading ? 0.7 : 1,
-              }}>{forgotLoading ? 'Sending…' : 'Send Reset Code'}</button>
-              <button type="button" onClick={() => { setStep('form'); setForgotError('') }} style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 13, cursor: 'pointer', textAlign: 'center',
-              }}>← Back to login</button>
+              {forgotError && <div style={errStyle}>{forgotError}</div>}
+              <button type="submit" disabled={forgotLoading} style={submitBtn(forgotLoading)}>
+                {forgotLoading ? 'Sending…' : 'Send Reset Code'}
+              </button>
+              <button type="button" onClick={() => { setStep('form'); setForgotError('') }} style={{ ...ghostBtn, textAlign: 'center' }}>
+                ← Back to login
+              </button>
             </form>
           </div>
         </div>
@@ -386,7 +280,7 @@ export default function Auth() {
   // ── Reset OTP verification ───────────────────────────
   if (step === 'reset-otp') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
+      <div style={outerWrap}>
         <div style={{ width: '100%', maxWidth: 420 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <div style={{ fontSize: 48, marginBottom: 8 }}>📧</div>
@@ -408,23 +302,16 @@ export default function Auth() {
                   autoFocus
                 />
               </div>
-              {forgotError && <div style={{ color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>{forgotError}</div>}
-              <button type="submit" disabled={resetOtp.length !== 6} style={{
-                width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
-                background: theme.grad, border: '1px solid rgba(249,115,22,0.3)',
-                color: '#fff', cursor: resetOtp.length !== 6 ? 'not-allowed' : 'pointer',
-                opacity: resetOtp.length !== 6 ? 0.6 : 1,
-              }}>Continue</button>
-              <div style={{ textAlign: 'center' }}>
-                <button type="button" onClick={handleResendResetOtp} disabled={resendCooldown > 0} style={{
-                  background: 'none', border: 'none', fontSize: 13,
-                  cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
-                  color: resendCooldown > 0 ? 'rgba(255,255,255,0.3)' : theme.primary,
-                }}>{resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}</button>
+              {forgotError && <div style={errStyle}>{forgotError}</div>}
+              <button type="submit" disabled={resetOtp.length !== 6} style={submitBtn(resetOtp.length !== 6)}>
+                Continue
+              </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button type="button" onClick={() => { setStep('forgot'); setForgotError('') }} style={ghostBtn}>← Back</button>
+                <button type="button" onClick={handleResendResetOtp} disabled={resendCooldown > 0} style={resendBtnStyle(resendCooldown > 0)}>
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                </button>
               </div>
-              <button type="button" onClick={() => { setStep('forgot'); setForgotError('') }} style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 13, cursor: 'pointer', textAlign: 'center',
-              }}>← Back</button>
             </form>
           </div>
         </div>
@@ -435,7 +322,7 @@ export default function Auth() {
   // ── New Password ─────────────────────────────────────
   if (step === 'new-password') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
+      <div style={outerWrap}>
         <div style={{ width: '100%', maxWidth: 420 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <div style={{ marginBottom: 8 }}><Lock size={48} color="#8b5cf6" /></div>
@@ -449,7 +336,8 @@ export default function Auth() {
                 <div style={{ position: 'relative' }}>
                   <input style={{ ...inputStyle, paddingRight: 44 }}
                     type={showPw ? 'text' : 'password'} placeholder="Min. 8 chars, uppercase & number"
-                    value={newPassword} onChange={e => setNewPassword(e.target.value)} autoFocus />
+                    value={newPassword} onChange={e => setNewPassword(e.target.value)} autoFocus
+                    autoComplete="new-password" />
                   <button type="button" onClick={() => setShowPw(v => !v)} style={{
                     position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                     background: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 16, border: 'none', cursor: 'pointer',
@@ -459,17 +347,16 @@ export default function Auth() {
               <div className="form-group">
                 <label>Confirm Password</label>
                 <input style={inputStyle} type={showPw ? 'text' : 'password'}
-                  placeholder="Repeat password" value={newConfirm} onChange={e => setNewConfirm(e.target.value)} />
+                  placeholder="Repeat password" value={newConfirm} onChange={e => setNewConfirm(e.target.value)}
+                  autoComplete="new-password" />
               </div>
-              {forgotError && <div style={{ color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>{forgotError}</div>}
-              <button type="submit" disabled={forgotLoading} style={{
-                width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
-                background: theme.grad, border: '1px solid rgba(249,115,22,0.3)',
-                color: '#fff', cursor: 'pointer', opacity: forgotLoading ? 0.7 : 1,
-              }}>{forgotLoading ? 'Resetting…' : 'Reset Password'}</button>
-              <button type="button" onClick={() => { setStep('reset-otp'); setForgotError('') }} style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 13, cursor: 'pointer', textAlign: 'center',
-              }}>← Back</button>
+              {forgotError && <div style={errStyle}>{forgotError}</div>}
+              <button type="submit" disabled={forgotLoading} style={submitBtn(forgotLoading)}>
+                {forgotLoading ? 'Resetting…' : 'Reset Password'}
+              </button>
+              <button type="button" onClick={() => { setStep('reset-otp'); setForgotError('') }} style={{ ...ghostBtn, textAlign: 'center' }}>
+                ← Back
+              </button>
             </form>
           </div>
         </div>
@@ -477,10 +364,11 @@ export default function Auth() {
     )
   }
 
-  // ── Login / Register ─────────────────────────────────
+  // ── Login / Register / Inline OTP ────────────────────
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', zIndex: 1 }}>
+    <div style={outerWrap}>
       <div style={{ width: '100%', maxWidth: 420 }}>
+        {/* Brand header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 32, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
             {settings.logo && <img src={settings.logo} alt={settings.siteName} style={{ height: 40, flexShrink: 0 }} />}
@@ -494,109 +382,193 @@ export default function Auth() {
             </span>
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: 8, fontSize: 14 }}>
-            {tab === 'login' ? 'Welcome back' : 'Create your account'}
+            {step === 'otp' ? `Code sent to ${pendingEmail}` :
+             step === 'phone-otp' ? `Code sent to ${pendingPhone || 'your phone'}` :
+             tab === 'login' ? 'Welcome back' : 'Create your account'}
           </div>
         </div>
 
         <div style={card}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 4, marginBottom: 24, gap: 4 }}>
-            {['login','register'].map(t => (
-              <button key={t} onClick={() => { setTab(t); reset() }} style={{
-                flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 14, fontWeight: 700,
-                background: tab === t ? theme.grad : 'transparent',
-                color: tab === t ? '#fff' : 'rgba(255,255,255,0.4)',
-                border: tab === t ? '1px solid rgba(249,115,22,0.3)' : 'none',
-                cursor: 'pointer',
-              }}>
-                {t === 'login' ? 'Login' : 'Register'}
-              </button>
-            ))}
-          </div>
 
-          {tab === 'login' ? (
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="form-group">
-                <label>Email address</label>
-                <input style={inputStyle} type="email" placeholder="you@example.com"
-                  value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" autoFocus />
-              </div>
-              <div className="form-group">
-                <label>Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input style={{ ...inputStyle, paddingRight: 44 }}
-                    type={showPw ? 'text' : 'password'} placeholder="Your password"
-                    value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
-                  <button type="button" onClick={() => setShowPw(v => !v)} style={{
-                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 16, border: 'none', cursor: 'pointer',
-                  }}>{showPw ? '🙈' : '👁️'}</button>
+          {/* ── Inline Email OTP ── */}
+          {step === 'otp' && (
+            <form onSubmit={handleVerifyOTP} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ textAlign: 'center', marginBottom: 4 }}>
+                <div style={{ fontSize: 40, marginBottom: 10 }}>📧</div>
+                <div style={{ fontWeight: 800, color: '#fff', fontSize: 15, marginBottom: 6 }}>Verify your email</div>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, lineHeight: 1.5 }}>
+                  Enter the 6-digit code we sent to<br />
+                  <span style={{ color: theme.primary, fontWeight: 700 }}>{pendingEmail}</span>
                 </div>
               </div>
-              <div style={{ textAlign: 'right', marginTop: -8 }}>
-                <button type="button" onClick={() => { setStep('forgot'); setForgotError(''); setForgotEmail(email) }} style={{
-                  background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: theme.primary, fontWeight: 600,
-                }}>Forgot password?</button>
-              </div>
-              {error && <div style={{ color: error.startsWith('Password reset') ? '#4ade80' : '#f87171', fontSize: 13, background: error.startsWith('Password reset') ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>{error}</div>}
-              <button type="submit" disabled={loading} style={{
-                width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
-                background: theme.grad, border: '1px solid rgba(249,115,22,0.3)',
-                color: '#fff', cursor: 'pointer', opacity: loading ? 0.7 : 1,
-              }}>{loading ? 'Signing in…' : 'Login'}</button>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
               <div className="form-group">
-                <label>Your name</label>
-                <input style={inputStyle} placeholder="Display name" value={name}
-                  onChange={e => setName(e.target.value)} autoFocus />
+                <label>Verification Code</label>
+                <input
+                  style={{ ...inputStyle, fontSize: 26, fontWeight: 800, letterSpacing: 10, textAlign: 'center' }}
+                  type="text" inputMode="numeric" maxLength={6} placeholder="000000"
+                  value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  autoFocus autoComplete="one-time-code"
+                />
               </div>
-              <div className="form-group">
-                <label>Email address</label>
-                <input style={inputStyle} type="email" placeholder="you@example.com" value={email}
-                  onChange={e => setEmail(e.target.value)} />
+
+              {otpError && <div style={errStyle}>{otpError}</div>}
+
+              <button type="submit" disabled={otpLoading || otp.length !== 6} style={submitBtn(otpLoading || otp.length !== 6)}>
+                {otpLoading ? 'Verifying…' : 'Verify Email'}
+              </button>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button type="button" onClick={() => { setStep('form'); setOtp(''); setOtpError('') }} style={ghostBtn}>
+                  ← Back
+                </button>
+                <button type="button" onClick={handleResendOTP} disabled={resendCooldown > 0} style={resendBtnStyle(resendCooldown > 0)}>
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                </button>
               </div>
-              <div className="form-group">
-                <label>Phone number</label>
-                <div style={{ display: 'flex', gap: 0 }}>
-                  <span style={{
-                    background: 'rgba(76,0,176,0.15)', border: '1px solid rgba(255,255,255,0.12)',
-                    borderRight: 'none', borderRadius: '10px 0 0 10px',
-                    padding: '12px 12px', color: 'rgba(255,255,255,0.7)', fontSize: 14,
-                    display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', userSelect: 'none',
-                  }}>🇮🇳 +91</span>
-                  <input style={{ ...inputStyle, borderRadius: '0 10px 10px 0', flex: 1 }}
-                    type="tel" inputMode="numeric" placeholder="98765 43210"
-                    value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,'').slice(0,10))}
-                    maxLength={10} />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input style={{ ...inputStyle, paddingRight: 44 }}
-                    type={showPw ? 'text' : 'password'} placeholder="Min. 8 chars, uppercase & number"
-                    value={password} onChange={e => setPassword(e.target.value)} />
-                  <button type="button" onClick={() => setShowPw(v => !v)} style={{
-                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 16, border: 'none', cursor: 'pointer',
-                  }}>{showPw ? '🙈' : '👁️'}</button>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Confirm password</label>
-                <input style={inputStyle} type={showPw ? 'text' : 'password'}
-                  placeholder="Repeat password" value={confirm} onChange={e => setConfirm(e.target.value)} />
-              </div>
-              {error && <div style={{ color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>{error}</div>}
-              <button type="submit" disabled={loading} style={{
-                width: '100%', padding: 13, borderRadius: 11, fontWeight: 800, fontSize: 15,
-                background: theme.grad, border: '1px solid rgba(249,115,22,0.3)',
-                color: '#fff', cursor: 'pointer', opacity: loading ? 0.7 : 1,
-              }}>{loading ? 'Creating account…' : 'Create Account'}</button>
             </form>
           )}
+
+          {/* ── Inline Phone OTP ── */}
+          {step === 'phone-otp' && (
+            <form onSubmit={handleVerifyPhoneOTP} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ textAlign: 'center', marginBottom: 4 }}>
+                <div style={{ fontSize: 40, marginBottom: 10 }}>📱</div>
+                <div style={{ fontWeight: 800, color: '#fff', fontSize: 15, marginBottom: 6 }}>Verify your phone</div>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, lineHeight: 1.5 }}>
+                  Enter the 6-digit code we sent to<br />
+                  <span style={{ color: theme.primary, fontWeight: 700 }}>{pendingPhone || 'your phone'}</span>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Phone Verification Code</label>
+                <input
+                  style={{ ...inputStyle, fontSize: 26, fontWeight: 800, letterSpacing: 10, textAlign: 'center' }}
+                  type="text" inputMode="numeric" maxLength={6} placeholder="000000"
+                  value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  autoFocus autoComplete="one-time-code"
+                />
+              </div>
+
+              {otpError && <div style={errStyle}>{otpError}</div>}
+
+              <button type="submit" disabled={otpLoading || otp.length !== 6} style={submitBtn(otpLoading || otp.length !== 6)}>
+                {otpLoading ? 'Verifying…' : 'Verify Phone'}
+              </button>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button type="button" onClick={() => { setStep('form'); setOtp(''); setOtpError('') }} style={ghostBtn}>
+                  ← Back
+                </button>
+                <button type="button" onClick={handleResendPhoneOTP} disabled={resendCooldown > 0} style={resendBtnStyle(resendCooldown > 0)}>
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ── Login / Register ── */}
+          {step === 'form' && (
+            <>
+              {/* Tabs */}
+              <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 4, marginBottom: 24, gap: 4 }}>
+                {['login', 'register'].map(t => (
+                  <button key={t} onClick={() => { setTab(t); reset() }} style={{
+                    flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 14, fontWeight: 700,
+                    background: tab === t ? theme.grad : 'transparent',
+                    color: tab === t ? '#fff' : 'rgba(255,255,255,0.4)',
+                    border: tab === t ? '1px solid rgba(249,115,22,0.3)' : 'none',
+                    cursor: 'pointer',
+                  }}>
+                    {t === 'login' ? 'Login' : 'Register'}
+                  </button>
+                ))}
+              </div>
+
+              {tab === 'login' ? (
+                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div className="form-group">
+                    <label>Email address</label>
+                    <input style={inputStyle} type="email" placeholder="you@example.com"
+                      value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" autoFocus />
+                  </div>
+                  <div className="form-group">
+                    <label>Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input style={{ ...inputStyle, paddingRight: 44 }}
+                        type={showPw ? 'text' : 'password'} placeholder="Your password"
+                        value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
+                      <button type="button" onClick={() => setShowPw(v => !v)} style={{
+                        position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 16, border: 'none', cursor: 'pointer',
+                      }}>{showPw ? '🙈' : '👁️'}</button>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', marginTop: -8 }}>
+                    <button type="button" onClick={() => { setStep('forgot'); setForgotError(''); setForgotEmail(email) }} style={{
+                      background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: theme.primary, fontWeight: 600,
+                    }}>Forgot password?</button>
+                  </div>
+                  {error && <div style={{ color: error.startsWith('Password reset') ? '#4ade80' : '#f87171', fontSize: 13, background: error.startsWith('Password reset') ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 8 }}>{error}</div>}
+                  <button type="submit" disabled={loading} style={submitBtn(loading)}>
+                    {loading ? 'Signing in…' : 'Login'}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div className="form-group">
+                    <label>Your name</label>
+                    <input style={inputStyle} placeholder="Display name" value={name}
+                      onChange={e => setName(e.target.value)} autoFocus autoComplete="name" />
+                  </div>
+                  <div className="form-group">
+                    <label>Email address</label>
+                    <input style={inputStyle} type="email" placeholder="you@example.com" value={email}
+                      onChange={e => setEmail(e.target.value)} autoComplete="email" />
+                  </div>
+                  <div className="form-group">
+                    <label>Phone number</label>
+                    <div style={{ display: 'flex', gap: 0 }}>
+                      <span style={{
+                        background: 'rgba(76,0,176,0.15)', border: '1px solid rgba(255,255,255,0.12)',
+                        borderRight: 'none', borderRadius: '10px 0 0 10px',
+                        padding: '12px 12px', color: 'rgba(255,255,255,0.7)', fontSize: 14,
+                        display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', userSelect: 'none',
+                      }}>🇮🇳 +91</span>
+                      <input style={{ ...inputStyle, borderRadius: '0 10px 10px 0', flex: 1 }}
+                        type="tel" inputMode="numeric" placeholder="98765 43210"
+                        value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        maxLength={10} autoComplete="tel" />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input style={{ ...inputStyle, paddingRight: 44 }}
+                        type={showPw ? 'text' : 'password'} placeholder="Min. 8 chars, uppercase & number"
+                        value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
+                      <button type="button" onClick={() => setShowPw(v => !v)} style={{
+                        position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 16, border: 'none', cursor: 'pointer',
+                      }}>{showPw ? '🙈' : '👁️'}</button>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Confirm password</label>
+                    <input style={inputStyle} type={showPw ? 'text' : 'password'}
+                      placeholder="Repeat password" value={confirm} onChange={e => setConfirm(e.target.value)}
+                      autoComplete="new-password" />
+                  </div>
+                  {error && <div style={errStyle}>{error}</div>}
+                  <button type="submit" disabled={loading} style={submitBtn(loading)}>
+                    {loading ? 'Creating account…' : 'Create Account'}
+                  </button>
+                </form>
+              )}
+            </>
+          )}
+
         </div>
       </div>
     </div>
