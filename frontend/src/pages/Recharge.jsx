@@ -525,15 +525,17 @@ function PackCard({ pack, sym, selected, onClick }) {
         </div>
       </div>
 
-      {/* Pack title — set by admin */}
+      {/* Total diamonds */}
       <div style={{ fontWeight: 900, color: '#fff', fontSize: 13, marginBottom: 2, lineHeight: 1.3 }}>
-        {pack.title}
+        {pack.diamonds > 0
+          ? `${pack.diamonds + (pack.bonus || 0)} Diamonds`
+          : pack.title}
       </div>
 
-      {/* Bonus */}
-      {pack.bonus > 0 && (
+      {/* Bonus breakdown */}
+      {pack.diamonds > 0 && pack.bonus > 0 && (
         <div style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700, marginBottom: 2 }}>
-          +{pack.bonus} Bonus
+          ({pack.diamonds} + {pack.bonus})
         </div>
       )}
 
