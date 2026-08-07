@@ -179,6 +179,17 @@ exports.handleWebhook = async (req, res) => {
       }
     }
 
+    // Optional 5-minute replay window (VULN-22)
+    const tsHeader = req.headers["x-novapay-timestamp"]
+    if (tsHeader) {
+      const tsSec  = parseInt(tsHeader, 10)
+      const nowSec = Math.floor(Date.now() / 1000)
+      if (isNaN(tsSec) || Math.abs(nowSec - tsSec) > 300) {
+        console.warn("[WEBHOOK] NovaPay timestamp rejected:", tsHeader)
+        return res.status(401).json({ message: "Request expired" })
+      }
+    }
+
     const { event, payment_id, order_id, status } = parsed
     console.log("[WEBHOOK] NovaPay received:", { event, payment_id, order_id, status })
 

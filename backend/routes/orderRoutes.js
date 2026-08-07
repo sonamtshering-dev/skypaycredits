@@ -166,8 +166,13 @@ router.post("/", protect, async (req, res) => {
       finalPrice     = Math.max(1, pack.price - couponDiscount)
       appliedCode    = coupon.code
 
-      // Increment usage count
-      await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } })
+      // Atomic increment — rejects if limit was hit by a concurrent request (VULN-01)
+      const updatedCoupon = await Coupon.findOneAndUpdate(
+        { _id: coupon._id, $or: [{ usageLimit: { $lte: 0 } }, { usedCount: { $lt: coupon.usageLimit } }] },
+        { $inc: { usedCount: 1 } },
+        { new: true }
+      )
+      if (!updatedCoupon) return res.status(400).json({ message: "This coupon has reached its usage limit" })
     }
 
     const order = await Order.create({
@@ -227,8 +232,13 @@ router.post("/:id/recharge", protect, adminOnly, validateObjectId, async (req, r
 router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
   try {
     const { status, adminNote, paymentStatus } = req.body
+    const VALID_ORDER_STATUSES = ['Pending', 'Processing', 'Completed', 'Failed', 'Refunded']
     const update = {}
-    if (status)                  update.status    = status
+    if (status) {
+      if (!VALID_ORDER_STATUSES.includes(status))
+        return res.status(400).json({ message: "Invalid status value" })
+      update.status = status
+    }
     if (adminNote !== undefined) update.adminNote = adminNote
     if (status === 'Completed') {
       update.paymentStatus     = 'paid'

@@ -40,9 +40,7 @@ router.put("/me", protect, async (req, res) => {
   try {
     const name = req.body.name?.trim().slice(0, 50)
     if (!name) return res.status(400).json({ message: "Name is required" })
-    const phone = req.body.phone?.trim() || undefined
-    const update = { name, ...(phone !== undefined ? { phone } : {}) }
-    const user = await User.findByIdAndUpdate(req.user._id, update, { new: true }).select("-password")
+    const user = await User.findByIdAndUpdate(req.user._id, { name }, { new: true }).select("-password")
     res.json(user)
   } catch (err) {
     res.status(400).json({ message: err.message })

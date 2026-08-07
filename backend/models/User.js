@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
     status:   { type: String, enum: ["active","banned"], default: "active" },
     isEmailVerified: { type: Boolean, default: false },
     isPhoneVerified: { type: Boolean, default: false },
+    tokenVersion:    { type: Number, default: 0 },
   },
   { timestamps: true }
 )

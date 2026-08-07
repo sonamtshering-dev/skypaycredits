@@ -1,4 +1,6 @@
 const securityLog = require('../services/securityLogger')
+const crypto = require('crypto')
+const mongoose = require('mongoose')
 const jwt   = require("jsonwebtoken")
 const User  = require("../models/User")
 const OTP   = require("../models/OTP")
@@ -6,14 +8,49 @@ const { generateOTP, sendOTPEmail, sendPasswordResetEmail } = require("../servic
 const { sendSMSOTP, maskPhone } = require("../services/smsService")
 
 const isProd = process.env.NODE_ENV === 'production'
-const makeToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" })
+const makeToken = (id, tokenVersion = 0) => jwt.sign({ id, tokenVersion }, process.env.JWT_SECRET, { expiresIn: "7d" })
 const SITE_URL = process.env.SITE_URL || 'https://nitrogenstore.in'
 const logoUrl  = (settings) => settings?.logo ? `${SITE_URL}${settings.logo}` : ''
 
+// ── OTP security helpers ────────────────────────────────
+function hashOTP(otp) {
+  return crypto.createHash('sha256').update(String(otp)).digest('hex')
+}
+function safeOTPCompare(storedHash, submitted) {
+  const a = Buffer.from(storedHash)
+  const b = Buffer.from(hashOTP(submitted))
+  if (a.length !== b.length) return false
+  return crypto.timingSafeEqual(a, b)
+}
+
+// ── MongoDB-backed login attempt tracking (VULN-07) ────
+const loginAttemptSchema = new mongoose.Schema({
+  email:     { type: String, required: true, unique: true },
+  count:     { type: Number, default: 0 },
+  expiresAt: { type: Date },
+}, { versionKey: false })
+loginAttemptSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+const LoginAttempt = mongoose.models.LoginAttempt
+  || mongoose.model('LoginAttempt', loginAttemptSchema)
+
+const MAX_LOGIN_ATTEMPTS = 10
+const LOCKOUT_MS = 15 * 60 * 1000
+
+async function getLoginAttempts(email) {
+  return LoginAttempt.findOne({ email })
+}
+async function incrementLoginAttempts(email) {
+  return LoginAttempt.findOneAndUpdate(
+    { email },
+    { $inc: { count: 1 }, $set: { expiresAt: new Date(Date.now() + LOCKOUT_MS) }, $setOnInsert: { email } },
+    { upsert: true, new: true }
+  )
+}
+async function resetLoginAttempts(email) {
+  await LoginAttempt.deleteOne({ email })
+}
+
 // ── Register ──────────────────────────────────────────
-// Supports two modes:
-//   1. Pre-verified: emailVerifiedToken + phoneVerifiedToken passed → create account immediately
-//   2. Legacy: no tokens → create unverified account + send email OTP
 exports.register = async (req, res) => {
   try {
     const name     = req.body.name?.trim()
@@ -59,7 +96,7 @@ exports.register = async (req, res) => {
         return res.status(400).json({ message: "Verification expired. Please verify email and phone again." })
       }
       const user = await User.create({ name, email, password, phone, isEmailVerified: true })
-      const token = makeToken(user._id)
+      const token = makeToken(user._id, user.tokenVersion || 0)
       res.cookie("token", token, { httpOnly: true, secure: isProd, sameSite: "strict", maxAge: 7*24*60*60*1000 })
       securityLog.loginSuccess(user._id, req.ip)
       return res.status(201).json({ token, user: { _id: user._id, name: user.name, email: user.email, role: user.role } })
@@ -69,7 +106,7 @@ exports.register = async (req, res) => {
     const user = await User.create({ name, email, password, ...(phone ? { phone } : {}), isEmailVerified: false })
     await OTP.deleteMany({ email })
     const otp = generateOTP()
-    await OTP.create({ email, otp })
+    await OTP.create({ email, otp: hashOTP(otp) })
     try {
       const settings = await require("../models/Settings").findOne()
       await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
@@ -99,10 +136,15 @@ exports.verifyOTP = async (req, res) => {
     if (!record)
       return res.status(400).json({ message: "OTP expired or not found. Please register again." })
 
-    if (record.otp !== otp)
+    if (!safeOTPCompare(record.otp, otp)) {
+      const updated = await OTP.findByIdAndUpdate(record._id, { $inc: { failedAttempts: 1 } }, { new: true })
+      if (updated && updated.failedAttempts >= 5) {
+        await OTP.deleteOne({ _id: record._id })
+        return res.status(429).json({ message: "Too many incorrect attempts. Please request a new code." })
+      }
       return res.status(400).json({ message: "Incorrect verification code" })
+    }
 
-    // Mark email as verified
     const user = await User.findOneAndUpdate(
       { email },
       { isEmailVerified: true },
@@ -110,14 +152,12 @@ exports.verifyOTP = async (req, res) => {
     )
     if (!user) return res.status(404).json({ message: "User not found" })
 
-    // Clean up email OTP
     await OTP.deleteMany({ email, purpose: 'verify' })
 
-    // If user has phone → send phone OTP next
     if (user.phone) {
       await OTP.deleteMany({ email, purpose: 'phone' })
       const phoneOtp = generateOTP()
-      await OTP.create({ email, phone: user.phone, otp: phoneOtp, purpose: 'phone' })
+      await OTP.create({ email, phone: user.phone, otp: hashOTP(phoneOtp), purpose: 'phone' })
       try {
         const settings = await require("../models/Settings").findOne()
         await sendSMSOTP(user.phone, phoneOtp, settings?.siteName || 'Nitrogen Store')
@@ -131,11 +171,10 @@ exports.verifyOTP = async (req, res) => {
       })
     }
 
-    // No phone — issue token directly
-    const token = makeToken(user._id)
+    const token = makeToken(user._id, user.tokenVersion || 0)
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
       sameSite: "strict",
       maxAge: 7*24*60*60*1000
     })
@@ -158,17 +197,25 @@ exports.verifyPhoneOTP = async (req, res) => {
 
     const record = await OTP.findOne({ email, purpose: 'phone' })
     if (!record) return res.status(400).json({ message: "OTP expired. Please request a new one." })
-    if (record.otp !== otp) return res.status(400).json({ message: "Incorrect code" })
+
+    if (!safeOTPCompare(record.otp, otp)) {
+      const updated = await OTP.findByIdAndUpdate(record._id, { $inc: { failedAttempts: 1 } }, { new: true })
+      if (updated && updated.failedAttempts >= 5) {
+        await OTP.deleteOne({ _id: record._id })
+        return res.status(429).json({ message: "Too many incorrect attempts. Please request a new code." })
+      }
+      return res.status(400).json({ message: "Incorrect code" })
+    }
 
     const user = await User.findOneAndUpdate({ email }, { isPhoneVerified: true }, { new: true })
     if (!user) return res.status(404).json({ message: "User not found" })
 
     await OTP.deleteMany({ email, purpose: 'phone' })
 
-    const token = makeToken(user._id)
+    const token = makeToken(user._id, user.tokenVersion || 0)
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
       sameSite: "strict",
       maxAge: 7*24*60*60*1000
     })
@@ -193,7 +240,7 @@ exports.resendPhoneOTP = async (req, res) => {
 
     await OTP.deleteMany({ email, purpose: 'phone' })
     const otp = generateOTP()
-    await OTP.create({ email, phone: user.phone, otp, purpose: 'phone' })
+    await OTP.create({ email, phone: user.phone, otp: hashOTP(otp), purpose: 'phone' })
 
     const settings = await require("../models/Settings").findOne()
     await sendSMSOTP(user.phone, otp, settings?.siteName || 'Nitrogen Store')
@@ -215,7 +262,7 @@ exports.resendOTP = async (req, res) => {
 
     await OTP.deleteMany({ email })
     const otp = generateOTP()
-    await OTP.create({ email, otp })
+    await OTP.create({ email, otp: hashOTP(otp) })
 
     const settings = await require("../models/Settings").findOne()
     await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
@@ -227,18 +274,6 @@ exports.resendOTP = async (req, res) => {
 }
 
 // ── Login ─────────────────────────────────────────────
-const loginAttempts = new Map()
-const LOCKOUT_MS    = 15 * 60 * 1000
-
-setInterval(() => {
-  const now = Date.now()
-  for (const [email, record] of loginAttempts) {
-    if (now - record.firstAt > LOCKOUT_MS) loginAttempts.delete(email)
-  }
-}, 60_000)
-
-const MAX_ATTEMPTS = 10
-
 exports.login = async (req, res) => {
   try {
     const email    = req.body.email?.trim().toLowerCase()
@@ -246,30 +281,26 @@ exports.login = async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ message: "Email and password are required" })
 
-    const now    = Date.now()
-    const record = loginAttempts.get(email) || { count: 0, firstAt: now }
-    if (now - record.firstAt > LOCKOUT_MS) {
-      loginAttempts.set(email, { count: 0, firstAt: now })
-    } else if (record.count >= MAX_ATTEMPTS) {
-      const wait = Math.ceil((LOCKOUT_MS - (now - record.firstAt)) / 60000)
+    // Check MongoDB-backed lockout (VULN-07)
+    const attempts = await getLoginAttempts(email)
+    if (attempts && attempts.count >= MAX_LOGIN_ATTEMPTS) {
+      const wait = Math.max(1, Math.ceil((new Date(attempts.expiresAt) - Date.now()) / 60000))
       return res.status(429).json({ message: `Too many failed attempts. Try again in ${wait} minute(s)` })
     }
 
     const user = await User.findOne({ email })
     if (!user || !user.password) {
-      record.count++; loginAttempts.set(email, record)
+      await incrementLoginAttempts(email)
       securityLog.loginFailed(email, req.ip)
       return res.status(401).json({ message: "Invalid email or password" })
     }
     if (user.status === "banned")
       return res.status(403).json({ message: "Account has been banned" })
 
-    // Check email verified
     if (!user.isEmailVerified) {
-      // Re-send OTP
       await OTP.deleteMany({ email })
       const otp = generateOTP()
-      await OTP.create({ email, otp })
+      await OTP.create({ email, otp: hashOTP(otp) })
       const settings = await require("../models/Settings").findOne()
       await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings)).catch(() => {})
       return res.status(403).json({
@@ -281,18 +312,21 @@ exports.login = async (req, res) => {
 
     const ok = await user.comparePassword(password)
     if (!ok) {
-      record.count++; loginAttempts.set(email, record)
+      const rec = await incrementLoginAttempts(email)
       securityLog.loginFailed(email, req.ip)
+      if (rec && rec.count >= MAX_LOGIN_ATTEMPTS) {
+        return res.status(429).json({ message: `Too many failed attempts. Try again in 15 minute(s)` })
+      }
       return res.status(401).json({ message: "Invalid email or password" })
     }
 
-    loginAttempts.delete(email)
+    await resetLoginAttempts(email)
     securityLog.loginSuccess(user._id, req.ip)
 
-    const token = makeToken(user._id)
+    const token = makeToken(user._id, user.tokenVersion || 0)
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
       sameSite: "strict",
       maxAge: 7*24*60*60*1000
     })
@@ -311,19 +345,61 @@ exports.getMe = async (req, res) => {
   res.json({ _id: u._id, name: u.name, email: u.email, role: u.role, avatar: u.avatar, createdAt: u.createdAt })
 }
 
-// ── Forgot Password — sends reset OTP ────────────────
+// ── Update profile (name only) ────────────────────────
+exports.updateProfile = async (req, res) => {
+  try {
+    const name = req.body.name?.trim().slice(0, 50)
+    if (!name) return res.status(400).json({ message: "Name is required" })
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name },
+      { new: true }
+    ).select("-password")
+    if (!user) return res.status(404).json({ message: "User not found" })
+    res.json({ user: { _id: user._id, name: user.name, email: user.email, role: user.role } })
+  } catch (err) {
+    res.status(500).json({ message: isProd ? "Update failed" : err.message })
+  }
+}
+
+// ── Change password ────────────────────────────────────
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body
+    if (!currentPassword || !newPassword)
+      return res.status(400).json({ message: "Current and new password are required" })
+    if (newPassword.length < 8)
+      return res.status(400).json({ message: "Password must be at least 8 characters" })
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword))
+      return res.status(400).json({ message: "Password must contain uppercase, lowercase and a number" })
+
+    const user = await User.findById(req.user._id)
+    if (!user) return res.status(404).json({ message: "User not found" })
+
+    const ok = await user.comparePassword(currentPassword)
+    if (!ok) return res.status(401).json({ message: "Current password is incorrect" })
+
+    user.password     = newPassword
+    user.tokenVersion = (user.tokenVersion || 0) + 1
+    await user.save()
+    res.json({ message: "Password changed successfully" })
+  } catch (err) {
+    res.status(500).json({ message: isProd ? "Password change failed" : err.message })
+  }
+}
+
+// ── Forgot Password ───────────────────────────────────
 exports.forgotPassword = async (req, res) => {
   try {
     const email = req.body.email?.trim().toLowerCase()
     if (!email) return res.status(400).json({ message: 'Email required' })
 
     const user = await User.findOne({ email, isEmailVerified: true })
-    // Always respond the same way to prevent email enumeration
     if (!user) return res.json({ message: 'If that email exists, a reset code has been sent.' })
 
     await OTP.deleteMany({ email, purpose: 'reset' })
     const otp = generateOTP()
-    await OTP.create({ email, otp, purpose: 'reset' })
+    await OTP.create({ email, otp: hashOTP(otp), purpose: 'reset' })
 
     const settings = await require('../models/Settings').findOne()
     await sendPasswordResetEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings)).catch(err => {
@@ -337,7 +413,7 @@ exports.forgotPassword = async (req, res) => {
   }
 }
 
-// ── Reset Password — verifies OTP + sets new password ─
+// ── Reset Password ─────────────────────────────────────
 exports.resetPassword = async (req, res) => {
   try {
     const email    = req.body.email?.trim().toLowerCase()
@@ -353,12 +429,20 @@ exports.resetPassword = async (req, res) => {
 
     const record = await OTP.findOne({ email, purpose: 'reset' })
     if (!record) return res.status(400).json({ message: 'Reset code expired. Please request a new one.' })
-    if (record.otp !== otp) return res.status(400).json({ message: 'Incorrect reset code' })
+
+    if (!safeOTPCompare(record.otp, otp)) {
+      const updated = await OTP.findByIdAndUpdate(record._id, { $inc: { failedAttempts: 1 } }, { new: true })
+      if (updated && updated.failedAttempts >= 5) {
+        await OTP.deleteOne({ _id: record._id })
+        return res.status(429).json({ message: "Too many incorrect attempts. Please request a new code." })
+      }
+      return res.status(400).json({ message: 'Incorrect reset code' })
+    }
 
     const user = await User.findOne({ email })
     if (!user) return res.status(404).json({ message: 'User not found' })
 
-    user.password = password // pre-save hook will hash it
+    user.password = password
     await user.save()
     await OTP.deleteMany({ email, purpose: 'reset' })
 
@@ -369,7 +453,7 @@ exports.resetPassword = async (req, res) => {
   }
 }
 
-// ── Pre-registration: send email OTP ─────────────────
+// ── Pre-registration: send email OTP ──────────────────
 exports.sendEmailOTPPre = async (req, res) => {
   try {
     const email = req.body.email?.trim().toLowerCase()
@@ -379,7 +463,7 @@ exports.sendEmailOTPPre = async (req, res) => {
     if (exists) return res.status(400).json({ message: "Email already registered" })
     const otp = generateOTP()
     await OTP.deleteMany({ email, purpose: 'pre-email' })
-    await OTP.create({ email, otp, purpose: 'pre-email' })
+    await OTP.create({ email, otp: hashOTP(otp), purpose: 'pre-email' })
     const settings = await require("../models/Settings").findOne()
     await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
     res.json({ message: "OTP sent to your email" })
@@ -388,7 +472,7 @@ exports.sendEmailOTPPre = async (req, res) => {
   }
 }
 
-// ── Pre-registration: verify email OTP ───────────────
+// ── Pre-registration: verify email OTP ────────────────
 exports.verifyEmailOTPPre = async (req, res) => {
   try {
     const email = req.body.email?.trim().toLowerCase()
@@ -396,7 +480,16 @@ exports.verifyEmailOTPPre = async (req, res) => {
     if (!email || !otp) return res.status(400).json({ message: "Email and OTP required" })
     const record = await OTP.findOne({ email, purpose: 'pre-email' })
     if (!record) return res.status(400).json({ message: "OTP expired. Request a new code." })
-    if (record.otp !== otp) return res.status(400).json({ message: "Incorrect code" })
+
+    if (!safeOTPCompare(record.otp, otp)) {
+      const updated = await OTP.findByIdAndUpdate(record._id, { $inc: { failedAttempts: 1 } }, { new: true })
+      if (updated && updated.failedAttempts >= 5) {
+        await OTP.deleteOne({ _id: record._id })
+        return res.status(429).json({ message: "Too many incorrect attempts. Request a new code." })
+      }
+      return res.status(400).json({ message: "Incorrect code" })
+    }
+
     await OTP.deleteMany({ email, purpose: 'pre-email' })
     const token = jwt.sign({ email, type: 'email-verified' }, process.env.JWT_SECRET, { expiresIn: '15m' })
     res.json({ verified: true, token })
@@ -405,7 +498,7 @@ exports.verifyEmailOTPPre = async (req, res) => {
   }
 }
 
-// ── Pre-registration: send phone OTP ─────────────────
+// ── Pre-registration: send phone OTP ──────────────────
 exports.sendPhoneOTPPre = async (req, res) => {
   try {
     const rawPhone = req.body.phone?.trim()
@@ -417,7 +510,7 @@ exports.sendPhoneOTPPre = async (req, res) => {
     if (taken) return res.status(400).json({ message: "Phone number already registered" })
     const otp = generateOTP()
     await OTP.deleteMany({ phone, purpose: 'pre-phone' })
-    await OTP.create({ phone, otp, purpose: 'pre-phone' })
+    await OTP.create({ phone, otp: hashOTP(otp), purpose: 'pre-phone' })
     const settings = await require("../models/Settings").findOne()
     await sendSMSOTP(phone, otp, settings?.siteName || 'Nitrogen Store')
     res.json({ message: "OTP sent to your phone" })
@@ -426,7 +519,7 @@ exports.sendPhoneOTPPre = async (req, res) => {
   }
 }
 
-// ── Pre-registration: verify phone OTP ───────────────
+// ── Pre-registration: verify phone OTP ────────────────
 exports.verifyPhoneOTPPre = async (req, res) => {
   try {
     const rawPhone = req.body.phone?.trim()
@@ -436,7 +529,16 @@ exports.verifyPhoneOTPPre = async (req, res) => {
     if (!phone10 || !otp) return res.status(400).json({ message: "Phone and OTP required" })
     const record = await OTP.findOne({ phone, purpose: 'pre-phone' })
     if (!record) return res.status(400).json({ message: "OTP expired. Request a new code." })
-    if (record.otp !== otp) return res.status(400).json({ message: "Incorrect code" })
+
+    if (!safeOTPCompare(record.otp, otp)) {
+      const updated = await OTP.findByIdAndUpdate(record._id, { $inc: { failedAttempts: 1 } }, { new: true })
+      if (updated && updated.failedAttempts >= 5) {
+        await OTP.deleteOne({ _id: record._id })
+        return res.status(429).json({ message: "Too many incorrect attempts. Request a new code." })
+      }
+      return res.status(400).json({ message: "Incorrect code" })
+    }
+
     await OTP.deleteMany({ phone, purpose: 'pre-phone' })
     const token = jwt.sign({ phone, type: 'phone-verified' }, process.env.JWT_SECRET, { expiresIn: '15m' })
     res.json({ verified: true, token })

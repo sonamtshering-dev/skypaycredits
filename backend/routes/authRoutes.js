@@ -1,7 +1,7 @@
 const express = require("express")
 const router  = express.Router()
 const rateLimit = require("express-rate-limit")
-const { register, login, getMe, logout, verifyOTP, resendOTP, verifyPhoneOTP, resendPhoneOTP, forgotPassword, resetPassword, sendEmailOTPPre, verifyEmailOTPPre, sendPhoneOTPPre, verifyPhoneOTPPre } = require("../controllers/authController")
+const { register, login, getMe, logout, verifyOTP, resendOTP, verifyPhoneOTP, resendPhoneOTP, forgotPassword, resetPassword, sendEmailOTPPre, verifyEmailOTPPre, sendPhoneOTPPre, verifyPhoneOTPPre, updateProfile, changePassword } = require("../controllers/authController")
 const { protect } = require("../middlewares/authMiddleware")
 
 // Rate limit OTP endpoints
@@ -36,6 +36,8 @@ router.post("/forgot-password",  otpLimiter, forgotPassword)
 router.post("/reset-password",   otpLimiter, resetPassword)
 router.post("/login",            loginLimiter, login)
 router.get("/me",                protect, getMe)
+router.put("/profile",           protect, updateProfile)
+router.put("/password",          protect, changePassword)
 router.post("/logout",           logout)
 
 module.exports = router

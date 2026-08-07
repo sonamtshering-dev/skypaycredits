@@ -21,6 +21,10 @@ const protect = async (req, res, next) => {
     const user    = await User.findById(decoded.id).select("-password")
     if (!user) return res.status(401).json({ message: "User not found" })
 
+    // Reject tokens issued before a password change (VULN-19)
+    if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== user.tokenVersion)
+      return res.status(401).json({ message: "Session expired, please log in again" })
+
     // Block banned users from all protected routes
     if (user.status === "banned") return res.status(403).json({ message: "Account has been banned" })
 

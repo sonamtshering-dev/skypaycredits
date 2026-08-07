@@ -17,13 +17,17 @@ function verifyFintopupCallback(req, res, next) {
       return res.status(403).json({ received: false, message: "Forbidden" })
     }
   }
-  // Shared-secret check (optional — set FINTOPUP_CALLBACK_SECRET)
-  if (FINTOPUP_CALLBACK_SECRET) {
+  // Shared-secret check — required in production (VULN-02/14)
+  if (!FINTOPUP_CALLBACK_SECRET) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error("[FINTOPUP] FINTOPUP_CALLBACK_SECRET not set — refusing all callbacks in production")
+      return res.status(500).json({ received: false, message: "Callback not configured" })
+    }
+  } else {
     const sig = req.headers["x-fintopup-secret"] || ""
-    if (!sig || !crypto.timingSafeEqual(
-      Buffer.from(FINTOPUP_CALLBACK_SECRET),
-      Buffer.from(sig.padEnd(FINTOPUP_CALLBACK_SECRET.length, "\0").slice(0, FINTOPUP_CALLBACK_SECRET.length))
-    )) {
+    const secretBuf = Buffer.from(FINTOPUP_CALLBACK_SECRET)
+    const sigBuf    = Buffer.from(sig)
+    if (!sig || sigBuf.length !== secretBuf.length || !crypto.timingSafeEqual(secretBuf, sigBuf)) {
       console.warn("[FINTOPUP] Callback rejected — invalid secret")
       return res.status(401).json({ received: false, message: "Invalid secret" })
     }

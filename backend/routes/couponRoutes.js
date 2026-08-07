@@ -108,7 +108,19 @@ router.post("/", protect, adminOnly, async (req, res) => {
 // PUT /api/coupons/:id — update coupon
 router.put("/:id", protect, adminOnly, async (req, res) => {
   try {
-    const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    const { code, type, value, minOrder, maxDiscount, usageLimit, perUser, active, expiresAt, gameIds } = req.body
+    const update = {}
+    if (code        !== undefined) update.code        = code.toUpperCase().trim()
+    if (type        !== undefined) update.type        = type
+    if (value       !== undefined) update.value       = value
+    if (minOrder    !== undefined) update.minOrder    = minOrder
+    if (maxDiscount !== undefined) update.maxDiscount = maxDiscount
+    if (usageLimit  !== undefined) update.usageLimit  = usageLimit
+    if (perUser     !== undefined) update.perUser     = perUser
+    if (active      !== undefined) update.active      = active
+    if (expiresAt   !== undefined) update.expiresAt   = expiresAt
+    if (gameIds     !== undefined) update.gameIds     = gameIds
+    const coupon = await Coupon.findByIdAndUpdate(req.params.id, update, { new: true })
     if (!coupon) return res.status(404).json({ message: "Coupon not found" })
     res.json(coupon)
   } catch (err) {

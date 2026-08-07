@@ -43,9 +43,10 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"],
 }))
 
-// Webhook — raw body MUST be before express.json
+// Webhook — raw body MUST be before express.json; own rate limiter (VULN-09)
 app.post(
   "/api/payment/webhook",
+  rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false }),
   express.raw({ type: "application/json" }),
   require("./routes/paymentRoutes").webhookHandler
 )
@@ -55,9 +56,13 @@ app.use(express.urlencoded({ extended: true, limit: "100kb" }))
 
 function sanitize(obj) {
   if (!obj || typeof obj !== "object") return obj
+  if (Array.isArray(obj)) {
+    obj.forEach((item, i) => { obj[i] = sanitize(item) })
+    return obj
+  }
   for (const key of Object.keys(obj)) {
     if (key.startsWith("$") || key.includes(".")) delete obj[key]
-    else sanitize(obj[key])
+    else obj[key] = sanitize(obj[key])
   }
   return obj
 }
@@ -111,6 +116,8 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
   { console.error("FATAL: JWT_SECRET must be at least 32 characters"); process.exit(1) }
 if (!process.env.NOVAPAY_API_KEY)  console.warn("WARNING: NOVAPAY_API_KEY not set — payments will fail")
 if (!process.env.FINTOPUP_API_KEY) console.warn("WARNING: FINTOPUP_API_KEY not set — game top-ups will fail")
+if (!process.env.FINTOPUP_CALLBACK_SECRET && process.env.NODE_ENV === "production")
+  console.warn("WARNING: FINTOPUP_CALLBACK_SECRET not set — fintopup callbacks are unauthenticated")
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
