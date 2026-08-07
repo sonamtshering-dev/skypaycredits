@@ -519,14 +519,14 @@ export default function Auth() {
               <div className="form-group">
                 <label>Email address</label>
                 <input style={inputStyle} type="email" placeholder="you@example.com"
-                  value={email} onChange={e => setEmail(e.target.value)} autoFocus />
+                  value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" autoFocus />
               </div>
               <div className="form-group">
                 <label>Password</label>
                 <div style={{ position: 'relative' }}>
                   <input style={{ ...inputStyle, paddingRight: 44 }}
                     type={showPw ? 'text' : 'password'} placeholder="Your password"
-                    value={password} onChange={e => setPassword(e.target.value)} />
+                    value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
                   <button type="button" onClick={() => setShowPw(v => !v)} style={{
                     position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                     background: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 16, border: 'none', cursor: 'pointer',
