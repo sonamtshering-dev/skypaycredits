@@ -51,20 +51,24 @@ async function run() {
     if (exists) { console.log(`  SKIP (already exists): ${u.email}`); skipped++; continue }
 
     const hash = await bcrypt.hash(u.password, 10)
-    await User.create({
-      name:            u.name,
-      email:           u.email,
-      phone:           u.phone,
-      password:        hash,
-      role:            'user',
-      status:          u.status,
-      isEmailVerified: u.isEmailVerified,
-      isPhoneVerified: u.isPhoneVerified,
-      tokenVersion:    0,
-      createdAt:       u.createdAt,
-    })
-    console.log(`  OK: ${u.email}`)
-    inserted++
+    try {
+      await User.create({
+        name:            u.name,
+        email:           u.email,
+        phone:           u.phone,
+        password:        hash,
+        role:            'user',
+        status:          u.status,
+        isEmailVerified: false,
+        isPhoneVerified: false,
+        tokenVersion:    0,
+      })
+      console.log(`  OK: ${u.email}`)
+      inserted++
+    } catch (err) {
+      console.log(`  ERR (${u.email}): ${err.message}`)
+      skipped++
+    }
   }
 
   console.log(`\nDone. Inserted: ${inserted}, Skipped: ${skipped}`)
