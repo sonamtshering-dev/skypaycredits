@@ -87,8 +87,12 @@ export default function AdminSettings() {
           <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12 }}>Social Links</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div className="form-group">
-              <label>WhatsApp (number or group link)</label>
-              <input style={inp} value={form.whatsapp || ''} onChange={e => set('whatsapp', e.target.value)} placeholder="919876543210 or https://chat.whatsapp.com/..." />
+              <label>WhatsApp Store Link (footer icon)</label>
+              <input style={inp} value={form.whatsapp || ''} onChange={e => set('whatsapp', e.target.value)} placeholder="https://chat.whatsapp.com/... or group number" />
+            </div>
+            <div className="form-group">
+              <label>WhatsApp Support Number (floating button)</label>
+              <input style={inp} value={form.whatsappSupport || ''} onChange={e => set('whatsappSupport', e.target.value)} placeholder="917085396397" />
             </div>
             <div className="form-group">
               <label>Instagram URL</label>

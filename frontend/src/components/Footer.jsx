@@ -162,9 +162,9 @@ export default function Footer() {
       </footer>
 
       {/* WhatsApp sticky float button */}
-      {settings.whatsapp && (
+      {settings.whatsappSupport && (
         <a
-          href={waLink(settings.whatsapp)}
+          href={waLink(settings.whatsappSupport)}
           target="_blank"
           rel="noopener noreferrer"
           title="Chat on WhatsApp"

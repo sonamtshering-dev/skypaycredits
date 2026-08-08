@@ -11,6 +11,7 @@ export function SettingsProvider({ children }) {
     primaryColor: theme.primaryDark,
     currencySymbol: '₹',
     whatsapp: '',
+    whatsappSupport: '',
     maintenanceMode: false,
   })
   const [settingsLoaded, setSettingsLoaded] = useState(false)
