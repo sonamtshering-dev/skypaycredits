@@ -11,7 +11,7 @@ export default function AdminUsers() {
   const [acting, setActing]   = useState(null)
 
   const load = () => {
-    api.get('/users')
+    api.get('/users?limit=500')
       .then(r => setUsers(Array.isArray(r.data) ? r.data : (r.data.users || [])))
       .catch(() => setUsers([]))
       .finally(() => setLoading(false))

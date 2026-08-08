@@ -11,7 +11,7 @@ const { protect, adminOnly, validateObjectId } = require("../middlewares/authMid
 router.get("/", protect, adminOnly, async (req, res) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page)  || 1)
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 30))
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit) || 100))
     const skip  = (page - 1) * limit
 
     const filter = {}

@@ -20,7 +20,7 @@ function parseUsers(sql) {
   const rowRegex = /\((\d+),\s*'((?:[^'\\]|\\.)*)'\s*,\s*'((?:[^'\\]|\\.)*)'\s*,\s*'((?:[^'\\]|\\.)*)'\s*,\s*'((?:[^'\\]|\\.)*)'\s*,[^,]+,\s*(\d+),\s*(\d+),\s*'([^']+)'/g
   let m
   while ((m = rowRegex.exec(match[0])) !== null) {
-    const [, id, name, email, phone, password, , is_active, , created_at] = m
+    const [, , name, email, phone, password, is_active] = m
     if (!email || !password) continue
     users.push({
       name:     name.replace(/\\'/g, "'"),
