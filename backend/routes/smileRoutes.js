@@ -76,10 +76,20 @@ router.get("/points", protect, adminOnly, async (req, res) => {
 // Returns SmilePoints balance from the account
 router.get("/balance", protect, adminOnly, async (req, res) => {
   try {
-    const result = await getBalance(process.env.SMILE_BASE_URL)
-    res.json({ success: true, balance: result.balance, raw: result.raw })
+    const params  = buildSmileRequestParams({})
+    const response = await axios.post(`${API}/querypoints`, new URLSearchParams(params), {
+      timeout: 15000,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" }
+    })
+    if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE'))
+      return res.status(400).json({ message: 'Smile API returned HTML — check URL config' })
+    const d = response.data
+    if (d?.status === 200 || d?.status === "200") {
+      return res.json({ success: true, balance: d.smile_points ?? d.smilecoin ?? d.balance ?? 0, raw: d })
+    }
+    res.status(400).json({ success: false, message: d?.message || `API status: ${d?.status}`, raw: d })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    res.status(500).json({ message: err.message })
   }
 })
 
