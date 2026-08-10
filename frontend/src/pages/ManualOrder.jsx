@@ -21,6 +21,7 @@ export default function ManualOrder() {
   const [packs, setPacks]     = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedPack, setSelectedPack] = useState(null)
+  const [fieldData, setFieldData] = useState({})
   const [email, setEmail]     = useState(user?.email || '')
   const [phone, setPhone]     = useState('')
   const [note, setNote]       = useState('')
@@ -38,22 +39,24 @@ export default function ManualOrder() {
     }).catch(() => {}).finally(() => setLoading(false))
   }, [gameId, regionSlug])
 
+  const customFields = game?.fields?.length ? game.fields : null
+
   const handlePay = async () => {
     if (!selectedPack) return setError('Please select a package')
-    if (!email) return setError('Email is required')
+    if (customFields) {
+      if (!fieldData[customFields[0]?.name]) return setError(`${customFields[0]?.label} is required`)
+    } else {
+      if (!email) return setError('Email is required')
+    }
     setPaying(true)
     setError('')
     try {
       const { data } = await api.post('/orders', {
         gameId,
         packId: selectedPack._id,
-        playerData: {
-          email,
-          phone,
-          note,
-          regionSlug: regionSlug || '',
-          orderType: 'manual',
-        },
+        playerData: customFields
+          ? { ...fieldData, regionSlug: regionSlug || '', orderType: 'manual' }
+          : { email, phone, note, regionSlug: regionSlug || '', orderType: 'manual' },
         regionSlug: regionSlug || '',
       })
       const pay = await api.post('/payment/create', { orderId: data.order._id })
@@ -117,28 +120,41 @@ export default function ManualOrder() {
           </div>
         </div>
 
-        {/* Step 1 - Contact Info */}
+        {/* Step 1 - Contact / Player Info */}
         <div className="card" style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: theme.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, color: '#fff' }}>1</div>
-            <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: 1 }}>CONTACT DETAILS</span>
+            <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: 1 }}>{customFields ? 'PLAYER DETAILS' : 'CONTACT DETAILS'}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div className="form-group">
-              <label>Email Address *</label>
-              <input className="form-input" type="email" placeholder="your@email.com"
-                value={email} onChange={e => setEmail(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Phone Number (optional)</label>
-              <input className="form-input" type="tel" placeholder="+880 1XXXXXXXXX"
-                value={phone} onChange={e => setPhone(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Note (optional)</label>
-              <input className="form-input" type="text" placeholder="Any special instructions..."
-                value={note} onChange={e => setNote(e.target.value)} />
-            </div>
+            {customFields ? (
+              customFields.map(f => (
+                <div key={f.name} className="form-group">
+                  <label>{f.label} *</label>
+                  <input className="form-input" type="text" placeholder={f.label}
+                    value={fieldData[f.name] || ''}
+                    onChange={e => setFieldData(prev => ({ ...prev, [f.name]: e.target.value }))} />
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="form-group">
+                  <label>Email Address *</label>
+                  <input className="form-input" type="email" placeholder="your@email.com"
+                    value={email} onChange={e => setEmail(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>Phone Number (optional)</label>
+                  <input className="form-input" type="tel" placeholder="+880 1XXXXXXXXX"
+                    value={phone} onChange={e => setPhone(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>Note (optional)</label>
+                  <input className="form-input" type="text" placeholder="Any special instructions..."
+                    value={note} onChange={e => setNote(e.target.value)} />
+                </div>
+              </>
+            )}
           </div>
         </div>
 
