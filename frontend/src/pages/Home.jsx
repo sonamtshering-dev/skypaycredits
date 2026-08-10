@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import api from '../api/axios'
 import theme from '../theme'
-import { Gamepad2, Gift, Globe, X } from 'lucide-react'
+import { Gamepad2, Gift, Globe, Star, Tv, Share2, X } from 'lucide-react'
 
 
 const CATS = [
@@ -13,6 +13,9 @@ const CATS = [
   { key: 'game',    label: 'Games' },
   { key: 'voucher', label: 'Gift Cards' },
   { key: 'other',   label: 'Via Login' },
+  { key: 'premium', label: 'Premium' },
+  { key: 'ott',     label: 'OTT' },
+  { key: 'smm',     label: 'SMM' },
 ]
 
 export default function Home() {
@@ -28,7 +31,7 @@ export default function Home() {
     api.get('/banners').then(r => setBanners(Array.isArray(r.data) ? r.data : [])).catch(() => {})
   }, [])
 
-  const isManual = (game) => game.category === 'voucher' || game.category === 'other'
+  const isManual = (game) => ['voucher', 'other', 'premium', 'ott', 'smm'].includes(game.category)
 
   const handleGameClick = (game) => {
     const route = isManual(game) ? 'order' : 'recharge'
@@ -45,16 +48,25 @@ export default function Home() {
   const gamesList    = games.filter(g => !g.category || g.category === 'game')
   const vouchersList = games.filter(g => g.category === 'voucher')
   const otherList    = games.filter(g => g.category === 'other')
+  const premiumList  = games.filter(g => g.category === 'premium')
+  const ottList      = games.filter(g => g.category === 'ott')
+  const smmList      = games.filter(g => g.category === 'smm')
 
   const visibleGames    = activeCat === 'all' || activeCat === 'game'    ? gamesList    : []
   const visibleVouchers = activeCat === 'all' || activeCat === 'voucher' ? vouchersList : []
   const visibleOthers   = activeCat === 'all' || activeCat === 'other'   ? otherList    : []
+  const visiblePremium  = activeCat === 'all' || activeCat === 'premium' ? premiumList  : []
+  const visibleOtt      = activeCat === 'all' || activeCat === 'ott'     ? ottList      : []
+  const visibleSmm      = activeCat === 'all' || activeCat === 'smm'     ? smmList      : []
 
   const availableCats = CATS.filter(c => {
     if (c.key === 'all') return true
     if (c.key === 'game')    return gamesList.length > 0
     if (c.key === 'voucher') return vouchersList.length > 0
     if (c.key === 'other')   return otherList.length > 0
+    if (c.key === 'premium') return premiumList.length > 0
+    if (c.key === 'ott')     return ottList.length > 0
+    if (c.key === 'smm')     return smmList.length > 0
     return false
   })
 
@@ -123,7 +135,7 @@ export default function Home() {
               )}
               {visibleVouchers.length > 0 && (
                 <div>
-                  <SectionHeader icon="🎁" title="Gift Cards & Vouchers" />
+                  <SectionHeader icon={<Gift size={20} color="#f59e0b" />} title="Gift Cards & Vouchers" />
                   <div className="game-grid">
                     {visibleVouchers.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} isVoucher />
@@ -133,9 +145,39 @@ export default function Home() {
               )}
               {visibleOthers.length > 0 && (
                 <div>
-                  <SectionHeader icon="📦" title="Via Login" />
+                  <SectionHeader icon={<Globe size={20} color="#06b6d4" />} title="Via Login" />
                   <div className="game-grid">
                     {visibleOthers.map(game => (
+                      <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {visiblePremium.length > 0 && (
+                <div>
+                  <SectionHeader icon={<Star size={20} color="#f59e0b" />} title="Premium" />
+                  <div className="game-grid">
+                    {visiblePremium.map(game => (
+                      <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {visibleOtt.length > 0 && (
+                <div>
+                  <SectionHeader icon={<Tv size={20} color="#ec4899" />} title="OTT" />
+                  <div className="game-grid">
+                    {visibleOtt.map(game => (
+                      <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {visibleSmm.length > 0 && (
+                <div>
+                  <SectionHeader icon={<Share2 size={20} color="#10b981" />} title="SMM" />
+                  <div className="game-grid">
+                    {visibleSmm.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
                     ))}
                   </div>

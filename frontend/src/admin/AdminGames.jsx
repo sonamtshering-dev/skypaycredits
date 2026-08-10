@@ -164,7 +164,12 @@ export default function AdminGames() {
                   <div className="form-group" style={{ flex: 1 }}>
                     <label>Category</label>
                     <select className="form-input" value={form.category} onChange={e => setForm(f=>({...f,category:e.target.value}))}>
-                      <option value="game">Game</option><option value="voucher">Gift card</option><option value="other">Via Login</option>
+                      <option value="game">Game</option>
+                      <option value="voucher">Gift Card</option>
+                      <option value="other">Via Login</option>
+                      <option value="premium">Premium</option>
+                      <option value="ott">OTT</option>
+                      <option value="smm">SMM</option>
                     </select>
                   </div>
                   <div className="form-group" style={{ flex: 1 }}>
