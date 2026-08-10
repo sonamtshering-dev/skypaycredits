@@ -222,15 +222,26 @@ export default function ManualOrder() {
                 <span style={{ color: 'var(--text2)' }}>Package</span>
                 <span style={{ fontWeight: 700 }}>{selectedPack.title}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ color: 'var(--text2)' }}>Email</span>
-                <span style={{ fontWeight: 700 }}>{email || '—'}</span>
-              </div>
-              {phone && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ color: 'var(--text2)' }}>Phone</span>
-                  <span style={{ fontWeight: 700 }}>{phone}</span>
-                </div>
+              {customFields ? (
+                customFields.map(f => fieldData[f.name] ? (
+                  <div key={f.name} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ color: 'var(--text2)' }}>{f.label}</span>
+                    <span style={{ fontWeight: 700 }}>{fieldData[f.name]}</span>
+                  </div>
+                ) : null)
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ color: 'var(--text2)' }}>Email</span>
+                    <span style={{ fontWeight: 700 }}>{email || '—'}</span>
+                  </div>
+                  {phone && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ color: 'var(--text2)' }}>Phone</span>
+                      <span style={{ fontWeight: 700 }}>{phone}</span>
+                    </div>
+                  )}
+                </>
               )}
               <div style={{ height: 1, background: 'var(--border)', margin: '12px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -240,7 +251,9 @@ export default function ManualOrder() {
             </div>
 
             <div style={{ fontSize: 12, color: 'var(--text2)', textAlign: 'center', marginBottom: 12 }}>
-              📧 Your order will be delivered to your email after payment confirmation
+              {customFields
+                ? 'Your order will be processed manually after payment confirmation'
+                : '📧 Your order will be delivered to your email after payment confirmation'}
             </div>
 
             {error && (
