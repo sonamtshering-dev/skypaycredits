@@ -250,7 +250,7 @@ export default function ManualOrder() {
             )}
 
             <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
-              onClick={handlePay} disabled={paying || !email}>
+              onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
               {paying ? '⏳ Processing...' : `💳 Pay ${sym}${selectedPack.price}`}
             </button>
           </div>
