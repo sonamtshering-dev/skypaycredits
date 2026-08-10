@@ -46,6 +46,7 @@ router.get("/", async (req, res) => {
       currencySymbol:  settings.currencySymbol,
       maintenanceMode: settings.maintenanceMode,
       whatsapp:        settings.whatsapp,
+      whatsappSupport: settings.whatsappSupport,
       email:           settings.email,
       instagram:       settings.instagram,
       facebook:        settings.facebook,
