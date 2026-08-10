@@ -3,6 +3,12 @@ import { useState, useEffect } from 'react'
 import api from '../api/axios'
 import theme from '../theme'
 
+const SKIP_KEYS = new Set(['regionSlug', 'orderType'])
+const PRETTY = { userId: 'Player ID', zoneId: 'Zone / Server', email: 'Email', phone: 'Phone', note: 'Note' }
+const prettyKey = k => PRETTY[k] || k.replace(/([A-Z])/g, ' $1').replace(/^[a-z]/, c => c.toUpperCase())
+const playerFields = (playerData) =>
+  Object.entries(playerData || {}).filter(([k, v]) => !SKIP_KEYS.has(k) && v)
+
 const S = {
   Pending:    { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)'  },
   Processing: { color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',  border: 'rgba(96,165,250,0.3)'  },
@@ -107,7 +113,7 @@ export default function AdminOrders() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 800, color: '#fff', fontSize: 14 }}>{order.gameName || '—'}</div>
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 2 }}>
-                      {order.packName || '—'} · {player.userId || '—'} {player.zoneId ? `· ${player.zoneId}` : ''} {player.regionSlug ? `· ${player.regionSlug}` : ''}
+                      {order.packName || '—'} · {playerFields(player).map(([,v]) => v).join(' · ') || '—'}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -126,12 +132,7 @@ export default function AdminOrders() {
                         ['Order ID', '#' + order._id?.slice(-8).toUpperCase()],
                         ['Amount', `₹${order.price || '—'}`],
                         ['Payment', order.paymentStatus || '—'],
-
                         ['Date', new Date(order.createdAt).toLocaleString()],
-
-                        ['Player ID', player.userId || '—'],
-                        ['Zone / Server', player.zoneId || '—'],
-                        ['Region', player.regionSlug || '—'],
                       ].map(([label, val]) => (
                         <div key={label}>
                           <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginBottom: 2 }}>{label}</div>
@@ -139,6 +140,21 @@ export default function AdminOrders() {
                         </div>
                       ))}
                     </div>
+
+                    {/* Player / custom fields */}
+                    {playerFields(player).length > 0 && (
+                      <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Player / Order Details</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px 20px' }}>
+                          {playerFields(player).map(([k, v]) => (
+                            <div key={k}>
+                              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginBottom: 2 }}>{prettyKey(k)}</div>
+                              <div style={{ color: theme.primary, fontSize: 13, fontWeight: 600, wordBreak: 'break-all' }}>{v}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Customer info */}
                     <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
