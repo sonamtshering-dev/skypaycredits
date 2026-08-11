@@ -166,8 +166,7 @@ export default function AdminGames() {
                     <select className="form-input" value={form.category} onChange={e => setForm(f=>({...f,category:e.target.value}))}>
                       <option value="game">Game</option>
                       <option value="voucher">Gift Card</option>
-                      <option value="other">Via Login</option>
-                      <option value="premium">Premium</option>
+                      <option value="premium">Via Login</option>
                       <option value="ott">OTT</option>
                       <option value="smm">SMM</option>
                     </select>
