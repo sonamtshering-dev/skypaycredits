@@ -188,7 +188,11 @@ export default function ManualOrder() {
                           -{Math.round((1 - pack.price / pack.oldPrice) * 100)}%
                         </div>
                       )}
-                      <div style={{ fontSize: 28, marginBottom: 6 }}>🎁</div>
+                      <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'center' }}>
+                        {pack.image
+                          ? <img src={pack.image} alt={pack.title} style={{ width: 44, height: 44, objectFit: 'contain' }} />
+                          : <span style={{ fontSize: 28 }}>🎁</span>}
+                      </div>
                       <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>{pack.title}</div>
                       {pack.oldPrice > 0 && pack.oldPrice > pack.price && (
                         <div style={{ fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through' }}>
