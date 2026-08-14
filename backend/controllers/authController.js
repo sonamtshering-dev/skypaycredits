@@ -60,13 +60,10 @@ exports.register = async (req, res) => {
     const emailToken = req.body.emailVerifiedToken
     const phoneToken = req.body.phoneVerifiedToken
 
-    if (!name || !email || !password || !rawPhone)
-      return res.status(400).json({ message: "Name, email, phone and password are required" })
+    if (!name || !email || !password)
+      return res.status(400).json({ message: "Name, email and password are required" })
 
-    const phone10 = rawPhone.replace(/^\+?91/, '').replace(/\D/g, '').slice(-10)
-    if (!/^[6-9]\d{9}$/.test(phone10))
-      return res.status(400).json({ message: "Enter a valid 10-digit Indian mobile number" })
-    const phone = `91${phone10}`
+    const phone = rawPhone ? rawPhone.replace(/\s/g, '') : ''
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       return res.status(400).json({ message: "Invalid email address" })
     if (password.length < 8)
@@ -79,23 +76,18 @@ exports.register = async (req, res) => {
     const exists = await User.findOne({ email })
     if (exists && exists.isEmailVerified)
       return res.status(400).json({ message: "An account with this email already exists" })
-    const phoneTaken = await User.findOne({ phone, isEmailVerified: true })
-    if (phoneTaken) return res.status(400).json({ message: "This phone number is already registered" })
     if (exists && !exists.isEmailVerified) await User.deleteOne({ email })
 
-    // ── Mode 1: pre-verified tokens provided ──────────
-    if (emailToken && phoneToken) {
+    // ── Mode 1: email-verified token provided ──────────
+    if (emailToken) {
       try {
         const emailPayload = jwt.verify(emailToken, process.env.JWT_SECRET)
-        const phonePayload = jwt.verify(phoneToken, process.env.JWT_SECRET)
         if (emailPayload.type !== 'email-verified' || emailPayload.email !== email)
           return res.status(400).json({ message: "Email verification expired. Please verify again." })
-        if (phonePayload.type !== 'phone-verified' || phonePayload.phone !== phone)
-          return res.status(400).json({ message: "Phone verification expired. Please verify again." })
       } catch {
-        return res.status(400).json({ message: "Verification expired. Please verify email and phone again." })
+        return res.status(400).json({ message: "Email verification expired. Please verify again." })
       }
-      const user = await User.create({ name, email, password, phone, isEmailVerified: true })
+      const user = await User.create({ name, email, password, ...(phone ? { phone } : {}), isEmailVerified: true })
       const token = makeToken(user._id, user.tokenVersion || 0)
       res.cookie("token", token, { httpOnly: true, secure: isProd, sameSite: "strict", maxAge: 7*24*60*60*1000 })
       securityLog.loginSuccess(user._id, req.ip)
@@ -153,23 +145,6 @@ exports.verifyOTP = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" })
 
     await OTP.deleteMany({ email, purpose: 'verify' })
-
-    if (user.phone) {
-      await OTP.deleteMany({ email, purpose: 'phone' })
-      const phoneOtp = generateOTP()
-      await OTP.create({ email, phone: user.phone, otp: hashOTP(phoneOtp), purpose: 'phone' })
-      try {
-        const settings = await require("../models/Settings").findOne()
-        await sendSMSOTP(user.phone, phoneOtp, settings?.siteName || 'Nitrogen Store')
-      } catch (smsErr) {
-        console.error("[SMS] Failed to send phone OTP:", smsErr.message)
-      }
-      return res.json({
-        requiresPhoneVerification: true,
-        phone: maskPhone(user.phone),
-        email,
-      })
-    }
 
     const token = makeToken(user._id, user.tokenVersion || 0)
     res.cookie("token", token, {
