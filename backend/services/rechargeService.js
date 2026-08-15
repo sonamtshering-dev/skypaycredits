@@ -29,8 +29,8 @@ async function verifyPlayer(game, playerData, packs) {
   const regionSlug     = playerData.regionSlug || ""
   const region         = game.regions?.find(r => r.slug === regionSlug && r.active)
                       || game.regions?.find(r => r.active)
-  const provider       = region?.provider || (packs[0] && packs[0].provider) || "fintopup"
-  const providerGameId = region?.providerGameId || (packs[0] && packs[0].providerGameId) || ""
+  const provider       = region?.provider || (packs[0] && packs[0].provider) || game?.provider || "fintopup"
+  const providerGameId = region?.providerGameId || (packs[0] && packs[0].providerGameId) || game?.providerGameId || ""
   const userId         = cleanId(playerData.userId)
   const zoneId         = cleanId(playerData.zoneId || playerData.serverId || "")
 
@@ -81,8 +81,8 @@ async function processRecharge(order, pack, game) {
   pack = pack || order.packSnapshot || {}
   const region         = game?.regions?.find(r => r.slug === order.playerData?.regionSlug && r.active)
                       || game?.regions?.find(r => r.active)
-  const provider       = region?.provider || "fintopup"
-  const providerGameId = pack.providerGameId || region?.providerGameId || ""
+  const provider       = region?.provider || pack?.provider || game?.provider || "fintopup"
+  const providerGameId = pack.providerGameId || region?.providerGameId || game?.providerGameId || ""
   const userId         = cleanId(order.playerData?.userId || "")
   const zoneId         = cleanId(order.playerData?.zoneId || order.playerData?.serverId || "")
   const baseUrl        = region?.smileRegionUrl || process.env.SMILE_BASE_URL || "https://www.smile.one/ph"
