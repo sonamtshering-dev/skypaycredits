@@ -185,7 +185,7 @@ router.post("/", protect, async (req, res) => {
       playerData: (() => {
         const pd = playerData || {}
         const clean = {}
-        const MANUAL_CATS = ['other','premium','ott','smm','voucher']
+        const MANUAL_CATS = ['other','premium','gifting','ott','smm','voucher']
         if (MANUAL_CATS.includes(game.category)) {
           Object.entries(pd).forEach(([k, v]) => {
             if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype')

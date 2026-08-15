@@ -43,7 +43,7 @@ async function triggerRechargeIfNeeded(paymentId) {
   if (order.status === "Pending") {
     const game = await Game.findById(order.gameId)
     // Manual-fulfillment categories — admin handles delivery; just mark Processing
-    const MANUAL_CATS = ['other','premium','ott','smm','voucher']
+    const MANUAL_CATS = ['other','premium','gifting','ott','smm','voucher']
     if (game && MANUAL_CATS.includes(game.category)) {
       order.status = "Processing"
       await order.save()

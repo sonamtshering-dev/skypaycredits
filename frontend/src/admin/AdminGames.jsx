@@ -167,6 +167,7 @@ export default function AdminGames() {
                       <option value="game">Game</option>
                       <option value="voucher">Gift Card</option>
                       <option value="premium">Via Login</option>
+                      <option value="gifting">Via Gifting</option>
                       <option value="ott">OTT</option>
                       <option value="smm">SMM</option>
                     </select>

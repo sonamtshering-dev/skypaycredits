@@ -5,16 +5,17 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import api from '../api/axios'
 import theme from '../theme'
-import { Gamepad2, Gift, Globe, Tv, Share2, X } from 'lucide-react'
+import { Gamepad2, Gift, Globe, Tv, Share2, X, Handshake } from 'lucide-react'
 
 
 const CATS = [
-  { key: 'all',     label: 'All' },
-  { key: 'game',    label: 'Games' },
-  { key: 'voucher', label: 'Gift Cards' },
-  { key: 'vialogin', label: 'Via Login' },
-  { key: 'ott',     label: 'OTT' },
-  { key: 'smm',     label: 'SMM' },
+  { key: 'all',       label: 'All' },
+  { key: 'game',      label: 'Games' },
+  { key: 'voucher',   label: 'Gift Cards' },
+  { key: 'vialogin',  label: 'Via Login' },
+  { key: 'gifting',   label: 'Via Gifting' },
+  { key: 'ott',       label: 'OTT' },
+  { key: 'smm',       label: 'SMM' },
 ]
 
 export default function Home() {
@@ -30,7 +31,7 @@ export default function Home() {
     api.get('/banners').then(r => setBanners(Array.isArray(r.data) ? r.data : [])).catch(() => {})
   }, [])
 
-  const isManual = (game) => ['voucher', 'other', 'premium', 'ott', 'smm'].includes(game.category || '')
+  const isManual = (game) => ['voucher', 'other', 'premium', 'gifting', 'ott', 'smm'].includes(game.category || '')
 
   const handleGameClick = (game) => {
     const route = isManual(game) ? 'order' : 'recharge'
@@ -47,12 +48,14 @@ export default function Home() {
   const gamesList     = games.filter(g => !g.category || g.category === 'game')
   const vouchersList  = games.filter(g => g.category === 'voucher')
   const viaLoginList  = games.filter(g => g.category === 'other' || g.category === 'premium')
+  const giftingList   = games.filter(g => g.category === 'gifting')
   const ottList       = games.filter(g => g.category === 'ott')
   const smmList       = games.filter(g => g.category === 'smm')
 
   const visibleGames    = activeCat === 'all' || activeCat === 'game'     ? gamesList    : []
   const visibleVouchers = activeCat === 'all' || activeCat === 'voucher'  ? vouchersList : []
   const visibleViaLogin = activeCat === 'all' || activeCat === 'vialogin' ? viaLoginList : []
+  const visibleGifting  = activeCat === 'all' || activeCat === 'gifting'  ? giftingList  : []
   const visibleOtt      = activeCat === 'all' || activeCat === 'ott'      ? ottList      : []
   const visibleSmm      = activeCat === 'all' || activeCat === 'smm'      ? smmList      : []
 
@@ -61,6 +64,7 @@ export default function Home() {
     if (c.key === 'game')     return gamesList.length > 0
     if (c.key === 'voucher')  return vouchersList.length > 0
     if (c.key === 'vialogin') return viaLoginList.length > 0
+    if (c.key === 'gifting')  return giftingList.length > 0
     if (c.key === 'ott')      return ottList.length > 0
     if (c.key === 'smm')      return smmList.length > 0
     return false
@@ -144,6 +148,16 @@ export default function Home() {
                   <SectionHeader icon={<Globe size={20} color="#06b6d4" />} title="Via Login" />
                   <div className="game-grid">
                     {visibleViaLogin.map(game => (
+                      <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {visibleGifting.length > 0 && (
+                <div>
+                  <SectionHeader icon={<Handshake size={20} color="#a78bfa" />} title="Via Gifting" />
+                  <div className="game-grid">
+                    {visibleGifting.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
                     ))}
                   </div>

@@ -25,7 +25,7 @@ const gameSchema = new mongoose.Schema(
     icon:     { type: String, default: "" },
     banner:   { type: String, default: "" },
     active:   { type: Boolean, default: true },
-    category:   { type: String, enum: ["game","voucher","other","premium","ott","smm"], default: "game" },
+    category:   { type: String, enum: ["game","voucher","other","premium","ott","smm","gifting"], default: "game" },
     sortOrder:  { type: Number, default: 0 },
     skipVerify: { type: Boolean, default: false },
     fields:   [{ name: String, label: String }],
