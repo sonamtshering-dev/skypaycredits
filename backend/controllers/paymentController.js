@@ -6,6 +6,10 @@ const Game   = require("../models/Game")
 const Pack   = require("../models/Pack")
 const securityLog         = require('../services/securityLogger')
 const { processRecharge } = require("../services/rechargeService")
+const { sendOrderConfirmationEmail } = require("../services/emailService")
+const Settings = require("../models/Settings")
+const User     = require("../models/User")
+const SITE_URL = process.env.SITE_URL || 'https://nitrogenstore.in'
 
 const NOVAPAY_API_KEY        = process.env.NOVAPAY_API_KEY
 const NOVAPAY_API_SECRET     = process.env.NOVAPAY_API_SECRET
@@ -47,6 +51,19 @@ async function triggerRechargeIfNeeded(paymentId) {
     if (game && MANUAL_CATS.includes(game.category)) {
       order.status = "Processing"
       await order.save()
+      // Notify customer that manual order is received and being processed
+      try {
+        const [settings, user] = await Promise.all([
+          Settings.findOne(),
+          User.findById(order.userId).select('email'),
+        ])
+        if (user?.email) {
+          const emailOrder = { ...order.toObject(), status: "Processing", gameIcon: '', playerInfo: order.playerData || {} }
+          await sendOrderConfirmationEmail(user.email, emailOrder, settings?.siteName || 'Nitrogen Store', settings?.logo ? `${SITE_URL}${settings.logo}` : '', settings?.currencySymbol || '₹')
+        }
+      } catch (emailErr) {
+        console.error('[EMAIL] Manual order notification failed:', emailErr.message)
+      }
     } else {
       // Prefer the snapshot saved at order time; fall back to live pack for old orders
       const pack = order.packSnapshot?.skuCodes?.length > 0
@@ -65,6 +82,20 @@ async function triggerRechargeIfNeeded(paymentId) {
             if (result.transactions?.length > 0) update.providerTransactions = result.transactions
             await Order.findByIdAndUpdate(order._id, update)
             console.log("[RECHARGE] Completed:", order._id, result.providerOrderId)
+            // Send billing email after auto-completion
+            try {
+              const [settings, user, gameDoc] = await Promise.all([
+                Settings.findOne(),
+                User.findById(order.userId).select('email'),
+                Game.findById(order.gameId).select('icon'),
+              ])
+              if (user?.email) {
+                const completedOrder = { ...order.toObject(), ...update, gameIcon: gameDoc?.icon ? `${SITE_URL}${gameDoc.icon}` : '', playerInfo: order.playerData || {} }
+                await sendOrderConfirmationEmail(user.email, completedOrder, settings?.siteName || 'Nitrogen Store', settings?.logo ? `${SITE_URL}${settings.logo}` : '', settings?.currencySymbol || '₹')
+              }
+            } catch (emailErr) {
+              console.error('[EMAIL] Auto-complete billing failed:', emailErr.message)
+            }
           })
           .catch(async (e) => {
             console.error("[RECHARGE] Failed:", e.message)

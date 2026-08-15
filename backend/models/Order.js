@@ -19,15 +19,7 @@ const orderSchema = new mongoose.Schema(
     packName: { type: String },
     price:    { type: Number, required: true },
 
-    playerData: {
-      type: {
-        userId:     { type: String, default: '' },
-        zoneId:     { type: String, default: '' },
-        serverId:   { type: String, default: '' },
-        regionSlug: { type: String, default: '' },
-      },
-      default: {}
-    },
+    playerData: { type: mongoose.Schema.Types.Mixed, default: {} },
 
     status: {
       type: String,
