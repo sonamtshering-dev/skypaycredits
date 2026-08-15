@@ -185,8 +185,16 @@ router.post("/", protect, async (req, res) => {
       playerData: (() => {
         const pd = playerData || {}
         const clean = {}
-        const allowed = ['userId','zoneId','serverId','regionSlug']
-        allowed.forEach(k => { if (pd[k] !== undefined) clean[k] = String(pd[k]).slice(0, 100) })
+        const MANUAL_CATS = ['other','premium','ott','smm','voucher']
+        if (MANUAL_CATS.includes(game.category)) {
+          Object.entries(pd).forEach(([k, v]) => {
+            if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype')
+              clean[k] = String(v ?? '').slice(0, 200)
+          })
+        } else {
+          const allowed = ['userId','zoneId','serverId','regionSlug']
+          allowed.forEach(k => { if (pd[k] !== undefined) clean[k] = String(pd[k]).slice(0, 100) })
+        }
         return clean
       })(),
       packSnapshot: {

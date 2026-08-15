@@ -42,31 +42,38 @@ async function triggerRechargeIfNeeded(paymentId) {
   if (!order) return null
   if (order.status === "Pending") {
     const game = await Game.findById(order.gameId)
-    // Prefer the snapshot saved at order time; fall back to live pack for old orders
-    const pack = order.packSnapshot?.skuCodes?.length > 0
-      ? order.packSnapshot
-      : await Pack.findById(order.packId)
-    if (game && pack) {
+    // Manual-fulfillment categories — admin handles delivery; just mark Processing
+    const MANUAL_CATS = ['other','premium','ott','smm','voucher']
+    if (game && MANUAL_CATS.includes(game.category)) {
       order.status = "Processing"
       await order.save()
-      processRecharge(order, pack, game)
-        .then(async (result) => {
-          const update = {
-            status: "Completed",
-            providerOrderId: result.providerOrderId || "",
-          }
-          if (result.playerName)              update.playerName = result.playerName
-          if (result.transactions?.length > 0) update.providerTransactions = result.transactions
-          await Order.findByIdAndUpdate(order._id, update)
-          console.log("[RECHARGE] Completed:", order._id, result.providerOrderId)
-        })
-        .catch(async (e) => {
-          console.error("[RECHARGE] Failed:", e.message)
-          await Order.findByIdAndUpdate(order._id, { status: "Failed" })
-        })
     } else {
-      console.error("[RECHARGE] Cannot process — game or pack not found for order:", order._id)
-      await Order.findByIdAndUpdate(order._id, { status: "Failed" })
+      // Prefer the snapshot saved at order time; fall back to live pack for old orders
+      const pack = order.packSnapshot?.skuCodes?.length > 0
+        ? order.packSnapshot
+        : await Pack.findById(order.packId)
+      if (game && pack) {
+        order.status = "Processing"
+        await order.save()
+        processRecharge(order, pack, game)
+          .then(async (result) => {
+            const update = {
+              status: "Completed",
+              providerOrderId: result.providerOrderId || "",
+            }
+            if (result.playerName)              update.playerName = result.playerName
+            if (result.transactions?.length > 0) update.providerTransactions = result.transactions
+            await Order.findByIdAndUpdate(order._id, update)
+            console.log("[RECHARGE] Completed:", order._id, result.providerOrderId)
+          })
+          .catch(async (e) => {
+            console.error("[RECHARGE] Failed:", e.message)
+            await Order.findByIdAndUpdate(order._id, { status: "Failed" })
+          })
+      } else {
+        console.error("[RECHARGE] Cannot process — game or pack not found for order:", order._id)
+        await Order.findByIdAndUpdate(order._id, { status: "Failed" })
+      }
     }
   }
   return order

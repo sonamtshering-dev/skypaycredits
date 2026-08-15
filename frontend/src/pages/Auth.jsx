@@ -294,7 +294,7 @@ export default function Auth() {
   const inp = {
     width: '100%', background: 'rgba(255,255,255,0.07)',
     border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10,
-    padding: '12px 14px', color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+    padding: '12px 14px', color: '#fff', fontSize: 16, outline: 'none', boxSizing: 'border-box',
   }
   const card = {
     background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(30px)',

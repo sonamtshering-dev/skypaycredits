@@ -59,7 +59,7 @@ export default function ManualOrder() {
           : { email, phone, note, regionSlug: regionSlug || '', orderType: 'manual' },
         regionSlug: regionSlug || '',
       })
-      const pay = await api.post('/payment/create', { orderId: data.order._id })
+      const pay = await api.post('/payment/create', { orderId: data._id })
       if (pay.data.payment_url) {
         window.location.href = pay.data.payment_url
       } else {
