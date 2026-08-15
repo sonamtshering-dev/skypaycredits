@@ -107,7 +107,7 @@ export default function ManualOrder() {
         {/* Game Header */}
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           {game.icon && (
-            <img src={`/uploads/games/${game.icon}`} alt={game.name}
+            <img src={game.icon} alt={game.name}
               style={{ width: 60, height: 60, borderRadius: 14, objectFit: 'cover' }} />
           )}
           <div>
