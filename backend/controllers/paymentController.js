@@ -69,7 +69,29 @@ async function triggerRechargeIfNeeded(paymentId) {
       const pack = order.packSnapshot?.skuCodes?.length > 0
         ? order.packSnapshot
         : await Pack.findById(order.packId)
-      if (game && pack) {
+
+      // If no provider is configured (or set to "manual"), skip auto-recharge
+      const region = game?.regions?.find(r => r.slug === order.playerData?.regionSlug && r.active)
+                  || game?.regions?.find(r => r.active)
+      const effectiveProvider = region?.provider || pack?.provider || game?.provider || ''
+      const isManualProvider  = !effectiveProvider || effectiveProvider === 'manual'
+
+      if (game && isManualProvider) {
+        order.status = "Processing"
+        await order.save()
+        try {
+          const [settings, user] = await Promise.all([
+            Settings.findOne(),
+            User.findById(order.userId).select('email'),
+          ])
+          if (user?.email) {
+            const emailOrder = { ...order.toObject(), status: "Processing", gameIcon: '', playerInfo: order.playerData || {} }
+            await sendOrderConfirmationEmail(user.email, emailOrder, settings?.siteName || 'Nitrogen Store', settings?.logo ? `${SITE_URL}${settings.logo}` : '', settings?.currencySymbol || '₹')
+          }
+        } catch (emailErr) {
+          console.error('[EMAIL] Manual-provider order notification failed:', emailErr.message)
+        }
+      } else if (game && pack) {
         order.status = "Processing"
         await order.save()
         processRecharge(order, pack, game)
