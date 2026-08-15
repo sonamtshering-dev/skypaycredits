@@ -68,6 +68,16 @@ router.get("/", async (req, res) => {
   }
 })
 
+// POST /api/games/migrate-other-to-premium — one-time migration for admin
+router.post("/migrate-other-to-premium", protect, adminOnly, async (req, res) => {
+  try {
+    const result = await Game.updateMany({ category: 'other' }, { $set: { category: 'premium' } })
+    res.json({ updated: result.modifiedCount, message: `Migrated ${result.modifiedCount} games from 'other' to 'premium'` })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
 // GET /api/games/all — admin (includes inactive)
 router.get("/all", protect, adminOnly, async (req, res) => {
   try {

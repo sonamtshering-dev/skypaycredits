@@ -35,7 +35,7 @@ export default function AdminGames() {
   useEffect(() => { load() }, [])
 
   const openAdd  = () => { setForm(EMPTY); setIconFile(null); setBannerFile(null); setError(''); setModal('add') }
-  const openEdit = g  => { setForm({ ...g, fields: g.fields||[], regions: g.regions||[] }); setIconFile(null); setBannerFile(null); setError(''); setModal(g) }
+  const openEdit = g  => { setForm({ ...g, category: g.category === 'other' ? 'premium' : (g.category || 'game'), fields: g.fields||[], regions: g.regions||[] }); setIconFile(null); setBannerFile(null); setError(''); setModal(g) }
 
   const handleSubmit = async e => {
     e.preventDefault(); setError(''); setSaving(true)
