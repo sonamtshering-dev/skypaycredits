@@ -36,9 +36,9 @@ export default function Home() {
   const handleGameClick = (game) => {
     const route = isManual(game) ? 'order' : 'recharge'
     const regions = game.regions?.filter(r => r.active)
-    if (!isManual(game) && regions && regions.length > 1) {
+    if (regions && regions.length > 1) {
       setPicker(game)
-    } else if (regions && regions.length >= 1) {
+    } else if (regions && regions.length === 1) {
       navigate(`/${route}/${game._id}?region=${regions[0].slug}`)
     } else {
       navigate(`/${route}/${game._id}`)
@@ -193,7 +193,8 @@ export default function Home() {
           onClose={() => setPicker(null)}
           onSelect={(game, region) => {
             setPicker(null)
-            navigate(`/recharge/${game._id}?region=${region.slug}`)
+            const route = isManual(game) ? 'order' : 'recharge'
+            navigate(`/${route}/${game._id}?region=${region.slug}`)
           }}
         />
       )}

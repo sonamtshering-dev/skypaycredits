@@ -260,11 +260,16 @@ function RegionRow({ region, onChange, onRemove }) {
     width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)',
     borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none',
   }
+  const previewUrl = region._imageFile
+    ? URL.createObjectURL(region._imageFile)
+    : region.banner || region.icon || null
+
   return (
     <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 8, overflow: 'hidden' }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', userSelect: 'none' }}>
+        {previewUrl && <img src={previewUrl} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />}
         <span style={{ flex: 1, fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{region.name || '(unnamed region)'}</span>
-        {region.displayTitle && <span style={{ fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>{region.displayTitle}</span>}
+        {region.provider && <span style={{ fontSize: 10, color: 'var(--text3)', background: 'var(--bg)', borderRadius: 4, padding: '2px 6px' }}>{region.provider}</span>}
         <span className={`badge badge-${region.active ? 'success' : 'danger'}`} style={{ fontSize: 10 }}>{region.active ? 'Active' : 'Hidden'}</span>
         <button type="button" onClick={e => { e.stopPropagation(); onRemove() }}
           style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 15, cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}>✕</button>
@@ -282,10 +287,7 @@ function RegionRow({ region, onChange, onRemove }) {
               <input style={inp} value={region.slug} onChange={e => onChange({ ...region, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} placeholder="e.g. br" />
             </div>
           </div>
-          <div className="form-group">
-            <label>Recharge Page Title <span style={{ color: 'var(--text3)', fontWeight: 400 }}>(optional — replaces auto "Game — Region" title)</span></label>
-            <input style={inp} value={region.displayTitle || ''} onChange={e => onChange({ ...region, displayTitle: e.target.value })} placeholder={`e.g. MLBB Brazil`} />
-          </div>
+
           <div style={{ display: 'flex', gap: 8 }}>
             <div className="form-group" style={{ flex: 1 }}>
               <label>Status</label>
@@ -295,15 +297,44 @@ function RegionRow({ region, onChange, onRemove }) {
               </select>
             </div>
             <div className="form-group" style={{ flex: 1 }}>
-              <label>Smile Region URL</label>
-              <input style={inp} value={region.smileRegionUrl || ''} onChange={e => onChange({ ...region, smileRegionUrl: e.target.value })} placeholder="https://www.smile.one/br" />
+              <label>Provider</label>
+              <select style={inp} value={region.provider || ''} onChange={e => onChange({ ...region, provider: e.target.value })}>
+                <option value="">Manual (inherit game)</option>
+                <option value="fintopup">FinTopup</option>
+                <option value="smile">Smile.One</option>
+                <option value="hopestore">HopeStore</option>
+                <option value="manual">Manual</option>
+              </select>
             </div>
           </div>
+
           <div style={{ display: 'flex', gap: 8 }}>
             <div className="form-group" style={{ flex: 1 }}>
-              <label>Provider Game ID</label>
-              <input style={inp} value={region.providerGameId || ''} onChange={e => onChange({ ...region, providerGameId: e.target.value })} />
+              <label>Provider Game ID / Service ID</label>
+              <input style={inp} value={region.providerGameId || ''} onChange={e => onChange({ ...region, providerGameId: e.target.value })} placeholder="e.g. mobilelegends or MLBB_ID_86" />
             </div>
+            {(region.provider === 'smile' || (!region.provider && true)) && (
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Smile Region URL</label>
+                <input style={inp} value={region.smileRegionUrl || ''} onChange={e => onChange({ ...region, smileRegionUrl: e.target.value })} placeholder="https://www.smile.one/br" />
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label>Region Banner Image</label>
+            {previewUrl && (
+              <img src={previewUrl} alt="banner" style={{ height: 60, borderRadius: 8, marginBottom: 6, objectFit: 'cover', display: 'block' }} />
+            )}
+            <input type="file" accept="image/*"
+              onChange={e => onChange({ ...region, _imageFile: e.target.files[0] || null })}
+              style={{ color: 'var(--text2)', fontSize: 12 }} />
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>This image shows in the region picker popup</div>
+          </div>
+
+          <div className="form-group">
+            <label>Page Title <span style={{ color: 'var(--text3)', fontWeight: 400 }}>(optional)</span></label>
+            <input style={inp} value={region.displayTitle || ''} onChange={e => onChange({ ...region, displayTitle: e.target.value })} placeholder="e.g. MLBB Brazil" />
           </div>
         </div>
       )}
