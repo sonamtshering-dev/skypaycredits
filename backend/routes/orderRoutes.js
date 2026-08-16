@@ -57,7 +57,16 @@ router.get("/", protect, adminOnly, async (req, res) => {
     const VALID_PAYMENTS = ["unpaid","paid","refunded"]
     if (req.query.status  && VALID_STATUSES.includes(req.query.status))  filter.status        = req.query.status
     if (req.query.payment && VALID_PAYMENTS.includes(req.query.payment)) filter.paymentStatus  = req.query.payment
-    if (req.query.search) filter.gameName = { $regex: escapeRegex(req.query.search), $options: "i" }
+    if (req.query.search) {
+      const re = { $regex: escapeRegex(req.query.search), $options: "i" }
+      filter.$or = [
+        { gameName: re },
+        { packName: re },
+        { 'playerData.userId': re },
+        { 'playerData.email':  re },
+        { 'playerData.phone':  re },
+      ]
+    }
     const [orders, total] = await Promise.all([
       Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate("userId","name email"),
       Order.countDocuments(filter),

@@ -1,5 +1,5 @@
 // src/admin/AdminOrders.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import api from '../api/axios'
 import theme from '../theme'
 
@@ -17,47 +17,71 @@ const S = {
   Refunded:   { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)' },
 }
 
+const LIMIT = 50
+
 export default function AdminOrders() {
   const [orders, setOrders]     = useState([])
+  const [total, setTotal]       = useState(0)
+  const [pages, setPages]       = useState(1)
+  const [page, setPage]         = useState(1)
   const [loading, setLoading]   = useState(true)
   const [filter, setFilter]     = useState('')
   const [search, setSearch]     = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [acting, setActing]     = useState(null)
   const [expanded, setExpanded] = useState(null)
 
-  const load = () => {
-    api.get('/orders')
-      .then(r => setOrders(Array.isArray(r.data) ? r.data : (r.data.orders || [])))
+  const load = useCallback((pg = page, st = filter, q = search) => {
+    setLoading(true)
+    const params = new URLSearchParams({ page: pg, limit: LIMIT })
+    if (st) params.set('status', st)
+    if (q)  params.set('search', q)
+    api.get(`/orders?${params}`)
+      .then(r => {
+        const data = r.data
+        if (Array.isArray(data)) {
+          setOrders(data)
+          setTotal(data.length)
+          setPages(1)
+        } else {
+          setOrders(data.orders || [])
+          setTotal(data.total || 0)
+          setPages(data.pages || 1)
+          setPage(data.page || pg)
+        }
+      })
       .catch(() => setOrders([]))
       .finally(() => setLoading(false))
+  }, [page, filter, search])
+
+  useEffect(() => { load(1, filter, search) }, [filter, search])
+
+  const goPage = (pg) => {
+    setPage(pg)
+    load(pg, filter, search)
+    setExpanded(null)
   }
-  useEffect(() => { load() }, [])
+
+  const handleSearch = (e) => {
+    e.preventDefault()
+    setSearch(searchInput)
+    setPage(1)
+  }
 
   const updateStatus = async (id, status) => {
     if (!confirm(`Mark order as ${status}?`)) return
     setActing(id)
     try {
       await api.put(`/orders/${id}`, { status })
-      load()
+      load(page, filter, search)
     } catch (e) { alert(e.response?.data?.message || 'Failed') }
     finally { setActing(null) }
   }
 
-  const filtered = orders.filter(o => {
-    const matchStatus = filter ? o.status === filter : true
-    const matchSearch = search
-      ? o.gameName?.toLowerCase().includes(search.toLowerCase()) ||
-        JSON.stringify(o.playerData || {}).toLowerCase().includes(search.toLowerCase()) ||
-        o._id?.slice(-8).toLowerCase().includes(search.toLowerCase()) ||
-        o.userId?.email?.toLowerCase().includes(search.toLowerCase())
-      : true
-    return matchStatus && matchSearch
-  })
-
   const inp = { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '9px 12px', color: '#fff', fontSize: 13, outline: 'none' }
 
-  // Count by status
-  const counts = orders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc }, {})
+  const start = (page - 1) * LIMIT + 1
+  const end   = Math.min(page * LIMIT, total)
 
   return (
     <div>
@@ -65,146 +89,206 @@ export default function AdminOrders() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 2 }}>Orders</h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>{orders.length} total</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
+            {total > 0 ? `Showing ${start}–${end} of ${total} orders` : '0 orders'}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <input style={{ ...inp, minWidth: 200 }} placeholder="Search game / player / email / ID…" value={search} onChange={e => setSearch(e.target.value)} />
-          <select style={inp} value={filter} onChange={e => setFilter(e.target.value)}>
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8 }}>
+            <input
+              style={{ ...inp, minWidth: 200 }}
+              placeholder="Search game / player / email / ID…"
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+            />
+            <button type="submit" style={{ ...inp, cursor: 'pointer', padding: '9px 14px', background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: theme.primary, fontWeight: 700 }}>
+              Search
+            </button>
+            {search && (
+              <button type="button" onClick={() => { setSearch(''); setSearchInput(''); setPage(1) }}
+                style={{ ...inp, cursor: 'pointer', padding: '9px 12px', color: 'rgba(255,255,255,0.4)' }}>
+                ✕
+              </button>
+            )}
+          </form>
+          <select style={inp} value={filter} onChange={e => { setFilter(e.target.value); setPage(1) }}>
             <option value="">All Status</option>
             {['Pending','Processing','Completed','Failed','Refunded'].map(s => (
-              <option key={s} value={s}>{s} {counts[s] ? `(${counts[s]})` : ''}</option>
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
-
         </div>
-      </div>
-
-      {/* Status summary pills */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        {Object.entries(counts).map(([status, count]) => {
-          const sc = S[status] || S.Pending
-          return (
-            <div key={status} onClick={() => setFilter(filter === status ? '' : status)} style={{
-              padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              background: filter === status ? sc.bg : 'rgba(255,255,255,0.05)',
-              color: filter === status ? sc.color : 'rgba(255,255,255,0.5)',
-              border: `1px solid ${filter === status ? sc.border : 'rgba(255,255,255,0.1)'}`,
-            }}>{status} · {count}</div>
-          )
-        })}
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60 }}><div className="spinner" /></div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filtered.length === 0 && <div style={{ textAlign: 'center', padding: 60, color: 'rgba(255,255,255,0.3)' }}>No orders found</div>}
-          {filtered.map(order => {
-            const sc = S[order.status] || S.Pending
-            const isOpen = expanded === order._id
-            const player = order.playerData || {}
-            const user = order.userId || {}
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {orders.length === 0 && <div style={{ textAlign: 'center', padding: 60, color: 'rgba(255,255,255,0.3)' }}>No orders found</div>}
+            {orders.map(order => {
+              const sc = S[order.status] || S.Pending
+              const isOpen = expanded === order._id
+              const player = order.playerData || {}
+              const user = order.userId || {}
 
-            return (
-              <div key={order._id} style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid rgba(255,255,255,0.09)`, borderRadius: 14, overflow: 'hidden' }}>
+              return (
+                <div key={order._id} style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid rgba(255,255,255,0.09)`, borderRadius: 14, overflow: 'hidden' }}>
 
-                {/* Main row */}
-                <div onClick={() => setExpanded(isOpen ? null : order._id)} style={{ padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 800, color: '#fff', fontSize: 14 }}>{order.gameName || '—'}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 2 }}>
-                      {order.packName || '—'} · {playerFields(player).map(([,v]) => v).join(' · ') || '—'}
+                  {/* Main row */}
+                  <div onClick={() => setExpanded(isOpen ? null : order._id)} style={{ padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, color: '#fff', fontSize: 14 }}>{order.gameName || '—'}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 2 }}>
+                        {order.packName || '—'} · {playerFields(player).map(([,v]) => v).join(' · ') || '—'}
+                      </div>
                     </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ color: theme.primary, fontWeight: 800, fontSize: 14 }}>₹{order.price || '—'}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{new Date(order.createdAt).toLocaleDateString()}</div>
+                    </div>
+                    <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, flexShrink: 0 }}>{order.status}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{isOpen ? '▲' : '▼'}</span>
                   </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ color: theme.primary, fontWeight: 800, fontSize: 14 }}>₹{order.price || '—'}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{new Date(order.createdAt).toLocaleDateString()}</div>
-                  </div>
-                  <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, flexShrink: 0 }}>{order.status}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{isOpen ? '▲' : '▼'}</span>
-                </div>
 
-                {/* Expanded details */}
-                {isOpen && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '14px 16px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px 20px', marginBottom: 14 }}>
-                      {[
-                        ['Order ID', '#' + order._id?.slice(-8).toUpperCase()],
-                        ['Amount', `₹${order.price || '—'}`],
-                        ['Payment', order.paymentStatus || '—'],
-                        ['Date', new Date(order.createdAt).toLocaleString()],
-                      ].map(([label, val]) => (
-                        <div key={label}>
-                          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginBottom: 2 }}>{label}</div>
-                          <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, wordBreak: 'break-all' }}>{val}</div>
+                  {/* Expanded details */}
+                  {isOpen && (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '14px 16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px 20px', marginBottom: 14 }}>
+                        {[
+                          ['Order ID', '#' + order._id?.slice(-8).toUpperCase()],
+                          ['Amount', `₹${order.price || '—'}`],
+                          ['Payment', order.paymentStatus || '—'],
+                          ['Date', new Date(order.createdAt).toLocaleString()],
+                        ].map(([label, val]) => (
+                          <div key={label}>
+                            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginBottom: 2 }}>{label}</div>
+                            <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, wordBreak: 'break-all' }}>{val}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Player / custom fields */}
+                      {playerFields(player).length > 0 && (
+                        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+                          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Player / Order Details</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px 20px' }}>
+                            {playerFields(player).map(([k, v]) => (
+                              <div key={k}>
+                                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginBottom: 2 }}>{prettyKey(k)}</div>
+                                <div style={{ color: theme.primary, fontSize: 13, fontWeight: 600, wordBreak: 'break-all' }}>{v}</div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      )}
 
-                    {/* Player / custom fields */}
-                    {playerFields(player).length > 0 && (
+                      {/* Customer info */}
                       <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
-                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Player / Order Details</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px 20px' }}>
-                          {playerFields(player).map(([k, v]) => (
-                            <div key={k}>
-                              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginBottom: 2 }}>{prettyKey(k)}</div>
-                              <div style={{ color: theme.primary, fontSize: 13, fontWeight: 600, wordBreak: 'break-all' }}>{v}</div>
-                            </div>
-                          ))}
+                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Customer</div>
+                        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                          <div>
+                            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Name</div>
+                            <div style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>{user.name || '—'}</div>
+                          </div>
+                          <div>
+                            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Email</div>
+                            <div style={{ color: theme.primary, fontSize: 13, fontWeight: 600 }}>{user.email || '—'}</div>
+                          </div>
+                          <div>
+                            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Phone</div>
+                            <div style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>{user.phone || '—'}</div>
+                          </div>
                         </div>
                       </div>
-                    )}
 
-                    {/* Customer info */}
-                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Customer</div>
-                      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                        <div>
-                          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Name</div>
-                          <div style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>{user.name || '—'}</div>
-                        </div>
-                        <div>
-                          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Email</div>
-                          <div style={{ color: theme.primary, fontSize: 13, fontWeight: 600 }}>{user.email || '—'}</div>
-                        </div>
-                        <div>
-                          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Phone</div>
-                          <div style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>{user.phone || '—'}</div>
-                        </div>
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {order.status === 'Pending' && (
+                          <button onClick={() => updateStatus(order._id, 'Completed')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e', cursor: 'pointer' }}>
+                            ✓ Mark Completed
+                          </button>
+                        )}
+                        {['Pending','Processing','Failed'].includes(order.status) && (
+                          <button onClick={() => updateStatus(order._id, 'Refunded')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)', color: '#a78bfa', cursor: 'pointer' }}>
+                            ↩ Refund
+                          </button>
+                        )}
+                        {order.status !== 'Failed' && order.status !== 'Completed' && (
+                          <button onClick={() => updateStatus(order._id, 'Failed')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', cursor: 'pointer' }}>
+                            ✕ Mark Failed
+                          </button>
+                        )}
+                        {order.status !== 'Completed' && (
+                          <button onClick={() => updateStatus(order._id, 'Completed')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e', cursor: 'pointer' }}>
+                            ✓ Complete
+                          </button>
+                        )}
                       </div>
                     </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
 
-                    {/* Action buttons */}
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {/* Pagination */}
+          {pages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 24, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => goPage(1)}
+                disabled={page === 1}
+                style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: page === 1 ? 'rgba(255,255,255,0.2)' : '#fff', cursor: page === 1 ? 'default' : 'pointer' }}>
+                «
+              </button>
+              <button
+                onClick={() => goPage(page - 1)}
+                disabled={page === 1}
+                style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: page === 1 ? 'rgba(255,255,255,0.2)' : '#fff', cursor: page === 1 ? 'default' : 'pointer' }}>
+                ‹ Prev
+              </button>
 
-                      {order.status === 'Pending' && (
-                        <button onClick={() => updateStatus(order._id, 'Completed')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e', cursor: 'pointer' }}>
-                          ✓ Mark Completed
-                        </button>
-                      )}
-                      {['Pending','Processing','Failed'].includes(order.status) && (
-                        <button onClick={() => updateStatus(order._id, 'Refunded')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)', color: '#a78bfa', cursor: 'pointer' }}>
-                          ↩ Refund
-                        </button>
-                      )}
-                      {order.status !== 'Failed' && order.status !== 'Completed' && (
-                        <button onClick={() => updateStatus(order._id, 'Failed')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', cursor: 'pointer' }}>
-                          ✕ Mark Failed
-                        </button>
-                      )}
-                      {order.status !== 'Completed' && (
-                        <button onClick={() => updateStatus(order._id, 'Completed')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e', cursor: 'pointer' }}>
-                          ✓ Complete
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+              {/* Page number pills */}
+              {Array.from({ length: pages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === pages || Math.abs(p - page) <= 2)
+                .reduce((acc, p, i, arr) => {
+                  if (i > 0 && p - arr[i-1] > 1) acc.push('...')
+                  acc.push(p)
+                  return acc
+                }, [])
+                .map((p, i) => p === '...'
+                  ? <span key={`dot-${i}`} style={{ color: 'rgba(255,255,255,0.3)', padding: '0 4px' }}>…</span>
+                  : (
+                    <button key={p} onClick={() => goPage(p)}
+                      style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, minWidth: 36,
+                        background: p === page ? theme.grad : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${p === page ? 'transparent' : 'rgba(255,255,255,0.1)'}`,
+                        color: p === page ? '#fff' : 'rgba(255,255,255,0.6)',
+                        cursor: p === page ? 'default' : 'pointer' }}>
+                      {p}
+                    </button>
+                  )
+                )
+              }
+
+              <button
+                onClick={() => goPage(page + 1)}
+                disabled={page === pages}
+                style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: page === pages ? 'rgba(255,255,255,0.2)' : '#fff', cursor: page === pages ? 'default' : 'pointer' }}>
+                Next ›
+              </button>
+              <button
+                onClick={() => goPage(pages)}
+                disabled={page === pages}
+                style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: page === pages ? 'rgba(255,255,255,0.2)' : '#fff', cursor: page === pages ? 'default' : 'pointer' }}>
+                »
+              </button>
+              <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginLeft: 4 }}>
+                Page {page} of {pages}
+              </span>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
