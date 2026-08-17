@@ -103,21 +103,37 @@ router.get("/:id", async (req, res) => {
   }
 })
 
+function parseGameBody(body) {
+  const arrays = ['fields', 'regions', 'staticServers']
+  arrays.forEach(k => { if (typeof body[k] === 'string') body[k] = JSON.parse(body[k] || '[]') })
+  if (typeof body.active         === 'string') body.active         = body.active === 'true'
+  if (typeof body.skipVerify     === 'string') body.skipVerify     = body.skipVerify === 'true'
+  if (typeof body.hasServerList  === 'string') body.hasServerList  = body.hasServerList === 'true'
+  return body
+}
+
+function friendlyGameError(err) {
+  if (err.name === 'ValidationError') {
+    const first = Object.values(err.errors)[0]
+    return first?.message || 'Validation failed — check your inputs'
+  }
+  if (err.name === 'CastError') return `Invalid value for field "${err.path}"`
+  if (err.code === 11000) return 'A game with this slug already exists'
+  return err.message || 'Save failed'
+}
+
 // POST /api/games — admin
 router.post("/", protect, adminOnly, upload.any(), async (req, res) => {
   try {
-    const body = { ...req.body }
+    const body = parseGameBody({ ...req.body })
     const files = extractFiles(req.files)
     if (files.icon)   body.icon   = `/uploads/games/${files.icon[0].filename}`
     if (files.banner) body.banner = `/uploads/games/${files.banner[0].filename}`
-    if (typeof body.fields  === "string") body.fields  = JSON.parse(body.fields  || "[]")
-    if (typeof body.regions === "string") body.regions = JSON.parse(body.regions || "[]")
-    if (typeof body.active  === "string") body.active  = body.active === "true"
     body.regions = processRegionImages(req.files, body.regions)
     const game = await Game.create(body)
     res.status(201).json(game)
   } catch (err) {
-    res.status(400).json({ message: err.message })
+    res.status(400).json({ message: friendlyGameError(err) })
   }
 })
 
@@ -135,19 +151,16 @@ router.patch("/:id/sort", protect, adminOnly, validateObjectId, async (req, res)
 
 router.put("/:id", protect, adminOnly, validateObjectId, upload.any(), async (req, res) => {
   try {
-    const body = { ...req.body }
+    const body = parseGameBody({ ...req.body })
     const files = extractFiles(req.files)
     if (files.icon)   body.icon   = `/uploads/games/${files.icon[0].filename}`
     if (files.banner) body.banner = `/uploads/games/${files.banner[0].filename}`
-    if (typeof body.fields  === "string") body.fields  = JSON.parse(body.fields  || "[]")
-    if (typeof body.regions === "string") body.regions = JSON.parse(body.regions || "[]")
-    if (typeof body.active  === "string") body.active  = body.active === "true"
     body.regions = processRegionImages(req.files, body.regions)
-    const game = await Game.findByIdAndUpdate(req.params.id, body, { new: true })
+    const game = await Game.findByIdAndUpdate(req.params.id, body, { new: true, runValidators: true })
     if (!game) return res.status(404).json({ message: "Game not found" })
     res.json(game)
   } catch (err) {
-    res.status(400).json({ message: err.message })
+    res.status(400).json({ message: friendlyGameError(err) })
   }
 })
 

@@ -51,9 +51,9 @@ export default function AdminGames() {
       const fd = new FormData()
       const cleanRegions = form.regions.map(({ _imageFile, ...r }) => r)
       Object.entries(form).forEach(([k, v]) => {
-        if (k === 'fields') fd.append(k, JSON.stringify(v))
-        else if (k === 'regions') fd.append(k, JSON.stringify(cleanRegions))
-        else fd.append(k, v)
+        if (k === 'regions') fd.append(k, JSON.stringify(cleanRegions))
+        else if (Array.isArray(v) || (v !== null && typeof v === 'object')) fd.append(k, JSON.stringify(v))
+        else fd.append(k, v ?? '')
       })
       if (iconFile)   fd.append('icon',   iconFile)
       if (bannerFile) fd.append('banner', bannerFile)
