@@ -450,7 +450,7 @@ export default function Recharge() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* Wallet pay — show if user has balance and wallet is active */}
-                {user && walletStatus === 'active' && finalPrice && walletBalance >= Math.round(finalPrice * 100) && (
+                {user && walletStatus !== 'blocked' && finalPrice && walletBalance >= Math.round(finalPrice * 100) && (
                   <button
                     onClick={() => handlePay('wallet')}
                     disabled={!playerData[fields[0]?.name] || paying}

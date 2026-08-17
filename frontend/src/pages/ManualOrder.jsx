@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
-import { Shield, Zap, Mail, Star } from 'lucide-react'
+import { Shield, Zap, Mail, Star, Wallet } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import api from '../api/axios'
@@ -13,7 +13,7 @@ export default function ManualOrder() {
   const { gameId }     = useParams()
   const [searchParams] = useSearchParams()
   const regionSlug     = searchParams.get('region')
-  const { user, isReseller } = useAuth()
+  const { user, isReseller, walletBalance, walletStatus, refreshWallet } = useAuth()
   const { settings }   = useSettings()
   const navigate       = useNavigate()
 
@@ -41,24 +41,32 @@ export default function ManualOrder() {
 
   const customFields = game?.fields?.length ? game.fields : null
 
-  const handlePay = async () => {
-    if (!selectedPack) return setError('Please select a package')
-    if (customFields) {
-      if (!fieldData[customFields[0]?.name]) return setError(`${customFields[0]?.label} is required`)
-    } else {
-      if (!email) return setError('Email is required')
+  function buildOrderPayload() {
+    return {
+      gameId,
+      packId: selectedPack._id,
+      playerData: customFields
+        ? { ...fieldData, regionSlug: regionSlug || '', orderType: 'manual' }
+        : { email, phone, note, regionSlug: regionSlug || '', orderType: 'manual' },
+      regionSlug: regionSlug || '',
     }
-    setPaying(true)
-    setError('')
+  }
+
+  function validateFields() {
+    if (!selectedPack) { setError('Please select a package'); return false }
+    if (customFields) {
+      if (!fieldData[customFields[0]?.name]) { setError(`${customFields[0]?.label} is required`); return false }
+    } else {
+      if (!email) { setError('Email is required'); return false }
+    }
+    return true
+  }
+
+  const handlePay = async () => {
+    if (!validateFields()) return
+    setPaying(true); setError('')
     try {
-      const { data } = await api.post('/orders', {
-        gameId,
-        packId: selectedPack._id,
-        playerData: customFields
-          ? { ...fieldData, regionSlug: regionSlug || '', orderType: 'manual' }
-          : { email, phone, note, regionSlug: regionSlug || '', orderType: 'manual' },
-        regionSlug: regionSlug || '',
-      })
+      const { data } = await api.post('/orders', buildOrderPayload())
       const pay = await api.post('/payment/create', { orderId: data._id })
       if (pay.data.payment_url) {
         window.location.href = pay.data.payment_url
@@ -67,9 +75,19 @@ export default function ManualOrder() {
       }
     } catch (e) {
       setError(e.response?.data?.message || 'Something went wrong')
-    } finally {
-      setPaying(false)
-    }
+    } finally { setPaying(false) }
+  }
+
+  const handleWalletPay = async () => {
+    if (!validateFields()) return
+    setPaying(true); setError('')
+    try {
+      await api.post('/orders', { ...buildOrderPayload(), paymentMethod: 'wallet' })
+      await refreshWallet()
+      navigate('/orders')
+    } catch (e) {
+      setError(e.response?.data?.message || 'Something went wrong')
+    } finally { setPaying(false) }
   }
 
   if (loading) return (
@@ -281,12 +299,31 @@ export default function ManualOrder() {
             )}
 
             {(() => {
-              const dp = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
+              const dp      = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
+              const pricePaise = Math.round(dp * 100)
+              const canUseWallet = walletStatus !== 'blocked' && walletBalance >= pricePaise
               return (
-                <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
-                  onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
-                  {paying ? '⏳ Processing...' : `💳 Pay ${sym}${dp}`}
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {canUseWallet && (
+                    <button
+                      onClick={handleWalletPay}
+                      disabled={paying}
+                      style={{
+                        width: '100%', padding: 14, fontSize: 15, fontWeight: 800,
+                        background: 'linear-gradient(135deg,rgba(109,40,217,0.25),rgba(76,0,176,0.2))',
+                        border: '2px solid rgba(139,92,246,0.5)',
+                        borderRadius: 12, color: '#c4b5fd', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      }}>
+                      <Wallet size={16} />
+                      Pay with Wallet · ₹{(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })} available
+                    </button>
+                  )}
+                  <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
+                    onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
+                    {paying ? '⏳ Processing...' : `💳 Pay ${sym}${dp}`}
+                  </button>
+                </div>
               )
             })()}
           </div>
