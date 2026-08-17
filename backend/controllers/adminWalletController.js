@@ -201,6 +201,7 @@ exports.createCodes = async (req, res) => {
     const count   = Math.min(100, Math.max(1, parseInt(req.body.count) || 1))
     const value   = parseInt(req.body.value)
     if (!value || value <= 0) return res.status(400).json({ message: 'value required (paise)' })
+    if (value > 200000) return res.status(400).json({ message: 'Max code value is ₹2,000' })
 
     const expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt) : null
     const batchNote = (req.body.batchNote || '').slice(0, 200)

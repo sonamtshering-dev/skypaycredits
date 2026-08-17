@@ -317,6 +317,7 @@ function CodesTab() {
     setCreateErr('')
     const paise = Math.round(parseFloat(value) * 100)
     if (!paise || paise <= 0) return setCreateErr('Enter a valid value (₹)')
+    if (paise > 200000) return setCreateErr('Max code value is ₹2,000')
     setCreating(true)
     try {
       const { data } = await api.post('/admin/wallet/codes', {
@@ -346,20 +347,30 @@ function CodesTab() {
       {/* New codes display */}
       {newCodes.length > 0 && (
         <div style={{ ...card, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <div style={{ fontWeight: 800, fontSize: 13, color: '#4ade80' }}>✓ {newCodes.length} codes generated — copy now, won't show again</div>
-            <button onClick={copyAll} style={{ ...btn('success'), display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, color: '#4ade80' }}>✓ {newCodes.length} code{newCodes.length > 1 ? 's' : ''} generated — copy now, won't show again</div>
+            <button onClick={copyAll} style={{ ...btn('success'), display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
               <Copy size={12} /> Copy All
             </button>
           </div>
-          <div style={{
-            background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: '12px 14px',
-            fontFamily: 'monospace', fontSize: 13, color: '#a7f3d0',
-            maxHeight: 200, overflowY: 'auto', letterSpacing: 1,
-          }}>
-            {newCodes.map((c, i) => <div key={i}>{c}</div>)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 280, overflowY: 'auto' }}>
+            {newCodes.map((c, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'rgba(0,0,0,0.35)', borderRadius: 10, padding: '10px 14px',
+                border: '1px solid rgba(74,222,128,0.15)',
+              }}>
+                <span style={{ fontFamily: 'monospace', fontSize: 14, color: '#a7f3d0', letterSpacing: 2, fontWeight: 700 }}>{c}</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(c)}
+                  style={{ ...btn('ghost'), padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, marginLeft: 10, flexShrink: 0 }}
+                >
+                  <Copy size={11} /> Copy
+                </button>
+              </div>
+            ))}
           </div>
-          <button onClick={() => setNewCodes([])} style={{ ...btn('ghost'), marginTop: 10, fontSize: 12 }}>Dismiss</button>
+          <button onClick={() => setNewCodes([])} style={{ ...btn('ghost'), marginTop: 12, fontSize: 12 }}>Dismiss</button>
         </div>
       )}
 
@@ -386,8 +397,8 @@ function CodesTab() {
               <input style={inp} type="number" min="1" max="100" value={count} onChange={e => setCount(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Value (₹) *</label>
-              <input style={inp} type="number" min="1" placeholder="e.g. 2000" value={value} onChange={e => setValue(e.target.value)} />
+              <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Value (₹) · max ₹2,000 *</label>
+              <input style={inp} type="number" min="1" max="2000" placeholder="e.g. 500" value={value} onChange={e => setValue(e.target.value)} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Expires (optional)</label>
