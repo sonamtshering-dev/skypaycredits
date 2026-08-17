@@ -74,6 +74,10 @@ export default function Navbar() {
           {user ? (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <Link to="/orders" className="hide-mobile btn btn-ghost btn-sm">Orders</Link>
+              <Link to="/wallet" className="hide-mobile btn btn-ghost btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <Wallet size={13} />
+                {walletBalance > 0 ? `₹${(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : 'Wallet'}
+              </Link>
               {isAdmin && <Link to="/admin" className="hide-mobile btn btn-ghost btn-sm">Admin</Link>}
 
               {/* Profile avatar — desktop dropdown */}
@@ -109,6 +113,7 @@ export default function Navbar() {
                       </div>
                       {[
                         { to: '/orders',  label: 'Orders',      icon: ClipboardList },
+                        { to: '/wallet',  label: 'Wallet',      icon: Wallet },
                         { to: '/profile', label: 'Profile',     icon: User },
                         ...(isAdmin ? [{ to: '/admin', label: 'Admin Panel', icon: Settings }] : []),
                       ].map(({ to, label, icon: Icon }) => (
