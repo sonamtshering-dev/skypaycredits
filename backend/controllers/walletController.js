@@ -60,6 +60,10 @@ exports.createTopup = async (req, res) => {
     if (amountPaise < minTopup) return res.status(400).json({ message: `Minimum topup is ₹${minTopup / 100}` })
     if (amountPaise > MAX_TOPUP) return res.status(400).json({ message: `Maximum topup is ₹${MAX_TOPUP / 100}` })
 
+    const walletUser = await User.findById(req.user._id).select('walletStatus').lean()
+    if (walletUser?.walletStatus === 'blocked')
+      return res.status(403).json({ message: 'Your wallet is blocked. Contact support.' })
+
     if (!NOVAPAY_API_KEY || !NOVAPAY_API_SECRET)
       return res.status(500).json({ message: 'Payment gateway not configured' })
 

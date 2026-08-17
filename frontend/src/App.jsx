@@ -26,6 +26,7 @@ const AdminUsers    = lazy(() => import('./admin/AdminUsers'))
 const AdminSettings = lazy(() => import('./admin/AdminSettings'))
 const AdminBanners  = lazy(() => import('./admin/AdminBanners'))
 const AdminCoupons  = lazy(() => import('./admin/AdminCoupons'))
+const AdminWallet   = lazy(() => import('./admin/AdminWallet'))
 
 function Loader() {
   return (
@@ -137,6 +138,7 @@ export default function App() {
         <Route path="users"     element={<AdminUsers />} />
         <Route path="banners"   element={<AdminBanners />} />
         <Route path="coupons"   element={<AdminCoupons />} />
+        <Route path="wallet"    element={<AdminWallet />} />
         <Route path="settings"  element={<AdminSettings />} />
       </Route>
 

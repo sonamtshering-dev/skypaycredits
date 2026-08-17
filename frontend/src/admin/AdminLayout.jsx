@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useState } from 'react'
 import theme from '../theme'
-import { LayoutDashboard, Gamepad2, Package, ClipboardList, Users, Ticket, Image, Settings, Menu, ArrowLeft } from 'lucide-react'
+import { LayoutDashboard, Gamepad2, Package, ClipboardList, Users, Ticket, Image, Settings, Menu, ArrowLeft, Wallet } from 'lucide-react'
 
 const NAV = [
   { to: '/admin',          label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -11,6 +11,7 @@ const NAV = [
   { to: '/admin/packs',    label: 'Packs',     icon: Package },
   { to: '/admin/orders',   label: 'Orders',    icon: ClipboardList },
   { to: '/admin/users',    label: 'Users',     icon: Users },
+  { to: '/admin/wallet',   label: 'Wallet',    icon: Wallet },
   { to: '/admin/coupons',  label: 'Coupons',   icon: Ticket },
   { to: '/admin/banners',  label: 'Banners',   icon: Image },
   { to: '/admin/settings', label: 'Settings',  icon: Settings },
