@@ -94,6 +94,10 @@ export default function WalletPage() {
     setTopupLoading(true)
     try {
       const { data } = await api.post('/wallet/topup', { amount: amountPaise })
+      if (data.payment_url) {
+        window.location.href = data.payment_url
+        return
+      }
       setTopupResult(data)
     } catch (err) {
       setTopupErr(err.response?.data?.message || 'Failed to create payment')
