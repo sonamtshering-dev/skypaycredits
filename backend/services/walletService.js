@@ -36,7 +36,7 @@ async function creditWallet(userId, amountPaise, type, referenceId, description,
   if (!amountPaise || amountPaise <= 0) return { ok: false, error: 'Amount must be positive' }
 
   const user = await User.findOneAndUpdate(
-    { _id: userId, walletStatus: 'active' },
+    { _id: userId, walletStatus: { $ne: 'blocked' } },
     { $inc: { walletBalance: amountPaise } },
     { new: false }
   )
@@ -71,14 +71,14 @@ async function debitWallet(userId, amountPaise, type, referenceId, description, 
   if (!amountPaise || amountPaise <= 0) return { ok: false, error: 'Amount must be positive' }
 
   const user = await User.findOneAndUpdate(
-    { _id: userId, walletBalance: { $gte: amountPaise }, walletStatus: 'active' },
+    { _id: userId, walletBalance: { $gte: amountPaise }, walletStatus: { $ne: 'blocked' } },
     { $inc: { walletBalance: -amountPaise } },
     { new: false }
   )
   if (!user) {
     const check = await User.findById(userId).select('walletBalance walletStatus').lean()
     if (!check) return { ok: false, error: 'User not found' }
-    if (check.walletStatus !== 'active') return { ok: false, error: 'Wallet is blocked' }
+    if (check.walletStatus === 'blocked') return { ok: false, error: 'Wallet is blocked' }
     return { ok: false, error: 'Insufficient wallet balance' }
   }
 

@@ -197,7 +197,7 @@ router.post("/", protect, async (req, res) => {
     if (payWithWallet) {
       // Check wallet first without debiting (fast rejection path)
       const walletUser = await User.findById(req.user._id).select('walletBalance walletStatus').lean()
-      if (!walletUser || walletUser.walletStatus !== 'active')
+      if (!walletUser || walletUser.walletStatus === 'blocked')
         return res.status(400).json({ message: 'Wallet is blocked' })
       if (walletUser.walletBalance < finalPriceInPaise)
         return res.status(400).json({ message: 'Insufficient wallet balance' })
