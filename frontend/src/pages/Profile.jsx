@@ -76,7 +76,22 @@ export default function Profile() {
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div className="container" style={{ paddingTop: 40, paddingBottom: 60, maxWidth: 560 }}>
 
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 24 }}>Profile</h1>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', margin: 0 }}>Profile</h1>
+            <button onClick={handleLogout} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 20,
+              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+              color: '#f87171', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Sign out
+            </button>
+          </div>
 
           {/* Avatar + info */}
           <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -156,12 +171,6 @@ export default function Profile() {
             </form>
           </div>
 
-          {/* Logout */}
-          <button onClick={handleLogout} style={{
-            width: '100%', padding: 13, borderRadius: 12, fontWeight: 800, fontSize: 14,
-            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
-            color: '#f87171', cursor: 'pointer',
-          }}>Logout</button>
 
         </div>
       </div>
