@@ -37,6 +37,7 @@ export default function Recharge() {
   const [servers, setServers]       = useState([])
   const [verifyError, setVerifyError]     = useState('')
   const [paying, setPaying]               = useState(false)
+  const [paySuccess, setPaySuccess]       = useState(null)
   const [couponCode, setCouponCode]       = useState('')
   const [couponApplied, setCouponApplied] = useState(null)
   const [couponError, setCouponError]     = useState('')
@@ -133,7 +134,9 @@ export default function Recharge() {
       if (paymentMethod === 'wallet') {
         await api.post('/orders', { ...orderPayload, paymentMethod: 'wallet' })
         await refreshWallet()
-        navigate('/orders')
+        const dp = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : (finalPrice ?? selectedPack.price)
+        setPaySuccess({ packName: selectedPack.title, amount: dp })
+        setTimeout(() => navigate('/orders'), 3000)
         return
       }
 
@@ -439,7 +442,23 @@ export default function Recharge() {
               </div>
             )}
 
-            {settings.purchasesEnabled === false ? (
+            {paySuccess ? (
+              <div style={{
+                textAlign: 'center', padding: '28px 20px',
+                background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14,
+              }}>
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px', display: 'block' }}>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 6 }}>Order Placed!</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 4 }}>{paySuccess.packName} · ₹{paySuccess.amount}</div>
+                <div style={{ color: '#4ade80', fontSize: 13, marginBottom: 20 }}>Paid from wallet · Balance updated</div>
+                <button className="btn btn-primary" onClick={() => navigate('/orders')} style={{ padding: '10px 28px' }}>
+                  View Orders
+                </button>
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 12 }}>Redirecting in 3 seconds…</div>
+              </div>
+            ) : settings.purchasesEnabled === false ? (
               <div style={{
                 width: '100%', padding: '16px', borderRadius: 14, textAlign: 'center',
                 fontWeight: 800, fontSize: 15, color: '#f87171',
@@ -449,7 +468,7 @@ export default function Recharge() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {/* Wallet pay — show if user has balance and wallet is active */}
+                {/* Wallet pay — show if user has balance and wallet is not blocked */}
                 {user && walletStatus !== 'blocked' && finalPrice && walletBalance >= Math.round(finalPrice * 100) && (
                   <button
                     onClick={() => handlePay('wallet')}

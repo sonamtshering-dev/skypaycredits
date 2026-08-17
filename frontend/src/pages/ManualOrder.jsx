@@ -25,8 +25,9 @@ export default function ManualOrder() {
   const [email, setEmail]     = useState(user?.email || '')
   const [phone, setPhone]     = useState('')
   const [note, setNote]       = useState('')
-  const [paying, setPaying]   = useState(false)
-  const [error, setError]     = useState('')
+  const [paying, setPaying]     = useState(false)
+  const [error, setError]       = useState('')
+  const [paySuccess, setPaySuccess] = useState(null) // { packName, amount }
   const sym = settings?.currencySymbol || '₹'
 
   useEffect(() => {
@@ -82,9 +83,11 @@ export default function ManualOrder() {
     if (!validateFields()) return
     setPaying(true); setError('')
     try {
+      const dp = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
       await api.post('/orders', { ...buildOrderPayload(), paymentMethod: 'wallet' })
       await refreshWallet()
-      navigate('/orders')
+      setPaySuccess({ packName: selectedPack.title, amount: dp })
+      setTimeout(() => navigate('/orders'), 3000)
     } catch (e) {
       setError(e.response?.data?.message || 'Something went wrong')
     } finally { setPaying(false) }
@@ -298,34 +301,54 @@ export default function ManualOrder() {
               </div>
             )}
 
-            {(() => {
-              const dp      = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
-              const pricePaise = Math.round(dp * 100)
-              const canUseWallet = walletStatus !== 'blocked' && walletBalance >= pricePaise
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {canUseWallet && (
-                    <button
-                      onClick={handleWalletPay}
-                      disabled={paying}
-                      style={{
-                        width: '100%', padding: 14, fontSize: 15, fontWeight: 800,
-                        background: 'linear-gradient(135deg,rgba(109,40,217,0.25),rgba(76,0,176,0.2))',
-                        border: '2px solid rgba(139,92,246,0.5)',
-                        borderRadius: 12, color: '#c4b5fd', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      }}>
-                      <Wallet size={16} />
-                      Pay with Wallet · ₹{(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })} available
-                    </button>
-                  )}
-                  <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
-                    onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
-                    {paying ? '⏳ Processing...' : `💳 Pay ${sym}${dp}`}
-                  </button>
+            {paySuccess ? (
+              <div style={{
+                textAlign: 'center', padding: '28px 20px',
+                background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14,
+              }}>
+                <div style={{ fontSize: 44, marginBottom: 12 }}>
+                  <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto', display: 'block' }}>
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
                 </div>
-              )
-            })()}
+                <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 6 }}>Order Placed!</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 4 }}>{paySuccess.packName} · {sym}{paySuccess.amount}</div>
+                <div style={{ color: '#4ade80', fontSize: 13, marginBottom: 20 }}>Paid from wallet · Balance updated</div>
+                <button className="btn btn-primary" onClick={() => navigate('/orders')} style={{ padding: '10px 28px' }}>
+                  View Orders
+                </button>
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 12 }}>Redirecting in 3 seconds…</div>
+              </div>
+            ) : (
+              (() => {
+                const dp         = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
+                const pricePaise = Math.round(dp * 100)
+                const canUseWallet = walletStatus !== 'blocked' && walletBalance >= pricePaise
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {canUseWallet && (
+                      <button
+                        onClick={handleWalletPay}
+                        disabled={paying}
+                        style={{
+                          width: '100%', padding: 14, fontSize: 15, fontWeight: 800,
+                          background: 'linear-gradient(135deg,rgba(109,40,217,0.25),rgba(76,0,176,0.2))',
+                          border: '2px solid rgba(139,92,246,0.5)',
+                          borderRadius: 12, color: '#c4b5fd', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        }}>
+                        <Wallet size={16} />
+                        {paying ? 'Processing…' : `Pay with Wallet · ₹${(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })} available`}
+                      </button>
+                    )}
+                    <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
+                      onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
+                      {paying ? 'Processing…' : `Pay ${sym}${dp}`}
+                    </button>
+                  </div>
+                )
+              })()
+            )}
           </div>
         )}
 
