@@ -9,7 +9,7 @@ const TABS = [
   { id: 'home',    label: 'Home',    Icon: Home,       route: '/' },
   { id: 'wallet',  label: 'Wallet',  Icon: Wallet,     route: '/orders' },
   { id: 'search',  label: 'Search',  Icon: Search,     route: null },
-  { id: 'tools',   label: 'Tools',   Icon: LayoutGrid, route: null },
+  { id: 'tools',   label: 'Tools',   Icon: LayoutGrid, route: '/tools' },
   { id: 'profile', label: 'Profile', Icon: UserCircle, route: '/profile' },
 ]
 
@@ -54,7 +54,6 @@ export default function BottomNav() {
   const isActive = (id, route) => {
     if (id === 'search')  return searchOpen
     if (id === 'wallet')  return false
-    if (id === 'tools')   return false
     if (!route) return false
     if (route === '/') return path === '/'
     return path.startsWith(route)
@@ -63,7 +62,6 @@ export default function BottomNav() {
   const handleTab = (tab) => {
     if (tab.id === 'search')  { setSearchOpen(v => !v); return }
     if (tab.id === 'wallet')  { return }
-    if (tab.id === 'tools')   { return }
     close()
     if (tab.id === 'profile') { navigate(user ? '/profile' : '/auth'); return }
     navigate(tab.route)
