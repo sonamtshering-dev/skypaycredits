@@ -12,7 +12,7 @@ const TABS = [
   { id: 'history',  label: 'History' },
 ]
 
-const TOPUP_AMOUNTS = [5000, 10000, 20000, 50000, 100000] // paise
+const TOPUP_AMOUNTS = [5000, 10000, 20000, 50000, 100000, 200000] // paise (₹50–₹2000)
 
 function fmt(paise) {
   return '₹' + (paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
@@ -281,15 +281,15 @@ export default function WalletPage() {
                       <input
                         style={inp}
                         type="number"
-                        min="20"
-                        max="10000"
+                        min={isReseller ? "200" : "20"}
+                        max="2000"
                         step="1"
                         placeholder="Enter amount…"
                         value={amount}
                         onChange={e => setAmount(e.target.value)}
                       />
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>
-                        Min ₹20 · Max ₹10,000
+                        Min ₹{isReseller ? '200' : '20'} · Max ₹2,000
                       </div>
                     </div>
 
