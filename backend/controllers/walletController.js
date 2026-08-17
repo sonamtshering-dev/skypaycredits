@@ -125,8 +125,8 @@ exports.redeemCode = async (req, res) => {
     const { code } = req.body
     if (!code || typeof code !== 'string') return res.status(400).json({ message: 'code required' })
 
-    // Only resellers can redeem codes
-    if (req.user.role !== 'reseller') return res.status(403).json({ message: 'Only resellers can redeem codes' })
+    // Only resellers and admins can redeem codes
+    if (!['reseller', 'admin'].includes(req.user.role)) return res.status(403).json({ message: 'Only resellers can redeem codes' })
 
     const ip = req.ip || req.socket?.remoteAddress || ''
     const result = await redeemCode(req.user._id, code, req.user.role, ip)

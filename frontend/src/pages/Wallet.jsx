@@ -46,7 +46,7 @@ const inp = {
 }
 
 export default function WalletPage() {
-  const { user, walletBalance, walletStatus, refreshWallet, isReseller } = useAuth()
+  const { user, walletBalance, walletStatus, refreshWallet, isReseller, isAdmin } = useAuth()
   const [params] = useSearchParams()
   const [tab, setTab]             = useState('balance')
   const [topupSuccess, setTopupSuccess] = useState(params.get('topup') === 'success')
@@ -229,7 +229,7 @@ export default function WalletPage() {
                 </div>
               </div>
 
-              {isReseller && (
+              {(isReseller || isAdmin) && (
                 <div style={card}>
                   <div style={{ fontWeight: 800, fontSize: 15, color: '#fff', marginBottom: 14 }}>Redeem Code</div>
                   <form onSubmit={handleRedeem} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
