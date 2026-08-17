@@ -522,6 +522,47 @@ exports.verifyPhoneOTPPre = async (req, res) => {
   }
 }
 
+// ── Google OAuth ──────────────────────────────────────
+exports.googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body
+    if (!credential) return res.status(400).json({ message: 'No credential provided' })
+    if (!process.env.GOOGLE_CLIENT_ID)
+      return res.status(500).json({ message: 'Google sign-in not configured on this server' })
+
+    const { OAuth2Client } = require('google-auth-library')
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    })
+    const { email, name, picture, sub: googleId } = ticket.getPayload()
+    if (!email) return res.status(400).json({ message: 'Google account has no email' })
+
+    let user = await User.findOne({ $or: [{ googleId }, { email: email.toLowerCase() }] })
+    if (user) {
+      if (user.status === 'banned') return res.status(403).json({ message: 'Account has been banned' })
+      if (!user.googleId) { user.googleId = googleId; user.isEmailVerified = true; await user.save() }
+    } else {
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email: email.toLowerCase(),
+        googleId,
+        avatar: picture || '',
+        isEmailVerified: true,
+      })
+    }
+
+    const token = makeToken(user._id, user.tokenVersion || 0)
+    res.cookie('token', token, { httpOnly: true, secure: isProd, sameSite: 'strict', maxAge: 7*24*60*60*1000 })
+    securityLog.loginSuccess(user._id, req.ip)
+    res.json({ token, user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } })
+  } catch (err) {
+    console.error('[GOOGLE AUTH]', err.message)
+    res.status(401).json({ message: 'Google sign-in failed. Please try again.' })
+  }
+}
+
 // ── Logout ────────────────────────────────────────────
 exports.logout = (req, res) => {
   res.clearCookie("token")

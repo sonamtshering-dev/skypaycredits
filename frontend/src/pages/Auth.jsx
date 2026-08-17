@@ -1,5 +1,5 @@
 // src/pages/Auth.jsx
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
@@ -115,6 +115,48 @@ export default function Auth() {
   const [newConfirm, setNewConfirm]       = useState('')
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotError, setForgotError]     = useState('')
+
+  const googleBtnRef = useRef(null)
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
+
+  const handleGoogleCredential = async (response) => {
+    setLoading(true); setError('')
+    try {
+      const { data } = await api.post('/auth/google', { credential: response.credential })
+      login(data.token, data.user); navigate('/')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google sign-in failed')
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || step !== 'form') return
+    const el = googleBtnRef.current
+    if (!el) return
+
+    const initAndRender = () => {
+      if (!window.google?.accounts?.id || !googleBtnRef.current) return
+      const div = googleBtnRef.current
+      div.innerHTML = ''
+      window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential })
+      window.google.accounts.id.renderButton(div, {
+        theme: 'filled_black', size: 'large', text: 'continue_with',
+        width: Math.min(div.offsetWidth || 360, 400), shape: 'rectangular',
+      })
+    }
+
+    if (window.google?.accounts?.id) {
+      initAndRender()
+    } else if (!document.getElementById('gsi-script')) {
+      const s = document.createElement('script')
+      s.id = 'gsi-script'; s.src = 'https://accounts.google.com/gsi/client'; s.async = true
+      s.onload = initAndRender
+      document.head.appendChild(s)
+    } else {
+      const existing = document.getElementById('gsi-script')
+      existing.addEventListener('load', initAndRender, { once: true })
+    }
+  }, [step, tab, GOOGLE_CLIENT_ID])
 
   const resetRegister = () => {
     setName(''); setEmail(''); setPhone(''); setPassword(''); setConfirm('')
@@ -492,6 +534,7 @@ export default function Auth() {
               {tab === 'register' && (
                 <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 14 }} autoComplete="off">
 
+
                   {/* Name */}
                   <div className="form-group">
                     <label>Full name</label>
@@ -553,6 +596,18 @@ export default function Auth() {
                     {loading ? 'Creating account…' : 'Create Account'}
                   </button>
                 </form>
+              )}
+
+              {/* ── Google sign-in ── */}
+              {GOOGLE_CLIENT_ID && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>OR</span>
+                    <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+                  </div>
+                  <div ref={googleBtnRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', minHeight: 44 }} />
+                </div>
               )}
             </>
           )}
