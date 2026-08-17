@@ -9,12 +9,13 @@ export default function PaymentSuccess() {
   const [params]   = useSearchParams()
   const navigate   = useNavigate()
   const orderId    = params.get('order_id')
+  const isWallet   = params.get('type') === 'wallet'
   const [status, setStatus] = useState('checking') // checking | paid | failed
 
   useEffect(() => {
-    if (!orderId) { navigate('/orders'); return }
+    if (!orderId) { navigate(isWallet ? '/wallet' : '/orders'); return }
 
-    // Poll payment status
+    // Poll payment status — same flow for game orders and wallet topups
     let attempts = 0
     const check = async () => {
       try {
@@ -22,7 +23,7 @@ export default function PaymentSuccess() {
         const { data } = await api.get(`/payment/status-by-order/${orderId}`)
         if (data.status === 'PAID' || data.status === 'COMPLETED') {
           setStatus('paid')
-          setTimeout(() => navigate('/orders'), 2000)
+          setTimeout(() => navigate(isWallet ? '/wallet?topup=success' : '/orders'), 2000)
         } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
           setStatus('failed')
         } else if (attempts < 20) {
@@ -57,8 +58,12 @@ export default function PaymentSuccess() {
             <>
               <div style={{ marginBottom: 16 }}><CheckCircle size={64} color="#22c55e" /></div>
               <div style={{ fontWeight: 900, fontSize: 24, color: '#fff', marginBottom: 8 }}>Payment Successful!</div>
-              <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>Your diamonds are being delivered automatically</div>
-              <div style={{ fontSize: 13, color: '#8b5cf6' }}>Redirecting to orders...</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>
+                {isWallet ? 'Your wallet has been topped up' : 'Your diamonds are being delivered automatically'}
+              </div>
+              <div style={{ fontSize: 13, color: '#8b5cf6' }}>
+                {isWallet ? 'Redirecting to wallet…' : 'Redirecting to orders...'}
+              </div>
             </>
           )}
 

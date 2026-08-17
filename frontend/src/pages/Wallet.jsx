@@ -1,5 +1,5 @@
 // src/pages/Wallet.jsx
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Wallet, ArrowUpCircle, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
 import Navbar from '../components/Navbar'
@@ -48,12 +48,9 @@ const inp = {
 export default function WalletPage() {
   const { user, walletBalance, walletStatus, refreshWallet, isReseller } = useAuth()
   const [params] = useSearchParams()
-  const pendingOrderId = params.get('order_id')
-  const isReturnFromPayment = params.get('topup') === 'success'
-
   const [tab, setTab]             = useState('balance')
-  const [topupSuccess, setTopupSuccess] = useState(false)
-  const [polling, setPolling]     = useState(isReturnFromPayment && !!pendingOrderId)
+  const [topupSuccess, setTopupSuccess] = useState(params.get('topup') === 'success')
+
 
   // Topup state
   const [amount, setAmount]       = useState('')
@@ -73,8 +70,6 @@ export default function WalletPage() {
   const [txTotal, setTxTotal]     = useState(0)
   const [txLoading, setTxLoading] = useState(false)
 
-  const pollRef = useRef(null)
-
   const amountPaise = Math.round(parseFloat(amount || 0) * 100)
 
   const loadTxs = useCallback(async (page = 1) => {
@@ -88,38 +83,8 @@ export default function WalletPage() {
     setTxLoading(false)
   }, [])
 
-  // Poll payment status after redirect from NovaPay
   useEffect(() => {
-    if (!isReturnFromPayment || !pendingOrderId) return
-
-    let attempts = 0
-    const MAX = 10
-
-    const check = async () => {
-      try {
-        const { data } = await api.get(`/payment/order/${pendingOrderId}/status`)
-        if (data.status === 'PAID' || data.status === 'paid') {
-          clearInterval(pollRef.current)
-          await refreshWallet()
-          setPolling(false)
-          setTopupSuccess(true)
-          loadTxs(1)
-          return
-        }
-      } catch {}
-      attempts++
-      if (attempts >= MAX) {
-        clearInterval(pollRef.current)
-        setPolling(false)
-        // Still refresh in case webhook already credited
-        await refreshWallet()
-        loadTxs(1)
-      }
-    }
-
-    check() // immediate first check
-    pollRef.current = setInterval(check, 3000)
-    return () => clearInterval(pollRef.current)
+    if (topupSuccess) { refreshWallet(); loadTxs(1) }
   }, [])
 
   useEffect(() => {
@@ -232,17 +197,6 @@ export default function WalletPage() {
           {/* ── Balance Tab ── */}
           {tab === 'balance' && (
             <div>
-              {polling && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px',
-                  borderRadius: 14, marginBottom: 16,
-                  background: 'rgba(120,40,255,0.1)', border: '1px solid rgba(120,40,255,0.25)',
-                  color: '#a78bfa', fontSize: 14, fontWeight: 600,
-                }}>
-                  <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }} />
-                  Confirming payment… balance will update automatically.
-                </div>
-              )}
               {topupSuccess && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px',
