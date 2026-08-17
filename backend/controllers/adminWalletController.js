@@ -6,6 +6,13 @@ const WalletAuditLog = require('../models/WalletAuditLog')
 const WalletTransaction = require('../models/WalletTransaction')
 const { creditWallet, debitWallet } = require('../services/walletService')
 
+const isProd = process.env.NODE_ENV === 'production'
+function safeErr(err) { return isProd ? 'Internal server error' : err.message }
+
+function escapeRegex(str) {
+  return (str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&').substring(0, 100)
+}
+
 function sha256(str) {
   return crypto.createHash('sha256').update(str).digest('hex')
 }
@@ -22,10 +29,11 @@ exports.listUserWallets = async (req, res) => {
     const skip  = (page - 1) * limit
     const q     = req.query.q?.trim() || ''
 
+    const escaped = escapeRegex(q)
     const filter = q
       ? { $or: [
-          { email: { $regex: q, $options: 'i' } },
-          { name:  { $regex: q, $options: 'i' } },
+          { email: { $regex: escaped, $options: 'i' } },
+          { name:  { $regex: escaped, $options: 'i' } },
         ]}
       : {}
 
@@ -39,7 +47,7 @@ exports.listUserWallets = async (req, res) => {
 
     res.json({ users, total, page, pages: Math.ceil(total / limit) })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -61,7 +69,7 @@ exports.getUserWallet = async (req, res) => {
 
     res.json({ user, transactions: txs, total: txTotal, page, pages: Math.ceil(txTotal / limit) })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -81,7 +89,7 @@ exports.adminCredit = async (req, res) => {
     if (!result.ok) return res.status(400).json({ message: result.error })
     res.json({ success: true, ...result })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -101,7 +109,7 @@ exports.adminDebit = async (req, res) => {
     if (!result.ok) return res.status(400).json({ message: result.error })
     res.json({ success: true, ...result })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -124,7 +132,7 @@ exports.blockWallet = async (req, res) => {
     })
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -144,7 +152,7 @@ exports.unblockWallet = async (req, res) => {
     })
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -163,7 +171,7 @@ exports.getAuditLog = async (req, res) => {
     ])
     res.json({ logs, total, page, pages: Math.ceil(total / limit) })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -183,7 +191,7 @@ exports.listCodes = async (req, res) => {
     ])
     res.json({ codes, total, page, pages: Math.ceil(total / limit) })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -210,7 +218,7 @@ exports.createCodes = async (req, res) => {
     // Return plaintext codes once — they won't be retrievable again
     res.json({ success: true, codes: plainCodes, count })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -225,7 +233,7 @@ exports.disableCode = async (req, res) => {
     if (!code) return res.status(404).json({ message: 'Code not found or already used/disabled' })
     res.json({ success: true })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }
 
@@ -262,6 +270,6 @@ exports.refundToWallet = async (req, res) => {
 
     res.json({ success: true, refunded: amountPaise })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: safeErr(err) })
   }
 }

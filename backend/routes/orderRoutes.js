@@ -172,7 +172,7 @@ router.post("/", protect, async (req, res) => {
           return res.status(400).json({ message: "This coupon is not valid for this game" })
       }
       const userUsage = await Order.countDocuments({
-        userId: req.user._id, couponCode: coupon.code, paymentStatus: "paid"
+        userId: req.user._id, couponCode: coupon.code, paymentStatus: { $ne: 'refunded' }
       })
       if (coupon.perUser > 0 && userUsage >= coupon.perUser)
         return res.status(400).json({ message: "You have already used this coupon" })

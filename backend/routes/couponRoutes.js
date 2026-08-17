@@ -42,7 +42,7 @@ router.post("/validate", protect, async (req, res) => {
       const userUsage = await Order.countDocuments({
         userId: req.user._id,
         couponCode: coupon.code,
-        paymentStatus: "paid",
+        paymentStatus: { $ne: 'refunded' },
       })
       if (userUsage >= coupon.perUser)
         return res.status(400).json({ message: "You have already used this coupon" })

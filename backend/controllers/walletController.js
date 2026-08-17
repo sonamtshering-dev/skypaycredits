@@ -64,6 +64,13 @@ exports.createTopup = async (req, res) => {
     if (walletUser?.walletStatus === 'blocked')
       return res.status(403).json({ message: 'Your wallet is blocked. Contact support.' })
 
+    // Prevent piling up unpaid topup orders
+    const pendingTopups = await Order.countDocuments({
+      userId: req.user._id, orderType: 'wallet_topup', paymentStatus: 'unpaid',
+      createdAt: { $gte: new Date(Date.now() - 30 * 60 * 1000) }
+    })
+    if (pendingTopups >= 3) return res.status(429).json({ message: 'You have pending topup orders. Please complete or wait for them to expire.' })
+
     if (!NOVAPAY_API_KEY || !NOVAPAY_API_SECRET)
       return res.status(500).json({ message: 'Payment gateway not configured' })
 
