@@ -295,6 +295,17 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" })
     }
 
+    // Admin accounts require email OTP as second factor
+    if (user.role === 'admin') {
+      await OTP.deleteMany({ email, purpose: 'admin-login' })
+      const adminOtp = generateOTP()
+      await OTP.create({ email, otp: hashOTP(adminOtp), purpose: 'admin-login' })
+      const settings = await require('../models/Settings').findOne()
+      await sendOTPEmail(email, adminOtp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
+        .catch(err => console.error('[EMAIL] Admin OTP send failed:', err.message))
+      return res.json({ requiresAdminOTP: true, email })
+    }
+
     await resetLoginAttempts(email)
     securityLog.loginSuccess(user._id, req.ip)
 
@@ -311,6 +322,40 @@ exports.login = async (req, res) => {
     })
   } catch (err) {
     res.status(500).json({ message: "Login failed" })
+  }
+}
+
+// ── Admin 2FA — verify email OTP and issue JWT ────────
+exports.verifyAdminOTP = async (req, res) => {
+  try {
+    const email = req.body.email?.trim().toLowerCase()
+    const otp   = req.body.otp?.trim()
+    if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' })
+
+    const record = await OTP.findOne({ email, purpose: 'admin-login' })
+    if (!record) return res.status(400).json({ message: 'Code expired. Please log in again.' })
+
+    if (!safeOTPCompare(record.otp, otp)) {
+      const updated = await OTP.findByIdAndUpdate(record._id, { $inc: { failedAttempts: 1 } }, { new: true })
+      if (updated && updated.failedAttempts >= 5) {
+        await OTP.deleteOne({ _id: record._id })
+        return res.status(429).json({ message: 'Too many incorrect attempts. Please log in again.' })
+      }
+      return res.status(400).json({ message: 'Incorrect code' })
+    }
+
+    const user = await User.findOne({ email, role: 'admin' })
+    if (!user) return res.status(404).json({ message: 'Admin account not found' })
+
+    await OTP.deleteMany({ email, purpose: 'admin-login' })
+    await resetLoginAttempts(email)
+    securityLog.loginSuccess(user._id, req.ip)
+
+    const token = makeToken(user._id, user.tokenVersion || 0)
+    res.cookie('token', token, { httpOnly: true, secure: isProd, sameSite: 'strict', maxAge: 7*24*60*60*1000 })
+    res.json({ token, user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } })
+  } catch (err) {
+    res.status(500).json({ message: isProd ? 'Verification failed' : err.message })
   }
 }
 
@@ -422,7 +467,8 @@ exports.resetPassword = async (req, res) => {
     const user = await User.findOne({ email })
     if (!user) return res.status(404).json({ message: 'User not found' })
 
-    user.password = password
+    user.password     = password
+    user.tokenVersion = (user.tokenVersion || 0) + 1
     await user.save()
     await OTP.deleteMany({ email, purpose: 'reset' })
 

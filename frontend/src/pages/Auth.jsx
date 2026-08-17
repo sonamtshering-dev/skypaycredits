@@ -173,6 +173,9 @@ export default function Auth() {
     setLoading(true)
     try {
       const { data } = await api.post('/auth/login', { email: loginEmail, password: loginPassword })
+      if (data.requiresAdminOTP) {
+        setPendingEmail(data.email); setStep('admin-otp'); startResendCooldown(); return
+      }
       if (data.requiresVerification) {
         setPendingEmail(data.email); setStep('otp'); startResendCooldown(); return
       }
@@ -260,6 +263,23 @@ export default function Auth() {
       login(data.token, data.user); navigate('/')
     } catch (err) { setOtpError(err.response?.data?.message || 'Invalid code') }
     finally { setOtpLoading(false) }
+  }
+
+  const handleAdminOTP = async e => {
+    e.preventDefault(); setOtpError('')
+    if (otp.length !== 6) return setOtpError('Enter the 6-digit code')
+    setOtpLoading(true)
+    try {
+      const { data } = await api.post('/auth/admin-otp', { email: pendingEmail, otp })
+      login(data.token, data.user); navigate('/')
+    } catch (err) { setOtpError(err.response?.data?.message || 'Invalid code') }
+    finally { setOtpLoading(false) }
+  }
+
+  const handleResendAdminOTP = async () => {
+    if (resendCooldown > 0) return
+    try { await api.post('/auth/login', { email: loginEmail, password: loginPassword }); setOtpError(''); startResendCooldown() }
+    catch { setOtpError('Failed to resend. Please log in again.') }
   }
 
   const handleResendOTP = async () => {
@@ -460,6 +480,30 @@ export default function Auth() {
       <div style={{ width: '100%', maxWidth: 420 }}>
         <Brand />
         <div style={card}>
+
+          {/* ── Admin 2FA step ── */}
+          {step === 'admin-otp' && (
+            <form onSubmit={handleAdminOTP} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ textAlign: 'center', marginBottom: 4 }}>
+                <div style={{ fontSize: 36 }}>🔐</div>
+                <div style={{ fontWeight: 800, color: '#fff', fontSize: 15, marginTop: 8 }}>Admin verification</div>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, marginTop: 4 }}>
+                  A 6-digit code was sent to <span style={{ color: theme.primary, fontWeight: 700 }}>{pendingEmail}</span>
+                </div>
+              </div>
+              <OtpBoxes value={otp} onChange={setOtp} />
+              {otpError && <div style={errBox}>{otpError}</div>}
+              <button type="submit" disabled={otpLoading || otp.length !== 6} style={btn(otpLoading || otp.length !== 6)}>
+                {otpLoading ? 'Verifying…' : 'Verify & Sign In'}
+              </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <button type="button" onClick={() => { setStep('form'); setOtp(''); setOtpError('') }} style={ghostBtn}>← Back</button>
+                <button type="button" onClick={handleResendAdminOTP} disabled={resendCooldown > 0} style={resendStyle(resendCooldown > 0)}>
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                </button>
+              </div>
+            </form>
+          )}
 
           {/* ── Login inline OTP steps ── */}
           {(step === 'otp' || step === 'phone-otp') && (

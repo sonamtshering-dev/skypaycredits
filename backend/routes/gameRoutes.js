@@ -64,7 +64,7 @@ router.get("/", async (req, res) => {
     const games = await Game.find(filter).sort({ sortOrder: 1, name: 1 })
     res.json(games)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: 'Something went wrong' })
   }
 })
 
@@ -99,7 +99,7 @@ router.get("/:id", async (req, res) => {
     if (!game) return res.status(404).json({ message: "Game not found" })
     res.json(game)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: 'Something went wrong' })
   }
 })
 
