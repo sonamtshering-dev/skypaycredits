@@ -526,7 +526,7 @@ export default function AdminWallet() {
       <div style={{ display: 'flex', gap: 6, marginBottom: 24, background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
-            padding: '8px 18px', borderRadius: 9, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
+            padding: '8px 18px', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer',
             background: tab === t.id ? 'linear-gradient(135deg,rgba(249,115,22,0.2),rgba(234,106,16,0.15))' : 'transparent',
             color: tab === t.id ? '#fff' : 'rgba(255,255,255,0.4)',
             border: tab === t.id ? '1px solid rgba(249,115,22,0.3)' : '1px solid transparent',
