@@ -301,31 +301,6 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Logout at bottom */}
-            <div className="drawer-logout" style={{ padding: '12px 12px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <button
-                onClick={handleLogout}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  width: '100%', padding: '12px 12px', borderRadius: 10,
-                  background: 'rgba(239,68,68,0.06)',
-                  border: '1px solid rgba(239,68,68,0.15)',
-                  color: '#f87171', cursor: 'pointer', fontSize: 14, fontWeight: 600,
-                  transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.15)' }}
-              >
-                <div style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  background: 'rgba(239,68,68,0.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <LogOut size={15} color="#f87171" />
-                </div>
-                Logout
-              </button>
-            </div>
           </div>
         </>
       )}
