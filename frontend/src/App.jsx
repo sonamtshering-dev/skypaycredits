@@ -10,6 +10,7 @@ import Auth          from './pages/Auth'
 import Recharge      from './pages/Recharge'
 
 const Orders        = lazy(() => import('./pages/Orders'))
+const Wallet        = lazy(() => import('./pages/Wallet'))
 const Tools         = lazy(() => import('./pages/Tools'))
 const Profile       = lazy(() => import('./pages/Profile'))
 const PaymentSuccess= lazy(() => import('./pages/PaymentSuccess'))
@@ -124,6 +125,7 @@ export default function App() {
       <Route path="/auth" element={<GuestRoute><Auth /></GuestRoute>} />
 
       <Route path="/orders"  element={<PrivateRoute><Orders /></PrivateRoute>} />
+      <Route path="/wallet"  element={<PrivateRoute><Wallet /></PrivateRoute>} />
       <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="/tools"   element={<Tools />} />
 

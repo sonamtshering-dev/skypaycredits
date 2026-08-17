@@ -14,7 +14,7 @@ export default function Recharge() {
   const { gameId }     = useParams()
   const [searchParams] = useSearchParams()
   const regionSlug     = searchParams.get('region')
-  const { user, isReseller } = useAuth()
+  const { user, isReseller, walletBalance, walletStatus, refreshWallet } = useAuth()
   const { settings }   = useSettings()
   const navigate       = useNavigate()
 
@@ -112,14 +112,14 @@ export default function Recharge() {
     verifyTimerRef.current = setTimeout(() => doVerify(nextPd), 1500)
   }
 
-  const handlePay = async () => {
+  const handlePay = async (paymentMethod = 'novapay') => {
     if (!playerData[fields[0]?.name]) return setError('Enter your Player ID')
     if (servers.length > 0 && !playerData[fields[1]?.name]) return setError('Please select a server')
     if (!selectedPack) return setError('Select a pack')
     if (!user) { navigate('/auth'); return }
     setPaying(true); setError('')
     try {
-      const { data: ord } = await api.post('/orders', {
+      const orderPayload = {
         gameId, packId: selectedPack._id,
         playerData: {
           userId:     playerData[fields[0]?.name] || '',
@@ -128,7 +128,16 @@ export default function Recharge() {
           regionSlug: regionSlug || '',
         },
         couponCode: couponApplied?.code || '',
-      })
+      }
+
+      if (paymentMethod === 'wallet') {
+        await api.post('/orders', { ...orderPayload, paymentMethod: 'wallet' })
+        await refreshWallet()
+        navigate('/orders')
+        return
+      }
+
+      const { data: ord } = await api.post('/orders', orderPayload)
       const { data: pay } = await api.post('/payment/create', {
         orderId: ord._id, amount: ord.price, customerName: user?.name || 'Customer',
       })
@@ -439,20 +448,45 @@ export default function Recharge() {
                 Purchases are temporarily disabled. Please check back soon.
               </div>
             ) : (
-              <button
-                onClick={handlePay}
-                disabled={!playerData[fields[0]?.name] || paying}
-                style={{
-                  width: '100%', padding: '16px', borderRadius: 14, cursor: 'pointer',
-                  fontWeight: 900, fontSize: 17, letterSpacing: 0.5,
-                  background: theme.grad,
-                  border: '1px solid rgba(249,115,22,0.3)', color: '#fff',
-                  opacity: (!playerData[fields[0]?.name] || paying) ? 0.5 : 1,
-                  boxShadow: '0 0 30px rgba(249,115,22,0.4)',
-                }}
-              >
-                {paying ? 'Processing…' : !user ? <><Lock size={14} style={{ marginRight: 6 }} />Login to Checkout</> : <>Proceed to Checkout <ArrowRight size={14} style={{ marginLeft: 6 }} /></>}
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Wallet pay — show if user has balance and wallet is active */}
+                {user && walletStatus === 'active' && finalPrice && walletBalance >= Math.round(finalPrice * 100) && (
+                  <button
+                    onClick={() => handlePay('wallet')}
+                    disabled={!playerData[fields[0]?.name] || paying}
+                    style={{
+                      width: '100%', padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
+                      fontWeight: 800, fontSize: 15, letterSpacing: 0.3,
+                      background: 'linear-gradient(135deg,rgba(76,0,176,0.35),rgba(120,40,255,0.25))',
+                      border: '1px solid rgba(120,40,255,0.5)', color: '#c084fc',
+                      opacity: (!playerData[fields[0]?.name] || paying) ? 0.5 : 1,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                      <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+                    </svg>
+                    {paying ? 'Processing…' : `Pay with Wallet · ₹${(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })} available`}
+                  </button>
+                )}
+
+                {/* NovaPay / main checkout button */}
+                <button
+                  onClick={() => handlePay('novapay')}
+                  disabled={!playerData[fields[0]?.name] || paying}
+                  style={{
+                    width: '100%', padding: '16px', borderRadius: 14, cursor: 'pointer',
+                    fontWeight: 900, fontSize: 17, letterSpacing: 0.5,
+                    background: theme.grad,
+                    border: '1px solid rgba(249,115,22,0.3)', color: '#fff',
+                    opacity: (!playerData[fields[0]?.name] || paying) ? 0.5 : 1,
+                    boxShadow: '0 0 30px rgba(249,115,22,0.4)',
+                  }}
+                >
+                  {paying ? 'Processing…' : !user ? <><Lock size={14} style={{ marginRight: 6 }} />Login to Checkout</> : <>Proceed to Checkout <ArrowRight size={14} style={{ marginLeft: 6 }} /></>}
+                </button>
+              </div>
             )}
             <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
               <Lock size={11} /> Secure payment

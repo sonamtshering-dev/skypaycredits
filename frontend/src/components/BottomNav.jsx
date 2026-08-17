@@ -7,7 +7,7 @@ import api from '../api/axios'
 
 const TABS = [
   { id: 'home',    label: 'Home',    Icon: Home,       route: '/' },
-  { id: 'wallet',  label: 'Wallet',  Icon: Wallet,     route: '/orders' },
+  { id: 'wallet',  label: 'Wallet',  Icon: Wallet,     route: '/wallet' },
   { id: 'search',  label: 'Search',  Icon: Search,     route: null },
   { id: 'tools',   label: 'Tools',   Icon: LayoutGrid, route: '/tools' },
   { id: 'profile', label: 'Profile', Icon: UserCircle, route: '/profile' },
@@ -52,16 +52,14 @@ export default function BottomNav() {
   const close = () => { setSearchOpen(false); setQuery('') }
 
   const isActive = (id, route) => {
-    if (id === 'search')  return searchOpen
-    if (id === 'wallet')  return false
+    if (id === 'search') return searchOpen
     if (!route) return false
     if (route === '/') return path === '/'
     return path.startsWith(route)
   }
 
   const handleTab = (tab) => {
-    if (tab.id === 'search')  { setSearchOpen(v => !v); return }
-    if (tab.id === 'wallet')  { return }
+    if (tab.id === 'search') { setSearchOpen(v => !v); return }
     close()
     if (tab.id === 'profile') { navigate(user ? '/profile' : '/auth'); return }
     navigate(tab.route)

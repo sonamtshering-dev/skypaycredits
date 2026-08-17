@@ -317,7 +317,12 @@ exports.login = async (req, res) => {
 // ── Get Me ────────────────────────────────────────────
 exports.getMe = async (req, res) => {
   const u = req.user
-  res.json({ _id: u._id, name: u.name, email: u.email, role: u.role, avatar: u.avatar, createdAt: u.createdAt })
+  res.json({
+    _id: u._id, name: u.name, email: u.email, role: u.role,
+    avatar: u.avatar, createdAt: u.createdAt,
+    walletBalance: u.walletBalance || 0,
+    walletStatus:  u.walletStatus  || 'active',
+  })
 }
 
 // ── Update profile (name only) ────────────────────────

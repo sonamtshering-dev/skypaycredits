@@ -33,11 +33,22 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
-  const isAdmin    = user?.role === 'admin'
-  const isReseller = user?.role === 'reseller'
+  const isAdmin        = user?.role === 'admin'
+  const isReseller     = user?.role === 'reseller'
+  const walletBalance  = user?.walletBalance  ?? 0
+  const walletStatus   = user?.walletStatus   ?? 'active'
+
+  // Refresh wallet balance without a full page reload
+  const refreshWallet = async () => {
+    try {
+      const r = await api.get('/auth/me')
+      setUser(r.data)
+      localStorage.setItem('user', JSON.stringify(r.data))
+    } catch {}
+  }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isReseller }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isReseller, walletBalance, walletStatus, refreshWallet }}>
       {children}
     </AuthContext.Provider>
   )

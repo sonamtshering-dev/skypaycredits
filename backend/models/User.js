@@ -15,6 +15,13 @@ const userSchema = new mongoose.Schema(
     isPhoneVerified: { type: Boolean, default: false },
     googleId:        { type: String, unique: true, sparse: true },
     tokenVersion:    { type: Number, default: 0 },
+
+    // Wallet
+    walletBalance:     { type: Number, default: 0, min: 0 }, // paise
+    walletStatus:      { type: String, enum: ['active','blocked'], default: 'active' },
+    walletBlockedAt:   { type: Date },
+    walletBlockedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    walletBlockReason: { type: String },
   },
   { timestamps: true }
 )

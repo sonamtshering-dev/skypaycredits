@@ -11,6 +11,8 @@ const Settings = require("../models/Settings")
 const User     = require("../models/User")
 const SITE_URL = process.env.SITE_URL || 'https://nitrogenstore.in'
 
+const { creditWallet } = require('../services/walletService')
+
 const NOVAPAY_API_KEY        = process.env.NOVAPAY_API_KEY
 const NOVAPAY_API_SECRET     = process.env.NOVAPAY_API_SECRET
 const NOVAPAY_WEBHOOK_SECRET = process.env.NOVAPAY_WEBHOOK_SECRET || ""
@@ -44,6 +46,24 @@ async function triggerRechargeIfNeeded(paymentId) {
     { new: true }
   )
   if (!order) return null
+
+  // Wallet topup — credit wallet, no game recharge needed
+  if (order.orderType === 'wallet_topup') {
+    if (!order.walletCredited) {
+      const topupPaise = order.walletAmountTopup || Math.round(order.price * 100)
+      await creditWallet(
+        order.userId, topupPaise, 'topup',
+        order._id.toString(), 'Wallet topup via NovaPay',
+        null, null
+      )
+      await Order.findOneAndUpdate(
+        { _id: order._id, walletCredited: { $ne: true } },
+        { walletCredited: true, status: 'Completed' }
+      )
+    }
+    return order
+  }
+
   if (order.status === "Pending") {
     const game = await Game.findById(order.gameId)
     // Manual-fulfillment categories — admin handles delivery; just mark Processing

@@ -16,6 +16,8 @@ const Pack      = require("../models/Pack")
 const Coupon    = require("../models/Coupon")
 const { processRecharge } = require("../services/rechargeService")
 const { protect, adminOnly, validateObjectId } = require("../middlewares/authMiddleware")
+const { debitWallet } = require("../services/walletService")
+const WalletTransaction = require("../models/WalletTransaction")
 const { sendOrderConfirmationEmail } = require("../services/emailService")
 const Settings = require("../models/Settings")
 const User     = require("../models/User")
@@ -188,6 +190,35 @@ router.post("/", protect, async (req, res) => {
       if (!updatedCoupon) return res.status(400).json({ message: "This coupon has reached its usage limit" })
     }
 
+    // ── Wallet payment path ───────────────────────
+    const payWithWallet = req.body.paymentMethod === 'wallet'
+    const finalPriceInPaise = Math.round(finalPrice * 100)
+
+    if (payWithWallet) {
+      // Check wallet first without debiting (fast rejection path)
+      const walletUser = await User.findById(req.user._id).select('walletBalance walletStatus').lean()
+      if (!walletUser || walletUser.walletStatus !== 'active')
+        return res.status(400).json({ message: 'Wallet is blocked' })
+      if (walletUser.walletBalance < finalPriceInPaise)
+        return res.status(400).json({ message: 'Insufficient wallet balance' })
+    }
+
+    const playerDataClean = (() => {
+      const pd = req.body.playerData || {}
+      const clean = {}
+      const MANUAL_CATS = ['other','premium','gifting','ott','smm','voucher']
+      if (MANUAL_CATS.includes(game.category)) {
+        Object.entries(pd).forEach(([k, v]) => {
+          if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype')
+            clean[k] = String(v ?? '').slice(0, 200)
+        })
+      } else {
+        const allowed = ['userId','zoneId','serverId','regionSlug']
+        allowed.forEach(k => { if (pd[k] !== undefined) clean[k] = String(pd[k]).slice(0, 100) })
+      }
+      return clean
+    })()
+
     const order = await Order.create({
       userId:    req.user._id,
       gameId,
@@ -195,21 +226,7 @@ router.post("/", protect, async (req, res) => {
       gameName:  game.name,
       packName:  pack.title,
       price:     finalPrice,
-      playerData: (() => {
-        const pd = playerData || {}
-        const clean = {}
-        const MANUAL_CATS = ['other','premium','gifting','ott','smm','voucher']
-        if (MANUAL_CATS.includes(game.category)) {
-          Object.entries(pd).forEach(([k, v]) => {
-            if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype')
-              clean[k] = String(v ?? '').slice(0, 200)
-          })
-        } else {
-          const allowed = ['userId','zoneId','serverId','regionSlug']
-          allowed.forEach(k => { if (pd[k] !== undefined) clean[k] = String(pd[k]).slice(0, 100) })
-        }
-        return clean
-      })(),
+      playerData: playerDataClean,
       packSnapshot: {
         title:          pack.title,
         price:          pack.price,
@@ -219,9 +236,72 @@ router.post("/", protect, async (req, res) => {
         skuCodes:       (pack.skuCodes || []).map(s => ({ skuCode: s.skuCode, quantity: s.quantity || 1 })),
         skuCode:        pack.skuCode || '',
       },
-      couponCode:     appliedCode,
-      couponDiscount: couponDiscount,
+      couponCode:        appliedCode,
+      couponDiscount:    couponDiscount,
+      ...(payWithWallet ? {
+        paymentMethod:    'wallet',
+        paymentStatus:    'unpaid', // will be set to paid after atomic debit below
+        walletAmountUsed: finalPriceInPaise,
+      } : {}),
     })
+
+    if (payWithWallet) {
+      // Atomically debit wallet — if this fails, rollback the order
+      const debitResult = await debitWallet(
+        req.user._id, finalPriceInPaise, 'debit',
+        order._id.toString(),
+        `Order: ${game.name} — ${pack.title}`,
+        null,
+        req.ip || ''
+      )
+
+      if (!debitResult.ok) {
+        // Rollback: delete order; also undo coupon increment if applied
+        await Order.findByIdAndDelete(order._id)
+        if (appliedCode) {
+          await Coupon.findOneAndUpdate({ code: appliedCode }, { $inc: { usedCount: -1 } })
+        }
+        return res.status(400).json({ message: debitResult.error })
+      }
+
+      // Mark order as paid and trigger recharge
+      await Order.findByIdAndUpdate(order._id, {
+        paymentStatus:    'paid',
+        rechargeTriggered: true,
+      })
+
+      // Kick off recharge in the background (same pattern as paymentController)
+      const MANUAL_CATS = ['other','premium','gifting','ott','smm','voucher']
+      if (MANUAL_CATS.includes(game.category)) {
+        await Order.findByIdAndUpdate(order._id, { status: 'Processing' })
+      } else {
+        const packForRecharge = order.packSnapshot?.skuCodes?.length > 0
+          ? order.packSnapshot
+          : pack
+        const region = game.regions?.find(r => r.slug === playerDataClean?.regionSlug && r.active)
+                    || game.regions?.find(r => r.active)
+        const effectiveProvider = region?.provider || packForRecharge?.provider || game?.provider || ''
+        if (!effectiveProvider || effectiveProvider === 'manual') {
+          await Order.findByIdAndUpdate(order._id, { status: 'Processing' })
+        } else {
+          await Order.findByIdAndUpdate(order._id, { status: 'Processing' })
+          processRecharge(order, packForRecharge, game)
+            .then(async result => {
+              const upd = { status: 'Completed', providerOrderId: result.providerOrderId || '' }
+              if (result.playerName) upd.playerName = result.playerName
+              if (result.transactions?.length > 0) upd.providerTransactions = result.transactions
+              await Order.findByIdAndUpdate(order._id, upd)
+            })
+            .catch(async e => {
+              console.error('[WALLET ORDER RECHARGE] Failed:', e.message)
+              await Order.findByIdAndUpdate(order._id, { status: 'Failed' })
+            })
+        }
+      }
+
+      return res.status(201).json({ ...order.toObject(), paymentStatus: 'paid', paymentMethod: 'wallet' })
+    }
+
     res.status(201).json(order)
   } catch (err) {
     res.status(400).json({ message: err.message })

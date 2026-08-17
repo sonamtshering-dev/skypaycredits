@@ -10,9 +10,10 @@ const providerTxSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema(
   {
-    userId:   { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    gameId:   { type: mongoose.Schema.Types.ObjectId, ref: "Game", required: true },
-    packId:   { type: mongoose.Schema.Types.ObjectId, ref: "Pack", required: true },
+    userId:    { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    orderType: { type: String, enum: ["game","wallet_topup"], default: "game" },
+    gameId:    { type: mongoose.Schema.Types.ObjectId, ref: "Game" },
+    packId:    { type: mongoose.Schema.Types.ObjectId, ref: "Pack" },
 
     // Denormalized for readable history
     gameName: { type: String },
@@ -48,6 +49,12 @@ const orderSchema = new mongoose.Schema(
     providerTransactions: [providerTxSchema],
     playerName: { type: String, default: "" },
     adminNote: { type: String, default: "" },
+
+    // Wallet-related
+    walletAmountUsed:   { type: Number, default: 0 },  // paise debited at order time
+    walletAmountTopup:  { type: Number, default: 0 },  // paise to credit for wallet_topup
+    walletCredited:     { type: Boolean, default: false }, // idempotency: topup credited
+    walletRefunded:     { type: Boolean, default: false }, // idempotency: refunded to wallet
   },
   { timestamps: true }
 )

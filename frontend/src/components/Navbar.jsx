@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import theme from '../theme'
-import { ClipboardList, User, Settings, LogOut, X, Home, ChevronRight } from 'lucide-react'
+import { ClipboardList, User, Settings, LogOut, X, Home, ChevronRight, Wallet } from 'lucide-react'
 import BottomNav from './BottomNav'
 
 function BrandName({ name, fontSize = 16 }) {
@@ -34,9 +34,12 @@ export default function Navbar() {
     await logout(); navigate('/'); setDrawerOpen(false); setProfileOpen(false)
   }
 
+  const { walletBalance } = useAuth()
+
   const navItems = [
     { to: '/',        label: 'Home',       icon: Home },
     { to: '/orders',  label: 'My Orders',  icon: ClipboardList },
+    { to: '/wallet',  label: 'Wallet',     icon: Wallet, badge: walletBalance > 0 ? `₹${(walletBalance/100).toLocaleString('en-IN')}` : null },
     { to: '/profile', label: 'Profile',    icon: User },
     ...(isAdmin ? [{ to: '/admin', label: 'Admin Panel', icon: Settings }] : []),
   ]
@@ -240,7 +243,7 @@ export default function Navbar() {
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', padding: '8px 8px 6px' }}>
                 Navigation
               </div>
-              {navItems.map(({ to, label, icon: Icon }) => (
+              {navItems.map(({ to, label, icon: Icon, badge }) => (
                 <Link
                   key={to}
                   to={to}
@@ -272,6 +275,14 @@ export default function Navbar() {
                     <Icon size={15} color="rgba(255,255,255,0.6)" />
                   </div>
                   <span style={{ flex: 1 }}>{label}</span>
+                  {badge && (
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, color: '#a78bfa',
+                      background: 'rgba(120,40,255,0.15)',
+                      border: '1px solid rgba(120,40,255,0.3)',
+                      borderRadius: 20, padding: '2px 8px',
+                    }}>{badge}</span>
+                  )}
                   <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
                 </Link>
               ))}
