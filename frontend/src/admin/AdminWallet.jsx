@@ -1,7 +1,17 @@
 // src/admin/AdminWallet.jsx
 import { useState, useEffect, useCallback } from 'react'
 import api from '../api/axios'
-import { Search, RefreshCw, Plus, Ban, CheckCircle, Wallet, Tag, Clock, ChevronDown, ChevronUp, Copy } from 'lucide-react'
+import { Search, RefreshCw, Plus, ArrowLeft, Copy } from 'lucide-react'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
 
 const TABS = [
   { id: 'users',  label: 'User Wallets' },
@@ -38,6 +48,7 @@ const btn = (variant = 'default') => ({
 
 // ── User Wallets Tab ─────────────────────────────────────────
 function UsersTab() {
+  const isMobile = useIsMobile()
   const [q, setQ]             = useState('')
   const [users, setUsers]     = useState([])
   const [total, setTotal]     = useState(0)
@@ -104,9 +115,14 @@ function UsersTab() {
     } finally { setActionLoading(false) }
   }
 
+  // On mobile: show detail panel OR list, not both
+  const showList   = !isMobile || !selected
+  const showDetail = !!selected
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', gap: 20 }}>
-      {/* Left: user list */}
+    <div style={!isMobile && selected ? { display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20 } : {}}>
+      {/* User list */}
+      {showList && (
       <div>
         <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
           <div style={{ flex: 1, position: 'relative' }}>
@@ -160,13 +176,20 @@ function UsersTab() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Right: detail panel */}
-      {selected && (
+      {/* Detail panel */}
+      {showDetail && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <div style={{ fontWeight: 800, fontSize: 14, color: '#fff' }}>Wallet Detail</div>
-            <button onClick={() => setSelected(null)} style={btn('ghost')}>✕</button>
+            <div style={{ fontWeight: 800, fontSize: 14, color: '#fff' }}>
+              {isMobile ? (
+                <button onClick={() => setSelected(null)} style={{ ...btn('ghost'), display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px' }}>
+                  <ArrowLeft size={14} /> Back
+                </button>
+              ) : 'Wallet Detail'}
+            </div>
+            {!isMobile && <button onClick={() => setSelected(null)} style={btn('ghost')}>✕</button>}
           </div>
 
           {detailLoading && <div style={{ color: 'rgba(255,255,255,0.3)', padding: 20, textAlign: 'center' }}>Loading…</div>}
