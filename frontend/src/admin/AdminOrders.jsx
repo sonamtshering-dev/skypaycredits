@@ -78,6 +78,18 @@ export default function AdminOrders() {
     finally { setActing(null) }
   }
 
+  const refundToWallet = async (id) => {
+    const reason = window.prompt('Refund reason (required):')
+    if (!reason || !reason.trim()) return
+    setActing(id)
+    try {
+      await api.post(`/admin/wallet/refund/${id}`, { reason: reason.trim() })
+      alert('Refunded to wallet successfully')
+      load(page, filter, search)
+    } catch (e) { alert(e.response?.data?.message || 'Refund failed') }
+    finally { setActing(null) }
+  }
+
   const inp = { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '9px 12px', color: '#fff', fontSize: 13, outline: 'none' }
 
   const start = (page - 1) * LIMIT + 1
@@ -209,9 +221,9 @@ export default function AdminOrders() {
                             ✓ Mark Completed
                           </button>
                         )}
-                        {['Pending','Processing','Failed'].includes(order.status) && (
-                          <button onClick={() => updateStatus(order._id, 'Refunded')} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)', color: '#a78bfa', cursor: 'pointer' }}>
-                            ↩ Refund
+                        {['Pending','Processing','Failed','Completed'].includes(order.status) && order.status !== 'Refunded' && !order.walletRefunded && (
+                          <button onClick={() => refundToWallet(order._id)} disabled={acting === order._id} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)', color: '#a78bfa', cursor: 'pointer' }}>
+                            ↩ Refund to Wallet
                           </button>
                         )}
                         {order.status !== 'Failed' && order.status !== 'Completed' && (
