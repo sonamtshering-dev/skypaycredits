@@ -44,6 +44,7 @@ const orderSchema = new mongoose.Schema(
       skuCodes:       [{ skuCode: String, quantity: { type: Number, default: 1 } }],
     },
 
+    providerOrderId:      { type: String, default: "", index: true },
     providerTransactions: [providerTxSchema],
     playerName: { type: String, default: "" },
     adminNote: { type: String, default: "" },

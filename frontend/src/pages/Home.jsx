@@ -27,8 +27,17 @@ export default function Home() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    api.get('/games').then(r => setGames(r.data)).finally(() => setLoading(false))
-    api.get('/banners').then(r => setBanners(Array.isArray(r.data) ? r.data : [])).catch(() => {})
+    api.get('/home')
+      .then(r => {
+        setGames(Array.isArray(r.data.games) ? r.data.games : [])
+        setBanners(Array.isArray(r.data.banners) ? r.data.banners : [])
+      })
+      .catch(() => {
+        // fallback to separate calls if /home fails
+        api.get('/games').then(r => setGames(r.data)).catch(() => {})
+        api.get('/banners').then(r => setBanners(Array.isArray(r.data) ? r.data : [])).catch(() => {})
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const isManual = (game) => ['voucher', 'other', 'premium', 'gifting', 'ott', 'smm'].includes(game.category || '')

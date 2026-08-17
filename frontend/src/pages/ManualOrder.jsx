@@ -13,7 +13,7 @@ export default function ManualOrder() {
   const { gameId }     = useParams()
   const [searchParams] = useSearchParams()
   const regionSlug     = searchParams.get('region')
-  const { user }       = useAuth()
+  const { user, isReseller } = useAuth()
   const { settings }   = useSettings()
   const navigate       = useNavigate()
 
@@ -183,25 +183,34 @@ export default function ManualOrder() {
                         borderRadius: 12, padding: '14px 12px', cursor: 'pointer',
                         textAlign: 'center', transition: 'all 0.2s', position: 'relative',
                       }}>
-                      {pack.oldPrice > 0 && pack.oldPrice > pack.price && (
-                        <div style={{ position: 'absolute', top: 8, right: 8, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 10, padding: '2px 6px' }}>
-                          -{Math.round((1 - pack.price / pack.oldPrice) * 100)}%
-                        </div>
-                      )}
-                      <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'center' }}>
-                        {pack.image
-                          ? <img src={pack.image} alt={pack.title} style={{ width: 44, height: 44, objectFit: 'contain' }} />
-                          : <span style={{ fontSize: 28 }}>🎁</span>}
-                      </div>
-                      <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>{pack.title}</div>
-                      {pack.oldPrice > 0 && pack.oldPrice > pack.price && (
-                        <div style={{ fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through' }}>
-                          {sym}{pack.oldPrice}
-                        </div>
-                      )}
-                      <div style={{ fontWeight: 900, fontSize: 16, color: selected ? theme.primary : 'var(--text)' }}>
-                        {sym}{pack.price}
-                      </div>
+                      {(() => {
+                        const dp = (isReseller && pack.resellerPrice > 0) ? pack.resellerPrice : pack.price
+                        const showDiscount = !isReseller && pack.oldPrice > 0 && pack.oldPrice > pack.price
+                        return (<>
+                          {showDiscount && (
+                            <div style={{ position: 'absolute', top: 8, right: 8, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 10, padding: '2px 6px' }}>
+                              -{Math.round((1 - pack.price / pack.oldPrice) * 100)}%
+                            </div>
+                          )}
+                          <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'center' }}>
+                            {pack.image
+                              ? <img src={pack.image} alt={pack.title} style={{ width: 44, height: 44, objectFit: 'contain' }} />
+                              : <span style={{ fontSize: 28 }}>🎁</span>}
+                          </div>
+                          <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>{pack.title}</div>
+                          {isReseller && pack.resellerPrice > 0 ? (
+                            <div style={{ fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through' }}>{sym}{pack.price}</div>
+                          ) : (showDiscount && (
+                            <div style={{ fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through' }}>{sym}{pack.oldPrice}</div>
+                          ))}
+                          <div style={{ fontWeight: 900, fontSize: 16, color: selected ? theme.primary : 'var(--text)' }}>
+                            {sym}{dp}
+                          </div>
+                          {isReseller && pack.resellerPrice > 0 && (
+                            <div style={{ fontSize: 10, color: '#a5b4fc', fontWeight: 700 }}>Reseller Price</div>
+                          )}
+                        </>)
+                      })()}
                       {selected && (
                         <div style={{ position: 'absolute', top: 8, left: 8, width: 18, height: 18, borderRadius: '50%', background: theme.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff' }}>✓</div>
                       )}
@@ -248,10 +257,15 @@ export default function ManualOrder() {
                 </>
               )}
               <div style={{ height: 1, background: 'var(--border)', margin: '12px 0' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 800 }}>TOTAL</span>
-                <span style={{ fontWeight: 900, fontSize: 20, color: theme.primary }}>{sym}{selectedPack.price}</span>
-              </div>
+              {(() => {
+                const dp = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
+                return (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 800 }}>TOTAL</span>
+                    <span style={{ fontWeight: 900, fontSize: 20, color: theme.primary }}>{sym}{dp}</span>
+                  </div>
+                )
+              })()}
             </div>
 
             <div style={{ fontSize: 12, color: 'var(--text2)', textAlign: 'center', marginBottom: 12 }}>
@@ -266,10 +280,15 @@ export default function ManualOrder() {
               </div>
             )}
 
-            <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
-              onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
-              {paying ? '⏳ Processing...' : `💳 Pay ${sym}${selectedPack.price}`}
-            </button>
+            {(() => {
+              const dp = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
+              return (
+                <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
+                  onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
+                  {paying ? '⏳ Processing...' : `💳 Pay ${sym}${dp}`}
+                </button>
+              )
+            })()}
           </div>
         )}
 

@@ -146,8 +146,12 @@ router.post("/", protect, async (req, res) => {
     })
     if (unpaidCount >= 10) return res.status(429).json({ message: "Too many pending orders. Please complete or wait for existing orders." })
 
+    // ── Pick base price (reseller vs regular) ─────
+    const isReseller = req.user.role === 'reseller'
+    const basePrice  = (isReseller && pack.resellerPrice > 0) ? pack.resellerPrice : pack.price
+
     // ── Apply coupon ──────────────────────────────
-    let finalPrice     = pack.price
+    let finalPrice     = basePrice
     let couponDiscount = 0
     let appliedCode    = ""
 
@@ -158,7 +162,7 @@ router.post("/", protect, async (req, res) => {
         return res.status(400).json({ message: "This coupon has expired" })
       if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit)
         return res.status(400).json({ message: "This coupon has reached its usage limit" })
-      if (pack.price < coupon.minOrder)
+      if (basePrice < coupon.minOrder)
         return res.status(400).json({ message: `Minimum order amount is ₹${coupon.minOrder}` })
       if (coupon.gameIds?.length > 0) {
         const allowed = coupon.gameIds.map(id => id.toString())
@@ -171,8 +175,8 @@ router.post("/", protect, async (req, res) => {
       if (coupon.perUser > 0 && userUsage >= coupon.perUser)
         return res.status(400).json({ message: "You have already used this coupon" })
 
-      couponDiscount = coupon.calculateDiscount(pack.price)
-      finalPrice     = Math.max(1, pack.price - couponDiscount)
+      couponDiscount = coupon.calculateDiscount(basePrice)
+      finalPrice     = Math.max(1, basePrice - couponDiscount)
       appliedCode    = coupon.code
 
       // Atomic increment — rejects if limit was hit by a concurrent request (VULN-01)
@@ -209,9 +213,11 @@ router.post("/", protect, async (req, res) => {
       packSnapshot: {
         title:          pack.title,
         price:          pack.price,
+        resellerPrice:  pack.resellerPrice || 0,
         provider:       pack.provider || '',
         providerGameId: pack.providerGameId || '',
         skuCodes:       (pack.skuCodes || []).map(s => ({ skuCode: s.skuCode, quantity: s.quantity || 1 })),
+        skuCode:        pack.skuCode || '',
       },
       couponCode:     appliedCode,
       couponDiscount: couponDiscount,
@@ -256,7 +262,7 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
         return res.status(400).json({ message: "Invalid status value" })
       update.status = status
     }
-    if (adminNote !== undefined) update.adminNote = adminNote
+    if (adminNote !== undefined) update.adminNote = String(adminNote).slice(0, 2000)
     if (status === 'Completed') {
       update.paymentStatus     = 'paid'
       update.rechargeTriggered = true

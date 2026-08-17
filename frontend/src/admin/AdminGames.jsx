@@ -4,6 +4,14 @@ import api from '../api/axios'
 import theme from '../theme'
 import { Gamepad2 } from 'lucide-react'
 
+const PROVIDER_LABEL = {
+  fintopup:   'Supplier 1',
+  smile:      'Supplier 2',
+  fazercards: 'Supplier 3',
+  manual:     'Manual',
+  '':         'Manual',
+}
+
 
 const EMPTY = {
   name: '', slug: '', category: 'game', active: true,
@@ -72,7 +80,7 @@ export default function AdminGames() {
   }
 
   const addRegion = () => setForm(f => ({
-    ...f, regions: [...f.regions, { name: '', slug: '', active: true, provider: '', providerGameId: '', smileRegionUrl: '', displayTitle: '' }]
+    ...f, regions: [...f.regions, { name: '', slug: '', active: true, provider: '', providerGameId: '', smileRegionUrl: '', displayTitle: '', hasServerList: false, serverSource: 'static', staticServers: [] }]
   }))
   const updateRegion = (i, updated) => setForm(f => ({
     ...f, regions: f.regions.map((r, j) => j === i ? updated : r)
@@ -123,7 +131,7 @@ export default function AdminGames() {
                     : <div style={{ width: 38, height: 38, borderRadius: 8, background: theme.alpha(0.2), display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Gamepad2 size={18} color="rgba(249,115,22,0.6)" /></div>}
                   </td>
                   <td style={{ fontWeight: 700, color: 'var(--text)' }}>{g.name}</td>
-                  <td style={{ color: 'var(--text2)', fontSize: 13 }}>{g.provider || 'manual'}</td>
+                  <td style={{ color: 'var(--text2)', fontSize: 13 }}>{PROVIDER_LABEL[g.provider] || 'Manual'}</td>
                   <td><span className={`badge badge-${g.active ? 'success' : 'danger'}`}>{g.active ? 'Active' : 'Hidden'}</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -198,11 +206,14 @@ export default function AdminGames() {
                     <div className="form-group" style={{ flex: 1 }}>
                       <label>Provider</label>
                       <select className="form-input" value={form.provider} onChange={e => setForm(f=>({...f,provider:e.target.value}))}>
-                        <option value="">Manual</option><option value="fintopup">FinTopup</option><option value="smile">Smile.One</option><option value="moogold">Moogold</option>
+                        <option value="">Manual</option>
+                        <option value="fintopup">Supplier 1</option>
+                        <option value="smile">Supplier 2</option>
+                        <option value="fazercards">Supplier 3</option>
                       </select>
                     </div>
                     <div className="form-group" style={{ flex: 1 }}>
-                      <label>{form.provider === 'smile' ? 'Smile Product ID' : 'Provider Game ID'}</label>
+                      <label>Provider Game ID / Service ID</label>
                       <input className="form-input" value={form.providerGameId} onChange={e => setForm(f=>({...f,providerGameId:e.target.value}))} />
                     </div>
                   </div>
@@ -256,6 +267,7 @@ export default function AdminGames() {
 
 function RegionRow({ region, onChange, onRemove }) {
   const [open, setOpen] = useState(false)
+  const [serverInput, setServerInput] = useState({ serverId: '', serverName: '' })
   const inp = {
     width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)',
     borderRadius: 8, padding: '7px 10px', color: 'var(--text)', fontSize: 13, outline: 'none',
@@ -264,12 +276,23 @@ function RegionRow({ region, onChange, onRemove }) {
     ? URL.createObjectURL(region._imageFile)
     : region.banner || region.icon || null
 
+  const addServer = () => {
+    if (!serverInput.serverId.trim() || !serverInput.serverName.trim()) return
+    const updated = [...(region.staticServers || []), { ...serverInput }]
+    onChange({ ...region, staticServers: updated })
+    setServerInput({ serverId: '', serverName: '' })
+  }
+  const removeServer = i => {
+    onChange({ ...region, staticServers: (region.staticServers || []).filter((_, j) => j !== i) })
+  }
+
   return (
     <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 8, overflow: 'hidden' }}>
       <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', userSelect: 'none' }}>
         {previewUrl && <img src={previewUrl} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />}
         <span style={{ flex: 1, fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{region.name || '(unnamed region)'}</span>
-        {region.provider && <span style={{ fontSize: 10, color: 'var(--text3)', background: 'var(--bg)', borderRadius: 4, padding: '2px 6px' }}>{region.provider}</span>}
+        {region.hasServerList && <span style={{ fontSize: 10, color: '#a78bfa', background: 'rgba(139,92,246,0.15)', borderRadius: 4, padding: '2px 6px' }}>servers</span>}
+        {region.provider && <span style={{ fontSize: 10, color: 'var(--text3)', background: 'var(--bg)', borderRadius: 4, padding: '2px 6px' }}>{PROVIDER_LABEL[region.provider] || region.provider}</span>}
         <span className={`badge badge-${region.active ? 'success' : 'danger'}`} style={{ fontSize: 10 }}>{region.active ? 'Active' : 'Hidden'}</span>
         <button type="button" onClick={e => { e.stopPropagation(); onRemove() }}
           style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 15, cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}>✕</button>
@@ -300,9 +323,9 @@ function RegionRow({ region, onChange, onRemove }) {
               <label>Provider</label>
               <select style={inp} value={region.provider || ''} onChange={e => onChange({ ...region, provider: e.target.value })}>
                 <option value="">Manual (inherit game)</option>
-                <option value="fintopup">FinTopup</option>
-                <option value="smile">Smile.One</option>
-                <option value="hopestore">HopeStore</option>
+                <option value="fintopup">Supplier 1</option>
+                <option value="smile">Supplier 2</option>
+                <option value="fazercards">Supplier 3</option>
                 <option value="manual">Manual</option>
               </select>
             </div>
@@ -313,11 +336,79 @@ function RegionRow({ region, onChange, onRemove }) {
               <label>Provider Game ID / Service ID</label>
               <input style={inp} value={region.providerGameId || ''} onChange={e => onChange({ ...region, providerGameId: e.target.value })} placeholder="e.g. mobilelegends or MLBB_ID_86" />
             </div>
-            {(region.provider === 'smile' || (!region.provider && true)) && (
+            {region.provider === 'smile' && (
               <div className="form-group" style={{ flex: 1 }}>
-                <label>Smile Region URL</label>
+                <label>Region URL</label>
                 <input style={inp} value={region.smileRegionUrl || ''} onChange={e => onChange({ ...region, smileRegionUrl: e.target.value })} placeholder="https://www.smile.one/br" />
               </div>
+            )}
+          </div>
+
+          {/* Server / Zone Dropdown */}
+          <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                Server / Zone Dropdown
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={!!region.hasServerList}
+                  onChange={e => onChange({ ...region, hasServerList: e.target.checked, serverSource: e.target.checked ? 'static' : '' })}
+                />
+                <span style={{ color: region.hasServerList ? 'var(--text)' : 'var(--text3)' }}>
+                  Show server dropdown on recharge page
+                </span>
+              </label>
+            </div>
+
+            {region.hasServerList && (
+              <>
+                <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>
+                  The "Zone ID" field becomes a dropdown with these options. Leave empty to keep as free text.
+                </div>
+                {(region.staticServers || []).map((s, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5,
+                    background: 'var(--bg2)', borderRadius: 6, padding: '5px 8px', fontSize: 12 }}>
+                    <code style={{ color: '#a78bfa', fontSize: 11, minWidth: 60 }}>{s.serverId}</code>
+                    <span style={{ flex: 1, color: 'var(--text)' }}>{s.serverName}</span>
+                    <button type="button" onClick={() => removeServer(i)}
+                      style={{ background: 'none', border: 'none', color: '#f87171', fontSize: 13, cursor: 'pointer', padding: 0 }}>✕</button>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                  <input style={{ ...inp, flex: '0 0 90px' }}
+                    placeholder="ID (e.g. 1)"
+                    value={serverInput.serverId}
+                    onChange={e => setServerInput(v => ({ ...v, serverId: e.target.value }))} />
+                  <input style={{ ...inp, flex: 1 }}
+                    placeholder="Name (e.g. Asia)"
+                    value={serverInput.serverName}
+                    onChange={e => setServerInput(v => ({ ...v, serverName: e.target.value }))}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addServer())} />
+                  <button type="button" onClick={addServer}
+                    style={{ padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700,
+                      cursor: 'pointer', background: 'rgba(139,92,246,0.2)',
+                      border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', whiteSpace: 'nowrap' }}>
+                    + Add
+                  </button>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text3)' }}>
+                  Quick fill:
+                  {[
+                    { label: 'Genshin', servers: [['Asia','Asia'],['America','America'],['Europe','Europe'],['TW_HK_MO','TW/HK/MO']] },
+                    { label: 'WW', servers: [['Asia','Asia'],['NA','North America'],['Europe','Europe'],['SEA','SEA']] },
+                    { label: 'MLBB', servers: [['5','South East Asia'],['3004','North America'],['3005','Europe'],['3006','Middle East']] },
+                  ].map(preset => (
+                    <button key={preset.label} type="button"
+                      onClick={() => onChange({ ...region, staticServers: preset.servers.map(([id,name]) => ({ serverId: id, serverName: name })) })}
+                      style={{ marginLeft: 6, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
+                        cursor: 'pointer', background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 

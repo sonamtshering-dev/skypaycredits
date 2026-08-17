@@ -1,6 +1,8 @@
 // services/rechargeService.js
-const fintopup = require("./fintopupService")
-const smile    = require("./smileService")
+const fintopup   = require("./fintopupService")
+const smile      = require("./smileService")
+const fazercards = require("./fazercardsService")
+const g2bulk     = require("./g2bulkService")
 
 const isProd = process.env.NODE_ENV === "production"
 const log    = (...a) => { if (!isProd) console.log(...a) }
@@ -71,6 +73,22 @@ async function verifyPlayer(game, playerData, packs) {
       warn("[RECHARGE] Smile verify failed", { error: e.message })
       throw new Error("Player not found. Please check your Player ID and Zone ID.")
     }
+  }
+
+  if (provider === "fazercards") {
+    try {
+      const res = await g2bulk.checkPlayerId({
+        fazercardsGameId: providerGameId,
+        userId,
+        serverId: zoneId || undefined,
+      })
+      if (res.valid === 'valid') return { username: res.name }
+      if (res.valid === 'invalid') throw new Error('Player not found. Please check your Player ID.')
+      // 'skip' — game doesn't support validation
+    } catch (e) {
+      if (e.message.includes('Player not found')) throw e
+    }
+    return { username: userId, skipped: true }
   }
 
   return { username: userId, skipped: true }
@@ -148,8 +166,28 @@ async function processRecharge(order, pack, game) {
         })
       }
 
+      else if (provider === "fazercards") {
+        // Build fields object using game/region field key names so they match FazerCards' category schema
+        const gameFields = (region?.fields?.length ? region.fields : game?.fields) || []
+        const key0 = gameFields[0]?.name || 'userId'
+        const key1 = gameFields[1]?.name || 'zoneId'
+        const fieldsObj = { [key0]: userId }
+        if (zoneId) fieldsObj[key1] = zoneId
+        result = await fazercards.placeOrder({
+          categoryId:    providerGameId,
+          offerId:       skuCode,
+          fields:        fieldsObj,
+          idempotencyKey: `${order._id}-${i}`,
+        })
+        transactions.push({
+          skuCode,
+          providerOrderId: String(result.order?.id || result.order?.orderId || ""),
+          status: "success"
+        })
+      }
+
       else if (provider === "moogold") {
-        throw new Error("Moogold provider is not active. Reconfigure this game to use fintopup, smile, or manual.")
+        throw new Error("Moogold provider is not active. Reconfigure this game to use fintopup, smile, fazercards, or manual.")
       }
 
       else {

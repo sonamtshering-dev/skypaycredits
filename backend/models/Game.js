@@ -6,7 +6,7 @@ const regionSchema = new mongoose.Schema({
   slug:           { type: String, required: true },  // e.g. "bd", "global"
   banner:         { type: String, default: "" },
   active:         { type: Boolean, default: true },
-  provider:       { type: String, enum: ["fintopup","smile","hopestore","moogold","g2bulk","manual",""], default: "" },
+  provider:       { type: String, enum: ["fintopup","smile","fazercards","moogold","g2bulk","manual",""], default: "" },
   providerGameId: { type: String, default: "" },  // game name for smile e.g. "mobilelegends"
   providerUrl:    { type: String, default: "" },  // smile region URL e.g. "https://www.smile.one/ph"
   smileProductId: { type: String, default: "" },
@@ -29,9 +29,12 @@ const gameSchema = new mongoose.Schema(
     sortOrder:  { type: Number, default: 0 },
     skipVerify: { type: Boolean, default: false },
     fields:   [{ name: String, label: String }],
-    provider:       { type: String, enum: ["fintopup","smile","hopestore","moogold","g2bulk","manual",""], default: "" },
+    provider:       { type: String, enum: ["fintopup","smile","fazercards","moogold","g2bulk","manual",""], default: "" },
     providerGameId: { type: String, default: "" },
     smileProductId: { type: String, default: "" },
+    hasServerList:  { type: Boolean, default: false },
+    serverSource:   { type: String, enum: ['smile','static',''], default: '' },
+    staticServers:  [{ serverId: String, serverName: String }],
     // Multiple regions — if empty, game has single region (uses game-level fields/provider)
     regions: [regionSchema],
   },

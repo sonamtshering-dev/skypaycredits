@@ -168,6 +168,7 @@ export default function Footer() {
           target="_blank"
           rel="noopener noreferrer"
           title="Chat on WhatsApp"
+          className="wa-float"
           style={{
             position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
             width: 56, height: 56, borderRadius: '50%',

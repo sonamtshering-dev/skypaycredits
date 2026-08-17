@@ -5,9 +5,17 @@ import theme from '../theme'
 
 
 
+const PROVIDER_LABEL = {
+  fintopup:   'Supplier 1',
+  smile:      'Supplier 2',
+  fazercards: 'Supplier 3',
+  manual:     'Manual',
+  '':         'Manual',
+}
+
 const EMPTY_PACK = {
-  title: '', price: '', diamonds: '', bonus: '',
-  provider: '', providerGameId: '', active: true, sortOrder: 0, skuCodes: [], sectionName: '', oldPrice: '',
+  title: '', price: '', resellerPrice: '', oldPrice: '', diamonds: '', bonus: '',
+  provider: '', providerGameId: '', skuCode: '', active: true, sortOrder: 0, skuCodes: [], sectionName: '',
 }
 
 // SKU input row
@@ -68,11 +76,13 @@ function PackModal({ pack, gameId, regionSlug, onSave, onClose }) {
       fd.append('sectionName', form.sectionName || '')
       fd.append('title', form.title)
       fd.append('price', Number(form.price))
+      fd.append('resellerPrice', Number(form.resellerPrice) || 0)
       fd.append('oldPrice', Number(form.oldPrice) || 0)
       fd.append('diamonds', Number(form.diamonds) || 0)
       fd.append('bonus', Number(form.bonus) || 0)
       fd.append('provider', form.provider || '')
       fd.append('providerGameId', form.providerGameId || '')
+      fd.append('skuCode', form.skuCode || '')
       fd.append('active', form.active)
       fd.append('sortOrder', Number(form.sortOrder) || 0)
       fd.append('skuCodes', JSON.stringify(form.skuCodes || []))
@@ -136,13 +146,18 @@ function PackModal({ pack, gameId, regionSlug, onSave, onClose }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div className="form-group">
-              <label>Price (₹) *</label>
+              <label>Customer Price (₹) *</label>
               <input style={inp} type="number" step="0.01" placeholder="149" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} required />
             </div>
             <div className="form-group">
-              <label>Old Price <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, fontSize: 11 }}>(for discount badge)</span></label>
-              <input style={inp} type="number" step="0.01" placeholder="165" value={form.oldPrice} onChange={e => setForm(f => ({ ...f, oldPrice: e.target.value }))} />
+              <label>Reseller Price (₹) <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, fontSize: 11 }}>(0 = same as customer)</span></label>
+              <input style={{ ...inp, borderColor: form.resellerPrice > 0 ? 'rgba(99,102,241,0.5)' : undefined }} type="number" step="0.01" placeholder="130" value={form.resellerPrice || ''} onChange={e => setForm(f => ({ ...f, resellerPrice: e.target.value }))} />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>Old Price <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, fontSize: 11 }}>(for discount badge)</span></label>
+            <input style={inp} type="number" step="0.01" placeholder="165" value={form.oldPrice} onChange={e => setForm(f => ({ ...f, oldPrice: e.target.value }))} />
           </div>
 
           {form.oldPrice > 0 && form.price > 0 && Number(form.oldPrice) > Number(form.price) && (
@@ -167,28 +182,35 @@ function PackModal({ pack, gameId, regionSlug, onSave, onClose }) {
               <label>Provider</label>
               <select style={inp} value={form.provider} onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}>
                 <option value="">Manual</option>
-                <option value="fintopup">FinTopup</option>
-                <option value="smile">Smile.One</option>
-                <option value="moogold">Moogold</option>
+                <option value="fintopup">Supplier 1</option>
+                <option value="smile">Supplier 2</option>
+                <option value="fazercards">Supplier 3</option>
               </select>
             </div>
             <div className="form-group">
               <label>Provider Game ID</label>
               <input style={inp}
-                placeholder={form.provider === 'fintopup' ? 'e.g. 484 (game code)' : form.provider === 'smile' ? 'e.g. mobilelegends' : 'e.g. 13814'}
+                placeholder="Provider Game ID / SKU"
                 value={form.providerGameId} onChange={e => setForm(f => ({ ...f, providerGameId: e.target.value }))} />
               {form.provider === 'fintopup' && (
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
-                  FinTopup game code — 484=MLBB PH · 412=MLBB ID · 262=Valorant · 143=Genshin · 435=Roblox
+                  Game code — 484=MLBB PH · 412=MLBB ID · 262=Valorant · 143=Genshin · 435=Roblox
                 </div>
               )}
             </div>
           </div>
 
-          <div className="form-group">
-            <label>SKU / Product Codes</label>
-            <SkuList skuCodes={form.skuCodes || []} onChange={v => setForm(f => ({ ...f, skuCodes: v }))} />
-          </div>
+          {form.provider === 'fazercards' ? (
+            <div className="form-group">
+              <label>SKU Code <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>(offer_id from Supplier 3)</span></label>
+              <input style={inp} placeholder="e.g. 60_genesis_crystals" value={form.skuCode || ''} onChange={e => setForm(f => ({ ...f, skuCode: e.target.value }))} />
+            </div>
+          ) : (
+            <div className="form-group">
+              <label>SKU / Product Codes</label>
+              <SkuList skuCodes={form.skuCodes || []} onChange={v => setForm(f => ({ ...f, skuCodes: v }))} />
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div className="form-group">
@@ -324,13 +346,19 @@ fdB.append('active', b.active)
                 </div>
                 <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 2 }}>
                   {pack.diamonds > 0 && `${pack.diamonds}${pack.bonus > 0 ? ` +${pack.bonus}` : ''} · `}
-                  {pack.provider || 'manual'}
-                  {pack.skuCodes?.length > 0 && ` · ${pack.skuCodes.length} SKU`}
+                  {PROVIDER_LABEL[pack.provider] || 'Manual'}
+                  {pack.skuCode && ` · ${pack.skuCode}`}
+                  {!pack.skuCode && pack.skuCodes?.length > 0 && ` · ${pack.skuCodes.length} SKU`}
                   {` · sort: ${pack.sortOrder ?? i}`}
                 </div>
               </div>
 
-              <div style={{ fontWeight: 800, color: theme.primary, fontSize: 15, flexShrink: 0 }}>₹{pack.price}</div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontWeight: 800, color: theme.primary, fontSize: 15 }}>₹{pack.price}</div>
+                {pack.resellerPrice > 0 && (
+                  <div style={{ fontSize: 10, color: '#a5b4fc', fontWeight: 600 }}>R: ₹{pack.resellerPrice}</div>
+                )}
+              </div>
 
               <span style={{
                 padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700, flexShrink: 0,
@@ -363,6 +391,7 @@ fdB.append('active', b.active)
 export default function AdminPacks() {
   const [games, setGames]           = useState([])
   const [selectedGame, setSelectedGame] = useState(null)
+  const [selectedRegion, setSelectedRegion] = useState(null) // null = no-region tab
   const [loading, setLoading]       = useState(true)
   const [categoryFilter, setCategoryFilter] = useState('all')
 
@@ -376,9 +405,17 @@ export default function AdminPacks() {
   const handleGameChange = gameId => {
     const game = games.find(g => g._id === gameId) || null
     setSelectedGame(game)
+    // Auto-select first active region if game has regions
+    const activeRegions = game?.regions?.filter(r => r.active) || []
+    setSelectedRegion(activeRegions.length > 0 ? activeRegions[0] : null)
   }
 
   const filteredGames = games.filter(g => categoryFilter === 'all' || g.category === categoryFilter)
+  const activeRegions = selectedGame?.regions?.filter(r => r.active) || []
+  const hasRegions    = activeRegions.length > 0
+
+  // Current region slug: null → "" (no-region packs), object → its slug
+  const currentSlug = selectedRegion ? selectedRegion.slug : ''
 
   return (
     <div>
@@ -390,7 +427,7 @@ export default function AdminPacks() {
       {/* Category filter */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {['all', 'game', 'voucher', 'other'].map(c => (
-          <button key={c} onClick={() => { setCategoryFilter(c); setSelectedGame(null) }}
+          <button key={c} onClick={() => { setCategoryFilter(c); setSelectedGame(null); setSelectedRegion(null) }}
             style={{
               padding: '6px 16px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer',
               background: categoryFilter === c ? theme.grad : 'rgba(255,255,255,0.06)',
@@ -418,6 +455,11 @@ export default function AdminPacks() {
                 {g.icon && <img src={g.icon} alt="" style={{ width: 22, height: 22, borderRadius: 5, objectFit: 'cover' }} />}
                 {g.name}
                 {g.category === 'voucher' && <span style={{ fontSize: 10, background: 'rgba(251,191,36,0.2)', color: '#fbbf24', padding: '1px 6px', borderRadius: 10 }}>voucher</span>}
+                {g.regions?.filter(r => r.active).length > 0 && (
+                  <span style={{ fontSize: 10, background: 'rgba(139,92,246,0.2)', color: '#a78bfa', padding: '1px 6px', borderRadius: 10 }}>
+                    {g.regions.filter(r => r.active).length} regions
+                  </span>
+                )}
               </button>
             ))}
             {filteredGames.length === 0 && <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>No games found.</div>}
@@ -427,14 +469,37 @@ export default function AdminPacks() {
 
       {selectedGame && (
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 20 }}>
-          <div style={{ fontWeight: 800, color: '#fff', fontSize: 16, marginBottom: 16 }}>
+          <div style={{ fontWeight: 800, color: '#fff', fontSize: 16, marginBottom: hasRegions ? 14 : 16 }}>
             {selectedGame.name}
           </div>
+
+          {/* Region tabs — only shown for games with regions */}
+          {hasRegions && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16, paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              {activeRegions.map(r => (
+                <button key={r.slug} onClick={() => setSelectedRegion(r)} style={{
+                  padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  background: selectedRegion?.slug === r.slug ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.05)',
+                  border: selectedRegion?.slug === r.slug ? '1px solid rgba(139,92,246,0.6)' : '1px solid rgba(255,255,255,0.08)',
+                  color: selectedRegion?.slug === r.slug ? '#c4b5fd' : 'rgba(255,255,255,0.5)',
+                  transition: 'all 0.15s',
+                }}>{r.name}</button>
+              ))}
+              <button onClick={() => setSelectedRegion(null)} style={{
+                padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                background: selectedRegion === null ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)',
+                border: selectedRegion === null ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(255,255,255,0.06)',
+                color: selectedRegion === null ? '#fff' : 'rgba(255,255,255,0.3)',
+                transition: 'all 0.15s',
+              }}>No Region</button>
+            </div>
+          )}
+
           <RegionPackList
-            key={selectedGame._id}
+            key={`${selectedGame._id}-${currentSlug}`}
             gameId={selectedGame._id}
-            regionSlug=""
-            regionName={selectedGame.name}
+            regionSlug={currentSlug}
+            regionName={selectedRegion ? selectedRegion.name : selectedGame.name}
           />
         </div>
       )}

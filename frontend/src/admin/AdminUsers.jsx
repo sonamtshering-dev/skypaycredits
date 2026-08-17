@@ -53,6 +53,17 @@ export default function AdminUsers() {
     finally { setActing(null) }
   }
 
+  const toggleReseller = async (user) => {
+    const making = user.role !== 'reseller'
+    if (!confirm(`${making ? 'Promote to Reseller' : 'Remove Reseller'}: ${user.name || user.email}?`)) return
+    setActing(user._id)
+    try {
+      await api.put(`/users/${user._id}`, { role: making ? 'reseller' : 'user' })
+      load(page, search)
+    } catch (e) { alert(e.response?.data?.message || 'Failed') }
+    finally { setActing(null) }
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
@@ -93,6 +104,9 @@ export default function AdminUsers() {
                       {user.role === 'admin' && (
                         <span style={{ padding: '1px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: theme.alpha(0.2), color: theme.primary, border: '1px solid rgba(249,115,22,0.3)' }}>Admin</span>
                       )}
+                      {user.role === 'reseller' && (
+                        <span style={{ padding: '1px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }}>Reseller</span>
+                      )}
                       <span style={{
                         padding: '1px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700,
                         background: user.status === 'banned' ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.1)',
@@ -105,15 +119,21 @@ export default function AdminUsers() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <button onClick={() => toggleBan(user)} disabled={!!acting} style={{
-                    flex: 1, padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    flex: 1, minWidth: 70, padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                     background: user.status === 'banned' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
                     border: user.status === 'banned' ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(239,68,68,0.2)',
                     color: user.status === 'banned' ? '#4ade80' : '#f87171', opacity: acting ? 0.5 : 1,
                   }}>{user.status === 'banned' ? 'Unban' : 'Ban'}</button>
+                  <button onClick={() => toggleReseller(user)} disabled={!!acting || user.role === 'admin'} style={{
+                    flex: 1, minWidth: 90, padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    background: user.role === 'reseller' ? 'rgba(99,102,241,0.15)' : 'rgba(99,102,241,0.07)',
+                    border: '1px solid rgba(99,102,241,0.3)',
+                    color: '#a5b4fc', opacity: (acting || user.role === 'admin') ? 0.4 : 1,
+                  }}>{user.role === 'reseller' ? 'Remove Reseller' : 'Make Reseller'}</button>
                   <button onClick={() => toggleAdmin(user)} disabled={!!acting} style={{
-                    flex: 1, padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    flex: 1, minWidth: 80, padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                     background: theme.alpha(0.1), border: '1px solid rgba(249,115,22,0.2)',
                     color: theme.primary, opacity: acting ? 0.5 : 1,
                   }}>{user.role === 'admin' ? 'Demote' : 'Make Admin'}</button>

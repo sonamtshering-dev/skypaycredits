@@ -38,7 +38,7 @@ router.post("/verify-player", protect, async (req, res) => {
 
 // GET /api/recharge/servers/:gameId?region=slug
 // Returns server dropdown list for games that need it
-router.get("/servers/:gameId", async (req, res) => {
+router.get("/servers/:gameId", protect, async (req, res) => {
   try {
     const raw = req.params.gameId
     const isOid = /^[a-f\d]{24}$/i.test(raw)
@@ -49,11 +49,11 @@ router.get("/servers/:gameId", async (req, res) => {
     const region = game.regions?.find(r => r.slug === regionSlug && r.active)
                 || game.regions?.find(r => r.active)
 
-    if (!region?.hasServerList) return res.json({ servers: [] })
-
-    const region2 = game.regions?.find(r => r.slug === regionSlug && r.active) || game.regions?.find(r => r.active)
-    if (region2?.staticServers?.length > 0) return res.json({ servers: region2.staticServers })
-    const servers = await getServers(region2?.provider || "g2bulk", region2?.providerGameId || "", "")
+    // Check region-level first, fall back to game-level
+    const src = region || game
+    if (!src.hasServerList) return res.json({ servers: [] })
+    if (src.staticServers?.length > 0) return res.json({ servers: src.staticServers })
+    const servers = await getServers(src.provider || "g2bulk", src.providerGameId || "", "")
     res.json({ servers })
   } catch (err) {
     res.status(500).json({ servers: [], message: err.message })

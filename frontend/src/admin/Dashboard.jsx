@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import api from '../api/axios'
 import { useSettings } from '../context/SettingsContext'
 import theme from '../theme'
-import { ClipboardList, CheckCircle, Clock, XCircle, IndianRupee, Users, RefreshCw, Smile } from 'lucide-react'
+import { ClipboardList, CheckCircle, Clock, XCircle, IndianRupee, Users, RefreshCw, Wallet } from 'lucide-react'
 
 
 export default function Dashboard() {
@@ -12,16 +12,28 @@ export default function Dashboard() {
   const { settings } = useSettings()
   const sym = settings.currencySymbol || '$'
 
-  const [smileBal, setSmileBal]       = useState(null)
-  const [smileLoading, setSmileLoading] = useState(false)
-  const [smileError, setSmileError]   = useState('')
+  const [s1Bal, setS1Bal]         = useState(null)
+  const [s1Loading, setS1Loading] = useState(false)
+  const [s1Error, setS1Error]     = useState('')
 
-  const fetchSmileBalance = () => {
-    setSmileLoading(true); setSmileError('')
+  const [s2Bal, setS2Bal]         = useState(null)
+  const [s2Loading, setS2Loading] = useState(false)
+  const [s2Error, setS2Error]     = useState('')
+
+  const fetchS1Balance = () => {
+    setS1Loading(true); setS1Error('')
     api.get('/smile/balance')
-      .then(r => setSmileBal(r.data.balance))
-      .catch(e => setSmileError(e.response?.data?.message || 'Failed to fetch balance'))
-      .finally(() => setSmileLoading(false))
+      .then(r => setS1Bal(r.data.balance))
+      .catch(e => setS1Error(e.response?.data?.message || 'Failed'))
+      .finally(() => setS1Loading(false))
+  }
+
+  const fetchS2Balance = () => {
+    setS2Loading(true); setS2Error('')
+    api.get('/fazercards/balance')
+      .then(r => setS2Bal(r.data.balance))
+      .catch(e => setS2Error(e.response?.data?.message || 'Failed'))
+      .finally(() => setS2Loading(false))
   }
 
   useEffect(() => {
@@ -29,7 +41,8 @@ export default function Dashboard() {
       .then(r => setStats(r.data))
       .catch(() => setStats({}))
       .finally(() => setLoading(false))
-    fetchSmileBalance()
+    fetchS1Balance()
+    fetchS2Balance()
   }, [])
 
   if (loading) return <div style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div>
@@ -61,37 +74,65 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Smile.One Balance */}
-      <div style={{ marginBottom: 28, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 16, padding: '18px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#f97316,#fb923c)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Smile size={17} color="#fff" />
+      {/* Supplier Balances */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12, marginBottom: 28 }}>
+        {/* Supplier 2 — Smile */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 16, padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#f97316,#fb923c)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Wallet size={17} color="#fff" />
+              </div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Supplier 2</div>
             </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Smile.One Balance</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Smile.One account</div>
-            </div>
+            <button onClick={fetchS1Balance} disabled={s1Loading} style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
+              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            }}>
+              <RefreshCw size={12} style={{ animation: s1Loading ? 'spin 1s linear infinite' : 'none' }} />
+            </button>
           </div>
-          <button onClick={fetchSmileBalance} disabled={smileLoading} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8,
-            background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-            color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-          }}>
-            <RefreshCw size={13} style={{ animation: smileLoading ? 'spin 1s linear infinite' : 'none' }} />
-            Refresh
-          </button>
+          {s1Loading ? (
+            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>Fetching…</div>
+          ) : s1Error ? (
+            <div style={{ color: '#f87171', fontSize: 12 }}>{s1Error}</div>
+          ) : s1Bal !== null ? (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontSize: 30, fontWeight: 900, color: '#fb923c' }}>{Number(s1Bal).toLocaleString()}</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>points</span>
+            </div>
+          ) : null}
         </div>
-        {smileLoading ? (
-          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>Fetching balance…</div>
-        ) : smileError ? (
-          <div style={{ color: '#f87171', fontSize: 13 }}>{smileError}</div>
-        ) : smileBal !== null ? (
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 36, fontWeight: 900, color: '#fb923c' }}>{Number(smileBal).toLocaleString()}</span>
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Smile Points</span>
+
+        {/* Supplier 3 — FazerCards */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 16, padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#8b5cf6,#a78bfa)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Wallet size={17} color="#fff" />
+              </div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Supplier 3</div>
+            </div>
+            <button onClick={fetchS2Balance} disabled={s2Loading} style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
+              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            }}>
+              <RefreshCw size={12} style={{ animation: s2Loading ? 'spin 1s linear infinite' : 'none' }} />
+            </button>
           </div>
-        ) : null}
+          {s2Loading ? (
+            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>Fetching…</div>
+          ) : s2Error ? (
+            <div style={{ color: '#f87171', fontSize: 12 }}>{s2Error}</div>
+          ) : s2Bal !== null ? (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontSize: 30, fontWeight: 900, color: '#a78bfa' }}>{Number(s2Bal).toLocaleString()}</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>USD</span>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {/* Recent orders */}

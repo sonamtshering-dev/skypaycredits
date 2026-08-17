@@ -3,24 +3,27 @@ import { Wrench, KeyRound } from 'lucide-react'
 import { useAuth } from './context/AuthContext'
 import { useSettings } from './context/SettingsContext'
 
+import { lazy, Suspense } from 'react'
+
 import Home          from './pages/Home'
 import Auth          from './pages/Auth'
 import Recharge      from './pages/Recharge'
-import Orders        from './pages/Orders'
-import Profile       from './pages/Profile'
-import PaymentSuccess from './pages/PaymentSuccess'
-import InfoPage       from './pages/InfoPage'
 
-import AdminLayout   from './admin/AdminLayout'
-import Dashboard     from './admin/Dashboard'
-import AdminGames    from './admin/AdminGames'
-import AdminPacks    from './admin/AdminPacks'
-import AdminOrders   from './admin/AdminOrders'
-import AdminUsers    from './admin/AdminUsers'
-import AdminSettings from './admin/AdminSettings'
-import AdminBanners  from './admin/AdminBanners'
-import AdminCoupons  from './admin/AdminCoupons'
-import ManualOrder   from './pages/ManualOrder'
+const Orders        = lazy(() => import('./pages/Orders'))
+const Profile       = lazy(() => import('./pages/Profile'))
+const PaymentSuccess= lazy(() => import('./pages/PaymentSuccess'))
+const InfoPage      = lazy(() => import('./pages/InfoPage'))
+const ManualOrder   = lazy(() => import('./pages/ManualOrder'))
+
+const AdminLayout   = lazy(() => import('./admin/AdminLayout'))
+const Dashboard     = lazy(() => import('./admin/Dashboard'))
+const AdminGames    = lazy(() => import('./admin/AdminGames'))
+const AdminPacks    = lazy(() => import('./admin/AdminPacks'))
+const AdminOrders   = lazy(() => import('./admin/AdminOrders'))
+const AdminUsers    = lazy(() => import('./admin/AdminUsers'))
+const AdminSettings = lazy(() => import('./admin/AdminSettings'))
+const AdminBanners  = lazy(() => import('./admin/AdminBanners'))
+const AdminCoupons  = lazy(() => import('./admin/AdminCoupons'))
 
 function Loader() {
   return (
@@ -106,6 +109,7 @@ export default function App() {
   }
 
   return (
+    <Suspense fallback={null}>
     <Routes>
       <Route path="/"                 element={<Home />} />
       <Route path="/recharge/:gameId" element={<Recharge />} />
@@ -134,5 +138,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }

@@ -55,7 +55,7 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
       return res.status(400).json({ message: "You cannot change your own role or status" })
 
     const { role, status } = req.body
-    const VALID_ROLES    = ["user", "admin"]
+    const VALID_ROLES    = ["user", "reseller", "admin"]
     const VALID_STATUSES = ["active", "banned"]
     const update = {}
     if (role   && VALID_ROLES.includes(role))     update.role   = role

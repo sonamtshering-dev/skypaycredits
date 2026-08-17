@@ -31,9 +31,14 @@ const upload = multer({
   }
 })
 
+let _settingsCache = null, _settingsCacheAt = 0
+const SETTINGS_TTL = 60 * 1000 // 60 seconds
+
 // GET /api/settings — public (only safe fields)
 router.get("/", async (req, res) => {
   try {
+    const now = Date.now()
+    if (_settingsCache && now - _settingsCacheAt < SETTINGS_TTL) return res.json(_settingsCache)
     let settings = await Settings.findOne()
     if (!settings) settings = await Settings.create({})
     // Only expose safe public fields — never expose API keys or internal config
@@ -52,6 +57,8 @@ router.get("/", async (req, res) => {
       facebook:        settings.facebook,
       purchasesEnabled: settings.purchasesEnabled,
     }
+    _settingsCache = safe
+    _settingsCacheAt = now
     res.json(safe)
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -79,6 +86,7 @@ router.put("/", protect, adminOnly, upload.fields([{ name: "logo" },{ name: "fav
     let settings = await Settings.findOne()
     if (!settings) settings = await Settings.create(body)
     else { Object.assign(settings, body); await settings.save() }
+    _settingsCache = null // bust cache on update
     res.json(settings)
   } catch (err) {
     res.status(400).json({ message: err.message })

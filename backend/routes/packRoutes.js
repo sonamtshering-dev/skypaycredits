@@ -71,11 +71,12 @@ router.post("/", protect, adminOnly, upload.single("image"), async (req, res) =>
     const body = { ...req.body }
     if (typeof body.skuCodes === "string") body.skuCodes = JSON.parse(body.skuCodes || "[]")
     if (typeof body.active === "string") body.active = body.active === "true"
-    body.price    = Number(body.price)    || 0
-    body.oldPrice = Number(body.oldPrice) || 0
-    body.diamonds = Number(body.diamonds) || 0
-    body.bonus    = Number(body.bonus)    || 0
-    body.sortOrder = Number(body.sortOrder) || 0
+    body.price         = Number(body.price)         || 0
+    body.resellerPrice = Number(body.resellerPrice) || 0
+    body.oldPrice      = Number(body.oldPrice)      || 0
+    body.diamonds      = Number(body.diamonds)      || 0
+    body.bonus         = Number(body.bonus)         || 0
+    body.sortOrder     = Number(body.sortOrder)     || 0
     if (req.file) body.image = `/uploads/packs/${req.file.filename}`
     const pack = await Pack.create(body)
     res.status(201).json(pack)
@@ -87,11 +88,12 @@ router.put("/:id", protect, adminOnly, validateObjectId, upload.single("image"),
     const body = { ...req.body }
     if (typeof body.skuCodes === "string") body.skuCodes = JSON.parse(body.skuCodes || "[]")
     if (typeof body.active === "string") body.active = body.active === "true"
-    body.price    = Number(body.price)    || 0
-    body.oldPrice = Number(body.oldPrice) || 0
-    body.diamonds = Number(body.diamonds) || 0
-    body.bonus    = Number(body.bonus)    || 0
-    body.sortOrder = Number(body.sortOrder) || 0
+    body.price         = Number(body.price)         || 0
+    body.resellerPrice = Number(body.resellerPrice) || 0
+    body.oldPrice      = Number(body.oldPrice)      || 0
+    body.diamonds      = Number(body.diamonds)      || 0
+    body.bonus         = Number(body.bonus)         || 0
+    body.sortOrder     = Number(body.sortOrder)     || 0
     if (req.file) body.image = `/uploads/packs/${req.file.filename}`
     const pack = await Pack.findByIdAndUpdate(req.params.id, body, { new: true })
     if (!pack) return res.status(404).json({ message: "Pack not found" })

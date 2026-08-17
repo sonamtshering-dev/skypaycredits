@@ -14,7 +14,7 @@ export default function Recharge() {
   const { gameId }     = useParams()
   const [searchParams] = useSearchParams()
   const regionSlug     = searchParams.get('region')
-  const { user }       = useAuth()
+  const { user, isReseller } = useAuth()
   const { settings }   = useSettings()
   const navigate       = useNavigate()
 
@@ -61,9 +61,9 @@ export default function Recharge() {
       setRegion(foundRegion || null)
       setPacks(pr.data)
 
-      // Fetch server list if region has one
-      if (foundRegion?.hasServerList) {
-        api.get(`/recharge/servers/${gameId}?region=${regionSlug}`)
+      // Fetch server list if region or game has one
+      if (foundRegion?.hasServerList || g.hasServerList) {
+        api.get(`/recharge/servers/${gameId}?region=${regionSlug || ''}`)
           .then(r => setServers(r.data?.servers || []))
           .catch(() => setServers([]))
       }
@@ -73,6 +73,13 @@ export default function Recharge() {
 
   const doVerify = async (pd) => {
     if (!pd[fields[0]?.name]) return
+    // For skipVerify games, resolve client-side — no API needed
+    if (game?.skipVerify) {
+      setVerified(true)
+      setUsername(pd[fields[0]?.name] || '')
+      setVerifyError('')
+      return
+    }
     setVerifying(true); setVerifyError('')
     try {
       const { data } = await api.post('/recharge/verify-player', {
@@ -107,6 +114,7 @@ export default function Recharge() {
 
   const handlePay = async () => {
     if (!playerData[fields[0]?.name]) return setError('Enter your Player ID')
+    if (servers.length > 0 && !playerData[fields[1]?.name]) return setError('Please select a server')
     if (!selectedPack) return setError('Select a pack')
     if (!user) { navigate('/auth'); return }
     setPaying(true); setError('')
@@ -216,8 +224,8 @@ export default function Recharge() {
             border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20,
           }}>
             <div style={{ display: 'grid', gridTemplateColumns: fields.length > 1 ? 'repeat(auto-fit, minmax(160px, 1fr))' : '1fr', gap: 12 }}>
-              {fields.map(field => (
-                field.name === 'zoneId' && servers.length > 0 ? (
+              {fields.map((field, fieldIdx) => (
+                servers.length > 0 && fieldIdx > 0 ? (
                   <select
                     key={field.name}
                     className="form-input"
@@ -258,10 +266,10 @@ export default function Recharge() {
             {!verifying && verified && (
               <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: '#4ade80' }}>
                 <CheckCircle size={15} />
-                {username
-                  ? <span>{username}</span>
-                  : <span>ID: {playerData[fields[0]?.name]}{playerData[fields[1]?.name] ? ` · ${playerData[fields[1]?.name]}` : ''}</span>
-                }
+                <span>
+                  {username || playerData[fields[0]?.name]}
+                  {playerData[fields[1]?.name] ? ` · ${servers.find(s => s.serverId === playerData[fields[1]?.name])?.serverName || playerData[fields[1]?.name]}` : ''}
+                </span>
               </div>
             )}
             {!verifying && verifyError && (
@@ -314,6 +322,7 @@ export default function Recharge() {
                   {packs.filter(p => (p.sectionName || '') === sec).map(pack => (
                     <PackCard
                       key={pack._id} pack={pack} sym={sym}
+                      isReseller={isReseller}
                       selected={selectedPack?._id === pack._id}
                       onClick={() => {
                         setSelectedPack(pack)
@@ -350,9 +359,9 @@ export default function Recharge() {
             }}>
               {[
               ['Account ID', (playerData[fields[0]?.name] || '—') + (playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : '')],
-              ...(username ? [['Player Name', username]] : []),
+              ...(username && username !== playerData[fields[0]?.name] ? [['Player Name', username]] : []),
               ['Pack', selectedPack.title],
-              ['Original Price', `${sym}${selectedPack.price}`]
+              ['Original Price', `${sym}${(isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price}`]
             ].map(([label, val]) => (
                 <div key={label} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -457,10 +466,11 @@ export default function Recharge() {
   )
 }
 
-function PackCard({ pack, sym, selected, onClick }) {
+function PackCard({ pack, sym, selected, onClick, isReseller }) {
   const [hovered, setHovered] = useState(false)
-  const discount = pack.oldPrice > pack.price
-    ? Math.round((1 - pack.price / pack.oldPrice) * 100)
+  const displayPrice = (isReseller && pack.resellerPrice > 0) ? pack.resellerPrice : pack.price
+  const discount = pack.oldPrice > displayPrice
+    ? Math.round((1 - displayPrice / pack.oldPrice) * 100)
     : 0
 
   return (
@@ -516,13 +526,21 @@ function PackCard({ pack, sym, selected, onClick }) {
             color: selected ? theme.primary : '#fff',
             transition: 'color 0.15s',
             wordBreak: 'break-all',
-          }}>{sym}{Number(pack.price).toFixed(0)}</span>
-          {pack.oldPrice > pack.price && (
+          }}>{sym}{Number(displayPrice).toFixed(0)}</span>
+          {isReseller && pack.resellerPrice > 0 && (
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textDecoration: 'line-through' }}>
+              {sym}{pack.price}
+            </span>
+          )}
+          {(!isReseller || !pack.resellerPrice) && pack.oldPrice > pack.price && (
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textDecoration: 'line-through' }}>
               {sym}{pack.oldPrice}
             </span>
           )}
         </div>
+        {isReseller && pack.resellerPrice > 0 && (
+          <div style={{ fontSize: 10, color: '#a5b4fc', fontWeight: 700, marginTop: 1 }}>Reseller Price</div>
+        )}
       </div>
 
       {/* Total diamonds */}

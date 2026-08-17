@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import theme from '../theme'
 import { ClipboardList, User, Settings, LogOut, X, Home, ChevronRight } from 'lucide-react'
+import BottomNav from './BottomNav'
 
 function BrandName({ name, fontSize = 16 }) {
   const parts = (name || 'Nitrogen Store').split(' ')
@@ -312,6 +313,8 @@ export default function Navbar() {
           .hide-mobile { display: inline-flex !important; }
         }
       `}</style>
+
+      <BottomNav />
     </>
   )
 }

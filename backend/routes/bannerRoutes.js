@@ -54,10 +54,20 @@ router.get("/all", protect, adminOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
+function isSafeUrl(url) {
+  if (!url) return true
+  try {
+    const u = new URL(url)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch { return false }
+}
+
 // POST /api/banners — admin
 router.post("/", protect, adminOnly, upload.single("image"), async (req, res) => {
   try {
     const body = { ...req.body }
+    if (body.link !== undefined && !isSafeUrl(body.link))
+      return res.status(400).json({ message: "Invalid banner link URL" })
     if (req.file) body.image = `/uploads/banners/${req.file.filename}`
     const banner = await Banner.create(body)
     res.status(201).json(banner)
@@ -70,7 +80,10 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
     const { title, link, active, image } = req.body
     const update = {}
     if (title !== undefined) update.title = title
-    if (link !== undefined) update.link = link
+    if (link !== undefined) {
+      if (!isSafeUrl(link)) return res.status(400).json({ message: "Invalid banner link URL" })
+      update.link = link
+    }
     if (active !== undefined) update.active = active === 'true' || active === true
     if (image !== undefined) update.image = image
     const banner = await Banner.findByIdAndUpdate(req.params.id, update, { new: true })
