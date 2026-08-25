@@ -40,6 +40,7 @@ export default function Recharge() {
   const [paying, setPaying]               = useState(false)
   const [paySuccess, setPaySuccess]       = useState(null)
   const [payMethod, setPayMethod]         = useState('upi')
+  const [showPaySheet, setShowPaySheet]   = useState(false)
   const [couponCode, setCouponCode]       = useState('')
   const [couponApplied, setCouponApplied] = useState(null)
   const [couponError, setCouponError]     = useState('')
@@ -469,138 +470,25 @@ export default function Recharge() {
                 Purchases are temporarily disabled. Please check back soon.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Payment method selector */}
-                {user && (
-                  <>
-                    {/* Section divider */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '2px 0' }}>
-                      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-                      <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 2 }}>Payment Method</span>
-                      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {/* Wallet option */}
-                      {(() => {
-                        const walletOk = walletStatus !== 'blocked' && finalPrice && walletBalance >= Math.round(finalPrice * 100)
-                        const sel = payMethod === 'wallet'
-                        return (
-                          <button type="button" onClick={() => walletOk && setPayMethod('wallet')} disabled={!walletOk} style={{
-                            width: '100%', padding: '16px 18px', borderRadius: 16,
-                            cursor: walletOk ? 'pointer' : 'not-allowed',
-                            background: sel
-                              ? 'linear-gradient(135deg, rgba(109,40,217,0.22) 0%, rgba(76,0,176,0.14) 100%)'
-                              : 'rgba(255,255,255,0.035)',
-                            border: `1.5px solid ${sel ? 'rgba(139,92,246,0.55)' : 'rgba(255,255,255,0.08)'}`,
-                            boxShadow: sel ? '0 0 20px rgba(109,40,217,0.18), inset 0 1px 0 rgba(255,255,255,0.06)' : 'none',
-                            display: 'flex', alignItems: 'center', gap: 14,
-                            opacity: walletOk ? 1 : 0.4, transition: 'all 0.2s',
-                            backdropFilter: 'blur(10px)',
-                          }}>
-                            {/* Icon box */}
-                            <div style={{
-                              width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-                              background: sel ? 'linear-gradient(135deg,#7c3aed,#4c00b0)' : 'rgba(255,255,255,0.07)',
-                              border: `1px solid ${sel ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              boxShadow: sel ? '0 4px 12px rgba(109,40,217,0.35)' : 'none',
-                            }}>
-                              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={sel ? '#e9d5ff' : 'rgba(255,255,255,0.45)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
-                                <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
-                              </svg>
-                            </div>
-                            <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
-                              <div style={{ fontWeight: 800, fontSize: 14, color: sel ? '#e9d5ff' : 'rgba(255,255,255,0.75)' }}>Wallet</div>
-                              <div style={{ fontSize: 12, color: sel ? '#a78bfa' : 'rgba(255,255,255,0.35)', marginTop: 2 }}>
-                                {walletStatus === 'blocked' ? 'Wallet blocked' : `${fmtP(walletBalance)} available`}
-                              </div>
-                            </div>
-                            {walletOk && !sel && (
-                              <span style={{ fontSize: 11, fontWeight: 700, color: '#4ade80', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, padding: '2px 8px', flexShrink: 0 }}>Instant</span>
-                            )}
-                            {/* Check indicator */}
-                            <div style={{
-                              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-                              background: sel ? 'linear-gradient(135deg,#7c3aed,#4c00b0)' : 'transparent',
-                              border: `2px solid ${sel ? '#a78bfa' : 'rgba(255,255,255,0.2)'}`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              transition: 'all 0.2s',
-                            }}>
-                              {sel && <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                            </div>
-                          </button>
-                        )
-                      })()}
-
-                      {/* UPI / Online option */}
-                      {(() => {
-                        const sel = payMethod === 'upi'
-                        return (
-                          <button type="button" onClick={() => setPayMethod('upi')} style={{
-                            width: '100%', padding: '16px 18px', borderRadius: 16, cursor: 'pointer',
-                            background: sel
-                              ? 'linear-gradient(135deg, rgba(249,115,22,0.14) 0%, rgba(234,88,12,0.08) 100%)'
-                              : 'rgba(255,255,255,0.035)',
-                            border: `1.5px solid ${sel ? 'rgba(249,115,22,0.45)' : 'rgba(255,255,255,0.08)'}`,
-                            boxShadow: sel ? '0 0 20px rgba(249,115,22,0.15), inset 0 1px 0 rgba(255,255,255,0.06)' : 'none',
-                            display: 'flex', alignItems: 'center', gap: 14,
-                            transition: 'all 0.2s', backdropFilter: 'blur(10px)',
-                          }}>
-                            <div style={{
-                              width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-                              background: sel ? 'linear-gradient(135deg,#f97316,#ea580c)' : 'rgba(255,255,255,0.07)',
-                              border: `1px solid ${sel ? 'rgba(249,115,22,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              boxShadow: sel ? '0 4px 12px rgba(249,115,22,0.3)' : 'none',
-                            }}>
-                              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={sel ? '#fff' : 'rgba(255,255,255,0.45)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="2" y="5" width="20" height="14" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/>
-                                <line x1="6" y1="15" x2="10" y2="15"/><line x1="13" y1="15" x2="16" y2="15"/>
-                              </svg>
-                            </div>
-                            <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
-                              <div style={{ fontWeight: 800, fontSize: 14, color: sel ? '#fed7aa' : 'rgba(255,255,255,0.75)' }}>UPI / Online Payment</div>
-                              <div style={{ fontSize: 12, color: sel ? '#fb923c' : 'rgba(255,255,255,0.35)', marginTop: 2 }}>UPI · Cards · Net banking</div>
-                            </div>
-                            <div style={{
-                              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-                              background: sel ? 'linear-gradient(135deg,#f97316,#ea580c)' : 'transparent',
-                              border: `2px solid ${sel ? '#f97316' : 'rgba(255,255,255,0.2)'}`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              transition: 'all 0.2s',
-                            }}>
-                              {sel && <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                            </div>
-                          </button>
-                        )
-                      })()}
-                    </div>
-                  </>
-                )}
-
-                {/* Single pay button */}
-                <button
-                  onClick={() => handlePay(payMethod === 'wallet' ? 'wallet' : 'novapay')}
-                  disabled={!playerData[fields[0]?.name] || paying}
-                  style={{
-                    width: '100%', padding: '17px', borderRadius: 14, cursor: 'pointer',
-                    fontWeight: 900, fontSize: 17, letterSpacing: 0.3,
-                    background: theme.grad,
-                    border: '1px solid rgba(249,115,22,0.25)', color: '#fff',
-                    opacity: (!playerData[fields[0]?.name] || paying) ? 0.5 : 1,
-                    boxShadow: '0 0 32px rgba(249,115,22,0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  }}
-                >
-                  {paying ? 'Processing…' : !user
-                    ? <><Lock size={14} />Login to Checkout</>
-                    : payMethod === 'wallet'
-                      ? <>Pay {fmt(finalPrice, 0)} from Wallet</>
-                      : <>Proceed to Checkout <ArrowRight size={15} /></>}
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  if (!user) { navigate('/auth'); return }
+                  if (!playerData[fields[0]?.name]) { setError('Enter your Player ID'); return }
+                  if (!selectedPack) { setError('Select a pack'); return }
+                  setShowPaySheet(true)
+                }}
+                disabled={paying}
+                style={{
+                  width: '100%', padding: '17px', borderRadius: 14, cursor: 'pointer',
+                  fontWeight: 900, fontSize: 17, letterSpacing: 0.3,
+                  background: theme.grad, border: 'none', color: '#fff',
+                  opacity: paying ? 0.5 : 1,
+                  boxShadow: '0 0 30px rgba(109,40,217,0.4), inset 0 1px 0 rgba(255,255,255,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                {!user ? <><Lock size={14} />Login to Checkout</> : <>Checkout <ArrowRight size={15} /></>}
+              </button>
             )}
             <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
               <Lock size={11} /> Secure payment
@@ -610,6 +498,207 @@ export default function Recharge() {
 
       </div>
       <Footer />
+
+      {/* ── Payment Bottom Sheet ── */}
+      {showPaySheet && (
+        <>
+          <style>{`@keyframes nsSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
+          <div
+            onClick={() => setShowPaySheet(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1000,
+              background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%', maxWidth: 560,
+                background: 'linear-gradient(180deg,#0d0020 0%,#07001a 100%)',
+                borderRadius: '24px 24px 0 0',
+                border: '1px solid rgba(139,92,246,0.18)', borderBottom: 'none',
+                animation: 'nsSlideUp 0.28s cubic-bezier(.22,1,.36,1)',
+                maxHeight: '90vh', overflowY: 'auto',
+              }}
+            >
+              {/* Drag handle */}
+              <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 12 }}>
+                <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.18)' }} />
+              </div>
+
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 22px 16px' }}>
+                <div style={{ fontWeight: 900, fontSize: 18, color: '#fff' }}>Payment Options</div>
+                <button onClick={() => setShowPaySheet(false)} style={{
+                  width: 34, height: 34, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: 'rgba(255,255,255,0.55)', flexShrink: 0,
+                }}>
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div style={{ padding: '0 20px 32px' }}>
+                {/* Product summary */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 16, padding: '14px 16px', marginBottom: 12,
+                }}>
+                  {game.icon
+                    ? <img src={game.icon} alt={game.name} style={{ width: 54, height: 54, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
+                    : <div style={{ width: 54, height: 54, borderRadius: 12, background: theme.alpha(0.2), flexShrink: 0 }} />
+                  }
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>{game.name}</div>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: '2px 0 6px' }}>{selectedPack?.title}</div>
+                    <div style={{ fontWeight: 900, fontSize: 20, color: '#a78bfa' }}>{fmt(finalPrice, 0)}</div>
+                  </div>
+                  <button onClick={() => setShowPaySheet(false)} style={{
+                    background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)',
+                    cursor: 'pointer', fontSize: 20, padding: 4, alignSelf: 'flex-start',
+                  }}>×</button>
+                </div>
+
+                {/* Player details summary */}
+                <div style={{
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: 12, padding: '11px 16px', marginBottom: 20,
+                  display: 'flex', flexWrap: 'wrap', gap: '6px 20px',
+                }}>
+                  {fields.map((f) => playerData[f.name] && (
+                    <div key={f.name} style={{ fontSize: 13 }}>
+                      <span style={{ color: 'rgba(255,255,255,0.4)' }}>{f.label}: </span>
+                      <span style={{ color: '#fff', fontWeight: 700 }}>{playerData[f.name]}</span>
+                    </div>
+                  ))}
+                  {username && (
+                    <div style={{ fontSize: 13 }}>
+                      <span style={{ color: 'rgba(255,255,255,0.4)' }}>Name: </span>
+                      <span style={{ color: '#4ade80', fontWeight: 700 }}>{username}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment method grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                  {/* Wallet tile */}
+                  {(() => {
+                    const walletOk = walletStatus !== 'blocked' && finalPrice && walletBalance >= Math.round(finalPrice * 100)
+                    const sel = payMethod === 'wallet'
+                    return (
+                      <button type="button" onClick={() => walletOk && setPayMethod('wallet')} disabled={!walletOk} style={{
+                        padding: '18px 12px', borderRadius: 18, cursor: walletOk ? 'pointer' : 'not-allowed',
+                        background: sel ? 'linear-gradient(135deg,rgba(109,40,217,0.28),rgba(76,0,176,0.18))' : 'rgba(255,255,255,0.04)',
+                        border: `1.5px solid ${sel ? 'rgba(139,92,246,0.65)' : 'rgba(255,255,255,0.09)'}`,
+                        boxShadow: sel ? '0 0 22px rgba(109,40,217,0.22)' : 'none',
+                        opacity: walletOk ? 1 : 0.38, transition: 'all 0.2s',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+                        position: 'relative',
+                      }}>
+                        <div style={{
+                          width: 52, height: 52, borderRadius: 16,
+                          background: sel ? 'linear-gradient(135deg,#7c3aed,#4c00b0)' : 'rgba(255,255,255,0.07)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          boxShadow: sel ? '0 4px 16px rgba(109,40,217,0.45)' : 'none',
+                        }}>
+                          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke={sel ? '#e9d5ff' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+                            <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+                          </svg>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontWeight: 800, fontSize: 14, color: sel ? '#e9d5ff' : 'rgba(255,255,255,0.75)' }}>Wallet</div>
+                          <div style={{ fontSize: 11, color: sel ? '#a78bfa' : 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                            {walletStatus === 'blocked' ? 'Blocked' : fmtP(walletBalance)}
+                          </div>
+                        </div>
+                        {sel && (
+                          <div style={{
+                            position: 'absolute', top: 10, right: 10, width: 20, height: 20,
+                            borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </div>
+                        )}
+                        {walletOk && !sel && (
+                          <span style={{
+                            position: 'absolute', top: 8, right: 8,
+                            fontSize: 9, fontWeight: 800, color: '#4ade80',
+                            background: 'rgba(34,197,94,0.12)', borderRadius: 20, padding: '2px 6px',
+                          }}>Instant</span>
+                        )}
+                      </button>
+                    )
+                  })()}
+
+                  {/* UPI tile */}
+                  {(() => {
+                    const sel = payMethod === 'upi'
+                    return (
+                      <button type="button" onClick={() => setPayMethod('upi')} style={{
+                        padding: '18px 12px', borderRadius: 18, cursor: 'pointer',
+                        background: sel ? 'linear-gradient(135deg,rgba(109,40,217,0.28),rgba(76,0,176,0.18))' : 'rgba(255,255,255,0.04)',
+                        border: `1.5px solid ${sel ? 'rgba(139,92,246,0.65)' : 'rgba(255,255,255,0.09)'}`,
+                        boxShadow: sel ? '0 0 22px rgba(109,40,217,0.22)' : 'none',
+                        transition: 'all 0.2s',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+                        position: 'relative',
+                      }}>
+                        <div style={{
+                          width: 52, height: 52, borderRadius: 16,
+                          background: sel ? 'linear-gradient(135deg,#7c3aed,#4c00b0)' : 'rgba(255,255,255,0.07)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          boxShadow: sel ? '0 4px 16px rgba(109,40,217,0.45)' : 'none',
+                        }}>
+                          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke={sel ? '#e9d5ff' : 'rgba(255,255,255,0.4)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/>
+                            <line x1="6" y1="15" x2="10" y2="15"/><line x1="13" y1="15" x2="16" y2="15"/>
+                          </svg>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontWeight: 800, fontSize: 14, color: sel ? '#e9d5ff' : 'rgba(255,255,255,0.75)' }}>UPI / Online</div>
+                          <div style={{ fontSize: 11, color: sel ? '#a78bfa' : 'rgba(255,255,255,0.35)', marginTop: 2 }}>Cards · Net banking</div>
+                        </div>
+                        {sel && (
+                          <div style={{
+                            position: 'absolute', top: 10, right: 10, width: 20, height: 20,
+                            borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })()}
+                </div>
+
+                {/* PAY button */}
+                <button
+                  onClick={() => { setShowPaySheet(false); handlePay(payMethod === 'wallet' ? 'wallet' : 'novapay') }}
+                  disabled={paying}
+                  style={{
+                    width: '100%', padding: '18px', borderRadius: 16, cursor: 'pointer',
+                    fontWeight: 900, fontSize: 17, letterSpacing: 0.5,
+                    background: theme.grad, border: 'none', color: '#fff',
+                    boxShadow: '0 0 30px rgba(109,40,217,0.4)',
+                    opacity: paying ? 0.7 : 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}
+                >
+                  {paying ? 'Processing…' : `Pay ${fmt(finalPrice, 0)}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   )
 }
