@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
+import { useCurrency } from '../context/CurrencyContext'
 import { Shield, Zap, Mail, Star, Wallet } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -15,6 +16,7 @@ export default function ManualOrder() {
   const regionSlug     = searchParams.get('region')
   const { user, isReseller, walletBalance, walletStatus, refreshWallet } = useAuth()
   const { settings }   = useSettings()
+  const { fmt, fmtP }  = useCurrency()
   const navigate       = useNavigate()
 
   const [game, setGame]       = useState(null)
@@ -28,7 +30,6 @@ export default function ManualOrder() {
   const [paying, setPaying]     = useState(false)
   const [error, setError]       = useState('')
   const [paySuccess, setPaySuccess] = useState(null) // { packName, amount }
-  const sym = settings?.currencySymbol || '₹'
 
   useEffect(() => {
     Promise.all([
@@ -220,12 +221,12 @@ export default function ManualOrder() {
                           </div>
                           <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4 }}>{pack.title}</div>
                           {isReseller && pack.resellerPrice > 0 ? (
-                            <div style={{ fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through' }}>{sym}{pack.price}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through' }}>{fmt(pack.price, 0)}</div>
                           ) : (showDiscount && (
-                            <div style={{ fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through' }}>{sym}{pack.oldPrice}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text3)', textDecoration: 'line-through' }}>{fmt(pack.oldPrice, 0)}</div>
                           ))}
                           <div style={{ fontWeight: 900, fontSize: 16, color: selected ? theme.primary : 'var(--text)' }}>
-                            {sym}{dp}
+                            {fmt(dp, 0)}
                           </div>
                           {isReseller && pack.resellerPrice > 0 && (
                             <div style={{ fontSize: 10, color: '#a5b4fc', fontWeight: 700 }}>Reseller Price</div>
@@ -283,7 +284,7 @@ export default function ManualOrder() {
                 return (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontWeight: 800 }}>TOTAL</span>
-                    <span style={{ fontWeight: 900, fontSize: 20, color: theme.primary }}>{sym}{dp}</span>
+                    <span style={{ fontWeight: 900, fontSize: 20, color: theme.primary }}>{fmt(dp, 0)}</span>
                   </div>
                 )
               })()}
@@ -312,7 +313,7 @@ export default function ManualOrder() {
                   </svg>
                 </div>
                 <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 6 }}>Order Placed!</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 4 }}>{paySuccess.packName} · {sym}{paySuccess.amount}</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 4 }}>{paySuccess.packName} · {fmt(paySuccess.amount, 0)}</div>
                 <div style={{ color: '#4ade80', fontSize: 13, marginBottom: 20 }}>Paid from wallet · Balance updated</div>
                 <button className="btn btn-primary" onClick={() => navigate('/orders')} style={{ padding: '10px 28px' }}>
                   View Orders
@@ -338,12 +339,12 @@ export default function ManualOrder() {
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                         }}>
                         <Wallet size={16} />
-                        {paying ? 'Processing…' : `Pay with Wallet · ₹${(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })} available`}
+                        {paying ? 'Processing…' : `Pay with Wallet · ${fmtP(walletBalance)} available`}
                       </button>
                     )}
                     <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
                       onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
-                      {paying ? 'Processing…' : `Pay ${sym}${dp}`}
+                      {paying ? 'Processing…' : `Pay ${fmt(dp, 0)}`}
                     </button>
                   </div>
                 )
