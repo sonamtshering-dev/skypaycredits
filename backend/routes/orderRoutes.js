@@ -38,7 +38,7 @@ router.get("/my", protect, async (req, res) => {
       playerId:     o.playerData?.userId || '',
       region:       o.playerData?.regionSlug || '',
       amount:       o.packId?.price || o.amount,
-      currency:     '৳',
+      currency:     'INR',
       provider:     o.providerTransactions?.[0]?.provider || '',
       providerTxId: o.providerTransactions?.[0]?.providerOrderId || '',
     }))
@@ -61,12 +61,15 @@ router.get("/", protect, adminOnly, async (req, res) => {
     if (req.query.payment && VALID_PAYMENTS.includes(req.query.payment)) filter.paymentStatus  = req.query.payment
     if (req.query.search) {
       const re = { $regex: escapeRegex(req.query.search), $options: "i" }
+      const matchingUsers = await User.find({ $or: [{ email: re }, { name: re }] }).select('_id').lean()
+      const userIds = matchingUsers.map(u => u._id)
       filter.$or = [
         { gameName: re },
         { packName: re },
         { 'playerData.userId': re },
         { 'playerData.email':  re },
         { 'playerData.phone':  re },
+        ...(userIds.length > 0 ? [{ userId: { $in: userIds } }] : []),
       ]
     }
     const [orders, total] = await Promise.all([

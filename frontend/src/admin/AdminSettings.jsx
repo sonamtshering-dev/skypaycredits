@@ -7,7 +7,7 @@ import { CheckCircle, XCircle } from 'lucide-react'
 
 export default function AdminSettings() {
   const [form, setForm] = useState({
-    siteName: '', currency: 'BDT', maintenanceMode: false,
+    siteName: '', currency: 'INR', maintenanceMode: false,
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState(false)
