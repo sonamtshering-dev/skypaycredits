@@ -26,8 +26,10 @@ const SITE_URL = process.env.SITE_URL || 'https://nitrogenstore.in'
 // GET /api/orders/my
 router.get("/my", protect, async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user._id })
-      .sort({ createdAt: -1 }).limit(50)
+    const orders = await Order.find({
+      userId: req.user._id,
+      $nor: [{ paymentStatus: 'unpaid', status: 'Pending' }],
+    }).sort({ createdAt: -1 }).limit(50)
       .populate('gameId', 'name icon slug')
       .populate('packId', 'title price diamonds regionSlug')
       .lean()
