@@ -39,6 +39,7 @@ export default function Recharge() {
   const [verifyError, setVerifyError]     = useState('')
   const [paying, setPaying]               = useState(false)
   const [paySuccess, setPaySuccess]       = useState(null)
+  const [payMethod, setPayMethod]         = useState('upi')
   const [couponCode, setCouponCode]       = useState('')
   const [couponApplied, setCouponApplied] = useState(null)
   const [couponError, setCouponError]     = useState('')
@@ -468,32 +469,93 @@ export default function Recharge() {
                 Purchases are temporarily disabled. Please check back soon.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {/* Wallet pay — show if user has balance and wallet is not blocked */}
-                {user && walletStatus !== 'blocked' && finalPrice && walletBalance >= Math.round(finalPrice * 100) && (
-                  <button
-                    onClick={() => handlePay('wallet')}
-                    disabled={!playerData[fields[0]?.name] || paying}
-                    style={{
-                      width: '100%', padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
-                      fontWeight: 800, fontSize: 15, letterSpacing: 0.3,
-                      background: 'linear-gradient(135deg,rgba(76,0,176,0.35),rgba(120,40,255,0.25))',
-                      border: '1px solid rgba(120,40,255,0.5)', color: '#c084fc',
-                      opacity: (!playerData[fields[0]?.name] || paying) ? 0.5 : 1,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
-                      <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
-                    </svg>
-                    {paying ? 'Processing…' : `Pay with Wallet · ${fmtP(walletBalance)} available`}
-                  </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Payment method selector */}
+                {user && (
+                  <>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Payment Method</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+                      {/* Wallet option */}
+                      {(() => {
+                        const walletOk = walletStatus !== 'blocked' && finalPrice && walletBalance >= Math.round(finalPrice * 100)
+                        const selected = payMethod === 'wallet'
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => walletOk && setPayMethod('wallet')}
+                            disabled={!walletOk}
+                            style={{
+                              width: '100%', padding: '14px 16px', borderRadius: 14,
+                              cursor: walletOk ? 'pointer' : 'not-allowed',
+                              background: selected ? 'rgba(120,40,255,0.18)' : 'rgba(255,255,255,0.04)',
+                              border: `2px solid ${selected ? 'rgba(120,40,255,0.6)' : 'rgba(255,255,255,0.1)'}`,
+                              display: 'flex', alignItems: 'center', gap: 12,
+                              opacity: walletOk ? 1 : 0.45, transition: 'all 0.15s',
+                            }}
+                          >
+                            <div style={{
+                              width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                              border: `2px solid ${selected ? '#a78bfa' : 'rgba(255,255,255,0.3)'}`,
+                              background: selected ? '#a78bfa' : 'transparent',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {selected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
+                            </div>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={selected ? '#c084fc' : 'rgba(255,255,255,0.5)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+                            </svg>
+                            <div style={{ flex: 1, textAlign: 'left' }}>
+                              <div style={{ fontWeight: 700, fontSize: 14, color: selected ? '#c084fc' : 'rgba(255,255,255,0.7)' }}>Wallet</div>
+                              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>
+                                {walletOk ? `${fmtP(walletBalance)} available` : walletStatus === 'blocked' ? 'Wallet blocked' : `Insufficient — ${fmtP(walletBalance)} available`}
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })()}
+
+                      {/* UPI / Online option */}
+                      {(() => {
+                        const selected = payMethod === 'upi'
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setPayMethod('upi')}
+                            style={{
+                              width: '100%', padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
+                              background: selected ? 'rgba(249,115,22,0.12)' : 'rgba(255,255,255,0.04)',
+                              border: `2px solid ${selected ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                              display: 'flex', alignItems: 'center', gap: 12,
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            <div style={{
+                              width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                              border: `2px solid ${selected ? '#f97316' : 'rgba(255,255,255,0.3)'}`,
+                              background: selected ? '#f97316' : 'transparent',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {selected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
+                            </div>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={selected ? '#f97316' : 'rgba(255,255,255,0.5)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                            </svg>
+                            <div style={{ flex: 1, textAlign: 'left' }}>
+                              <div style={{ fontWeight: 700, fontSize: 14, color: selected ? '#f97316' : 'rgba(255,255,255,0.7)' }}>UPI / Online Payment</div>
+                              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>Pay via UPI, card, netbanking</div>
+                            </div>
+                          </button>
+                        )
+                      })()}
+                    </div>
+                  </>
                 )}
 
-                {/* NovaPay / main checkout button */}
+                {/* Single pay button */}
                 <button
-                  onClick={() => handlePay('novapay')}
+                  onClick={() => handlePay(payMethod === 'wallet' ? 'wallet' : 'novapay')}
                   disabled={!playerData[fields[0]?.name] || paying}
                   style={{
                     width: '100%', padding: '16px', borderRadius: 14, cursor: 'pointer',
@@ -501,10 +563,15 @@ export default function Recharge() {
                     background: theme.grad,
                     border: '1px solid rgba(249,115,22,0.3)', color: '#fff',
                     opacity: (!playerData[fields[0]?.name] || paying) ? 0.5 : 1,
-                    boxShadow: '0 0 30px rgba(249,115,22,0.4)',
+                    boxShadow: '0 0 30px rgba(249,115,22,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}
                 >
-                  {paying ? 'Processing…' : !user ? <><Lock size={14} style={{ marginRight: 6 }} />Login to Checkout</> : <>Proceed to Checkout <ArrowRight size={14} style={{ marginLeft: 6 }} /></>}
+                  {paying ? 'Processing…' : !user
+                    ? <><Lock size={14} />Login to Checkout</>
+                    : payMethod === 'wallet'
+                      ? <>Pay {fmt(finalPrice, 0)} from Wallet</>
+                      : <>Proceed to Checkout <ArrowRight size={15} /></>}
                 </button>
               </div>
             )}

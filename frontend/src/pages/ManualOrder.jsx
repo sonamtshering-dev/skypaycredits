@@ -30,6 +30,7 @@ export default function ManualOrder() {
   const [paying, setPaying]     = useState(false)
   const [error, setError]       = useState('')
   const [paySuccess, setPaySuccess] = useState(null) // { packName, amount }
+  const [payMethod, setPayMethod]   = useState('upi')
 
   useEffect(() => {
     Promise.all([
@@ -324,27 +325,56 @@ export default function ManualOrder() {
               (() => {
                 const dp         = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
                 const pricePaise = Math.round(dp * 100)
-                const canUseWallet = walletStatus !== 'blocked' && walletBalance >= pricePaise
+                const walletOk   = walletStatus !== 'blocked' && walletBalance >= pricePaise
+                const fieldOk    = customFields ? !!fieldData[customFields[0]?.name] : !!email
                 return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {canUseWallet && (
-                      <button
-                        onClick={handleWalletPay}
-                        disabled={paying}
-                        style={{
-                          width: '100%', padding: 14, fontSize: 15, fontWeight: 800,
-                          background: 'linear-gradient(135deg,rgba(109,40,217,0.25),rgba(76,0,176,0.2))',
-                          border: '2px solid rgba(139,92,246,0.5)',
-                          borderRadius: 12, color: '#c4b5fd', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                        }}>
-                        <Wallet size={16} />
-                        {paying ? 'Processing…' : `Pay with Wallet · ${fmtP(walletBalance)} available`}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Payment Method</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+                      {/* Wallet option */}
+                      <button type="button" onClick={() => walletOk && setPayMethod('wallet')} disabled={!walletOk} style={{
+                        width: '100%', padding: '14px 16px', borderRadius: 14,
+                        cursor: walletOk ? 'pointer' : 'not-allowed',
+                        background: payMethod === 'wallet' ? 'rgba(120,40,255,0.18)' : 'rgba(255,255,255,0.04)',
+                        border: `2px solid ${payMethod === 'wallet' ? 'rgba(120,40,255,0.6)' : 'rgba(255,255,255,0.1)'}`,
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        opacity: walletOk ? 1 : 0.45, transition: 'all 0.15s',
+                      }}>
+                        <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, border: `2px solid ${payMethod === 'wallet' ? '#a78bfa' : 'rgba(255,255,255,0.3)'}`, background: payMethod === 'wallet' ? '#a78bfa' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {payMethod === 'wallet' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
+                        </div>
+                        <Wallet size={18} color={payMethod === 'wallet' ? '#c084fc' : 'rgba(255,255,255,0.5)'} style={{ flexShrink: 0 }} />
+                        <div style={{ flex: 1, textAlign: 'left' }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: payMethod === 'wallet' ? '#c084fc' : 'rgba(255,255,255,0.7)' }}>Wallet</div>
+                          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>
+                            {walletOk ? `${fmtP(walletBalance)} available` : walletStatus === 'blocked' ? 'Wallet blocked' : `Insufficient — ${fmtP(walletBalance)} available`}
+                          </div>
+                        </div>
                       </button>
-                    )}
-                    <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16 }}
-                      onClick={handlePay} disabled={paying || (customFields ? !fieldData[customFields[0]?.name] : !email)}>
-                      {paying ? 'Processing…' : `Pay ${fmt(dp, 0)}`}
+
+                      {/* UPI option */}
+                      <button type="button" onClick={() => setPayMethod('upi')} style={{
+                        width: '100%', padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
+                        background: payMethod === 'upi' ? 'rgba(249,115,22,0.12)' : 'rgba(255,255,255,0.04)',
+                        border: `2px solid ${payMethod === 'upi' ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                        display: 'flex', alignItems: 'center', gap: 12, transition: 'all 0.15s',
+                      }}>
+                        <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, border: `2px solid ${payMethod === 'upi' ? '#f97316' : 'rgba(255,255,255,0.3)'}`, background: payMethod === 'upi' ? '#f97316' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {payMethod === 'upi' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
+                        </div>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={payMethod === 'upi' ? '#f97316' : 'rgba(255,255,255,0.5)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                        <div style={{ flex: 1, textAlign: 'left' }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: payMethod === 'upi' ? '#f97316' : 'rgba(255,255,255,0.7)' }}>UPI / Online Payment</div>
+                          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>Pay via UPI, card, netbanking</div>
+                        </div>
+                      </button>
+                    </div>
+
+                    <button className="btn btn-primary" style={{ width: '100%', padding: 14, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                      onClick={payMethod === 'wallet' ? handleWalletPay : handlePay}
+                      disabled={paying || !fieldOk}>
+                      {paying ? 'Processing…' : payMethod === 'wallet' ? `Pay ${fmt(dp, 0)} from Wallet` : `Pay ${fmt(dp, 0)}`}
                     </button>
                   </div>
                 )
