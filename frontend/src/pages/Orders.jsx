@@ -126,8 +126,8 @@ function OrderCard({ order }) {
               ['Amount',   order.amount ? `${order.currency || ''} ${order.amount}` : '—'],
               ['Payment',  order.paymentStatus || '—'],
               ['Date',     new Date(order.createdAt).toLocaleString()],
-              ['Provider', order.provider || '—'],
-              ['Ref',      order.providerTxId || '—'],
+              ['Player ID', order.playerData?.userId || order.playerId || '—'],
+              [order.playerName ? 'Username' : 'Zone ID', order.playerName || order.playerData?.zoneId || '—'],
             ].map(([label, val]) => (
               <div key={label}>
                 <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginBottom: 2 }}>{label}</div>
