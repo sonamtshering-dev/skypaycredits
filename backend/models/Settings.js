@@ -9,6 +9,7 @@ const settingsSchema = new mongoose.Schema(
     primaryColor:{ type: String, default: "#6366f1" },
     currency:    { type: String, default: "INR" },
     currencySymbol: { type: String, default: "₹" },
+    phpRate:     { type: Number, default: 0.67 },
     whatsapp:        { type: String, default: "" },
     whatsappSupport: { type: String, default: "" },
     email:       { type: String, default: "" },

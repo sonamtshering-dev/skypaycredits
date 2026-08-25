@@ -83,6 +83,14 @@ export default function AdminSettings() {
           </select>
         </div>
 
+        <div className="form-group">
+          <label>PHP Exchange Rate <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, fontSize: 11 }}>(1 INR = ? PHP · shown when customers switch to ₱)</span></label>
+          <input style={inp} type="number" step="0.0001" min="0.01"
+            value={form.phpRate ?? 0.67}
+            onChange={e => set('phpRate', parseFloat(e.target.value) || 0.67)}
+            placeholder="0.67" />
+        </div>
+
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12 }}>Social Links</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

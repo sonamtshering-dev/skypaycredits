@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
+import { useCurrency } from '../context/CurrencyContext'
 import theme from '../theme'
 import { ClipboardList, User, Settings, LogOut, X, Home, ChevronRight, Wallet } from 'lucide-react'
 import BottomNav from './BottomNav'
@@ -26,6 +27,7 @@ function BrandName({ name, fontSize = 16 }) {
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth()
   const { settings } = useSettings()
+  const { currency, toggle: toggleCurrency, fmtP } = useCurrency()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -39,7 +41,7 @@ export default function Navbar() {
   const navItems = [
     { to: '/',        label: 'Home',       icon: Home },
     { to: '/orders',  label: 'My Orders',  icon: ClipboardList },
-    { to: '/wallet',  label: 'Wallet',     icon: Wallet, badge: walletBalance > 0 ? `₹${(walletBalance/100).toLocaleString('en-IN')}` : null },
+    { to: '/wallet',  label: 'Wallet',     icon: Wallet, badge: walletBalance > 0 ? fmtP(walletBalance) : null },
     { to: '/profile', label: 'Profile',    icon: User },
     ...(isAdmin ? [{ to: '/admin', label: 'Admin Panel', icon: Settings }] : []),
   ]
@@ -70,13 +72,32 @@ export default function Navbar() {
 
           <div style={{ flex: 1 }} />
 
+          {/* Currency toggle — visible to everyone */}
+          <button
+            onClick={toggleCurrency}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 11px', borderRadius: 20,
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              color: '#fff', fontSize: 12, fontWeight: 700,
+              cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+            title="Switch currency"
+          >
+            {currency === 'INR' ? '🇮🇳 INR' : '🇵🇭 PHP'}
+          </button>
+
           {/* Desktop nav */}
           {user ? (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <Link to="/orders" className="hide-mobile btn btn-ghost btn-sm">Orders</Link>
               <Link to="/wallet" className="hide-mobile btn btn-ghost btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                 <Wallet size={13} />
-                {walletBalance > 0 ? `₹${(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : 'Wallet'}
+                {walletBalance > 0 ? fmtP(walletBalance) : 'Wallet'}
               </Link>
               {isAdmin && <Link to="/admin" className="hide-mobile btn btn-ghost btn-sm">Admin</Link>}
 
@@ -291,6 +312,29 @@ export default function Navbar() {
                   <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
                 </Link>
               ))}
+
+              {/* Currency toggle — drawer */}
+              <button
+                onClick={toggleCurrency}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  width: '100%', padding: '12px 12px', borderRadius: 10, marginBottom: 4,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                }}
+              >
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                }}>
+                  {currency === 'INR' ? '🇮🇳' : '🇵🇭'}
+                </div>
+                Currency: {currency === 'INR' ? 'INR (₹)' : 'PHP (₱)'}
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>tap to switch</span>
+              </button>
 
               {/* Logout — inline in nav list */}
               <button

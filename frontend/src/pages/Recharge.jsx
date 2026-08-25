@@ -4,6 +4,7 @@ import { CheckCircle, XCircle, ArrowRight, Shield, Zap, Globe, Gem, Ticket, Lock
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
+import { useCurrency } from '../context/CurrencyContext'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import api from '../api/axios'
@@ -177,7 +178,7 @@ export default function Recharge() {
   const activeProvider   = region?.provider || packs[0]?.provider || ''
   const isFintopup       = activeProvider === 'fintopup'
 
-  const sym = settings.currencySymbol || '$'
+  const { fmt, fmtP } = useCurrency()
 
   if (loading) return <><Navbar /><div style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div></>
   if (!game)   return <><Navbar /><div style={{ textAlign: 'center', padding: 80, color: 'rgba(255,255,255,0.3)' }}>Game not found</div></>
@@ -333,7 +334,7 @@ export default function Recharge() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
                   {packs.filter(p => (p.sectionName || '') === sec).map(pack => (
                     <PackCard
-                      key={pack._id} pack={pack} sym={sym}
+                      key={pack._id} pack={pack} fmt={fmt}
                       isReseller={isReseller}
                       selected={selectedPack?._id === pack._id}
                       onClick={() => {
@@ -373,7 +374,7 @@ export default function Recharge() {
               ['Account ID', (playerData[fields[0]?.name] || '—') + (playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : '')],
               ...(username && username !== playerData[fields[0]?.name] ? [['Player Name', username]] : []),
               ['Pack', selectedPack.title],
-              ['Original Price', `${sym}${(isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price}`]
+              ['Original Price', fmt((isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price, 0)]
             ].map(([label, val]) => (
                 <div key={label} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -390,7 +391,7 @@ export default function Recharge() {
                   background: 'rgba(34,197,94,0.06)',
                 }}>
                   <span style={{ color: '#4ade80', fontSize: 14, display: 'flex', alignItems: 'center', gap: 5 }}><Ticket size={13} /> Coupon ({couponApplied.code})</span>
-                  <span style={{ color: '#4ade80', fontWeight: 700, fontSize: 14 }}>-{sym}{couponApplied.discount}</span>
+                  <span style={{ color: '#4ade80', fontWeight: 700, fontSize: 14 }}>-{fmt(couponApplied.discount, 0)}</span>
                 </div>
               )}
               <div style={{
@@ -399,7 +400,7 @@ export default function Recharge() {
                 borderTop: `1px solid ${theme.alpha(0.2)}`,
               }}>
                 <span style={{ color: '#fff', fontWeight: 900, fontSize: 16, letterSpacing: 1 }}>TOTAL</span>
-                <span style={{ color: theme.primary, fontWeight: 900, fontSize: 22 }}>{sym}{finalPrice}</span>
+                <span style={{ color: theme.primary, fontWeight: 900, fontSize: 22 }}>{fmt(finalPrice, 0)}</span>
               </div>
             </div>
 
@@ -486,7 +487,7 @@ export default function Recharge() {
                       <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
                       <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
                     </svg>
-                    {paying ? 'Processing…' : `Pay with Wallet · ₹${(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })} available`}
+                    {paying ? 'Processing…' : `Pay with Wallet · ${fmtP(walletBalance)} available`}
                   </button>
                 )}
 
@@ -519,7 +520,7 @@ export default function Recharge() {
   )
 }
 
-function PackCard({ pack, sym, selected, onClick, isReseller }) {
+function PackCard({ pack, fmt, selected, onClick, isReseller }) {
   const [hovered, setHovered] = useState(false)
   const displayPrice = (isReseller && pack.resellerPrice > 0) ? pack.resellerPrice : pack.price
   const discount = pack.oldPrice > displayPrice
@@ -579,15 +580,15 @@ function PackCard({ pack, sym, selected, onClick, isReseller }) {
             color: selected ? theme.primary : '#fff',
             transition: 'color 0.15s',
             wordBreak: 'break-all',
-          }}>{sym}{Number(displayPrice).toFixed(0)}</span>
+          }}>{fmt(displayPrice, 0)}</span>
           {isReseller && pack.resellerPrice > 0 && (
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textDecoration: 'line-through' }}>
-              {sym}{pack.price}
+              {fmt(pack.price, 0)}
             </span>
           )}
           {(!isReseller || !pack.resellerPrice) && pack.oldPrice > pack.price && (
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textDecoration: 'line-through' }}>
-              {sym}{pack.oldPrice}
+              {fmt(pack.oldPrice, 0)}
             </span>
           )}
         </div>

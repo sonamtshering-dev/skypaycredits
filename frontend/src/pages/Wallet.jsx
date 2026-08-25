@@ -5,6 +5,7 @@ import { Wallet, ArrowUpCircle, Clock, CheckCircle, XCircle, RefreshCw } from 'l
 import Navbar from '../components/Navbar'
 import api from '../api/axios'
 import { useAuth } from '../context/AuthContext'
+import { useCurrency } from '../context/CurrencyContext'
 
 const TABS = [
   { id: 'balance',  label: 'Balance' },
@@ -14,9 +15,6 @@ const TABS = [
 
 const TOPUP_AMOUNTS = [5000, 10000, 20000, 50000, 100000, 200000] // paise (₹50–₹2000)
 
-function fmt(paise) {
-  return '₹' + (paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
-}
 
 function txIcon(type) {
   if (type === 'topup' || type === 'credit' || type === 'refund' || type === 'redeem') return '+'
@@ -47,6 +45,8 @@ const inp = {
 
 export default function WalletPage() {
   const { user, walletBalance, walletStatus, refreshWallet, isReseller } = useAuth()
+  const { fmtP } = useCurrency()
+  const fmt = fmtP
   const [params] = useSearchParams()
   const [tab, setTab]             = useState('balance')
   const [topupSuccess, setTopupSuccess] = useState(params.get('topup') === 'success')
@@ -95,7 +95,7 @@ export default function WalletPage() {
   const handleTopup = async e => {
     e.preventDefault()
     setTopupErr(''); setTopupResult(null)
-    if (!amountPaise || amountPaise < 2000) return setTopupErr('Minimum topup is ₹20')
+    if (!amountPaise || amountPaise < 2000) return setTopupErr(`Minimum topup is ${fmtP(2000)}`)
     setTopupLoading(true)
     try {
       const { data } = await api.post('/wallet/topup', { amount: amountPaise })
