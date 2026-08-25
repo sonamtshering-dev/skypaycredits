@@ -24,6 +24,8 @@ router.get("/", protect, adminOnly, async (req, res) => {
     }
     const VALID_USER_STATUSES = ["active", "banned"]
     if (req.query.status && VALID_USER_STATUSES.includes(req.query.status)) filter.status = req.query.status
+    const VALID_ROLES = ["user", "reseller", "admin"]
+    if (req.query.role && VALID_ROLES.includes(req.query.role)) filter.role = req.query.role
 
     const [users, total] = await Promise.all([
       User.find(filter).select("-password").sort({ createdAt: -1 }).skip(skip).limit(limit),

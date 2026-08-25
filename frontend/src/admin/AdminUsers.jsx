@@ -12,25 +12,27 @@ export default function AdminUsers() {
   const [page, setPage]     = useState(1)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState('')
   const [acting, setActing] = useState(null)
 
-  const load = useCallback((p = page, q = search) => {
+  const load = useCallback((p = page, q = search, r = roleFilter) => {
     setLoading(true)
     const params = new URLSearchParams({ page: p, limit: PER_PAGE })
     if (q) params.set('search', q)
+    if (r) params.set('role', r)
     api.get(`/users?${params}`)
-      .then(r => {
-        const data = r.data
+      .then(res => {
+        const data = res.data
         setUsers(Array.isArray(data) ? data : (data.users || []))
         setTotal(data.total ?? (Array.isArray(data) ? data.length : 0))
         setPages(data.pages ?? 1)
       })
       .catch(() => setUsers([]))
       .finally(() => setLoading(false))
-  }, [page, search])
+  }, [page, search, roleFilter])
 
-  useEffect(() => { load(1, search); setPage(1) }, [search])
-  useEffect(() => { load(page, search) }, [page])
+  useEffect(() => { load(1, search, roleFilter); setPage(1) }, [search, roleFilter])
+  useEffect(() => { load(page, search, roleFilter) }, [page])
 
   const goTo = (p) => { if (p >= 1 && p <= pages) setPage(p) }
 
@@ -71,11 +73,22 @@ export default function AdminUsers() {
           <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 2 }}>Users</h1>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>{total} total</p>
         </div>
-        <input
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '9px 14px', color: '#fff', fontSize: 13, outline: 'none', minWidth: 220 }}
-          placeholder="Search name or email…"
-          value={search} onChange={e => setSearch(e.target.value)}
-        />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {[['', 'All'], ['user', 'Normal'], ['reseller', 'Reseller'], ['admin', 'Admin']].map(([val, label]) => (
+            <button key={val} onClick={() => { setRoleFilter(val); setPage(1) }} style={{
+              padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              background: roleFilter === val ? theme.grad : 'rgba(255,255,255,0.07)',
+              border: `1px solid ${roleFilter === val ? 'transparent' : 'rgba(255,255,255,0.12)'}`,
+              color: roleFilter === val ? '#fff' : 'rgba(255,255,255,0.5)',
+              transition: 'all 0.15s',
+            }}>{label}</button>
+          ))}
+          <input
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '9px 14px', color: '#fff', fontSize: 13, outline: 'none', minWidth: 200 }}
+            placeholder="Search name or email…"
+            value={search} onChange={e => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {loading ? (
