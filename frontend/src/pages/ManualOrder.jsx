@@ -361,7 +361,7 @@ export default function ManualOrder() {
           <div
             onClick={() => setShowPaySheet(false)}
             style={{
-              position: 'fixed', inset: 0, zIndex: 1000,
+              position: 'fixed', inset: 0, zIndex: 10000,
               background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
               display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
             }}
@@ -454,6 +454,18 @@ export default function ManualOrder() {
                           <div style={{ textAlign: 'center' }}>
                             <div style={{ fontWeight: 800, fontSize: 14, color: payMethod === 'wallet' ? '#e9d5ff' : 'rgba(255,255,255,0.75)' }}>Wallet</div>
                             <div style={{ fontSize: 11, color: payMethod === 'wallet' ? '#a78bfa' : 'rgba(255,255,255,0.35)', marginTop: 2 }}>{fmtP(walletBalance)}</div>
+                            {!walletOk && walletStatus !== 'blocked' && (
+                              <span
+                                onClick={e => { e.stopPropagation(); setShowPaySheet(false); navigate('/wallet') }}
+                                style={{
+                                  display: 'inline-block', marginTop: 6,
+                                  fontSize: 11, fontWeight: 700, color: '#a78bfa',
+                                  background: 'rgba(139,92,246,0.15)',
+                                  border: '1px solid rgba(139,92,246,0.3)',
+                                  borderRadius: 20, padding: '3px 10px', cursor: 'pointer',
+                                }}
+                              >+ Add Funds</span>
+                            )}
                           </div>
                           {payMethod === 'wallet' && <div style={{ position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#4c00b0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="9" height="9" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>}
                           {walletOk && payMethod !== 'wallet' && <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: 800, color: '#4ade80', background: 'rgba(34,197,94,0.12)', borderRadius: 20, padding: '2px 6px' }}>Instant</span>}

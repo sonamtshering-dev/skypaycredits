@@ -506,7 +506,7 @@ export default function Recharge() {
           <div
             onClick={() => setShowPaySheet(false)}
             style={{
-              position: 'fixed', inset: 0, zIndex: 1000,
+              position: 'fixed', inset: 0, zIndex: 10000,
               background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
               display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
             }}
@@ -616,6 +616,18 @@ export default function Recharge() {
                           <div style={{ fontSize: 11, color: sel ? '#a78bfa' : 'rgba(255,255,255,0.35)', marginTop: 2 }}>
                             {walletStatus === 'blocked' ? 'Blocked' : fmtP(walletBalance)}
                           </div>
+                          {!walletOk && walletStatus !== 'blocked' && (
+                            <span
+                              onClick={e => { e.stopPropagation(); setShowPaySheet(false); navigate('/wallet') }}
+                              style={{
+                                display: 'inline-block', marginTop: 6,
+                                fontSize: 11, fontWeight: 700, color: '#a78bfa',
+                                background: 'rgba(139,92,246,0.15)',
+                                border: '1px solid rgba(139,92,246,0.3)',
+                                borderRadius: 20, padding: '3px 10px', cursor: 'pointer',
+                              }}
+                            >+ Add Funds</span>
+                          )}
                         </div>
                         {sel && (
                           <div style={{
