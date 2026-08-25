@@ -515,7 +515,7 @@ export default function Recharge() {
               onClick={e => e.stopPropagation()}
               style={{
                 width: '100%', maxWidth: 560,
-                background: 'linear-gradient(180deg,#0d0020 0%,#07001a 100%)',
+                background: '#000',
                 borderRadius: '24px 24px 0 0',
                 border: '1px solid rgba(139,92,246,0.18)', borderBottom: 'none',
                 animation: 'nsSlideUp 0.28s cubic-bezier(.22,1,.36,1)',
