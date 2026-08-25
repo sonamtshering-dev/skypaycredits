@@ -171,7 +171,7 @@ export default function AdminOrders() {
                           ['Order ID', '#' + order._id?.slice(-8).toUpperCase()],
                           ['Amount', `₹${order.price || '—'}`],
                           ['Payment', order.paymentStatus || '—'],
-                          ['Method', order.paymentMethod === 'wallet' ? '👛 Wallet' : order.paymentMethod ? '🏦 UPI / Online' : '—'],
+                          ['Method', order.paymentMethod === 'wallet' ? 'Wallet' : order.paymentMethod ? 'UPI / Online' : '—'],
                           ['Date', new Date(order.createdAt).toLocaleString()],
                         ].map(([label, val]) => (
                           <div key={label}>
