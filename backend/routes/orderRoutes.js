@@ -69,6 +69,7 @@ router.get("/", protect, adminOnly, async (req, res) => {
         { 'playerData.userId': re },
         { 'playerData.email':  re },
         { 'playerData.phone':  re },
+        { $expr: { $regexMatch: { input: { $toString: '$_id' }, regex: escapeRegex(req.query.search), options: 'i' } } },
         ...(userIds.length > 0 ? [{ userId: { $in: userIds } }] : []),
       ]
     }
