@@ -38,13 +38,6 @@ export default function Navbar() {
 
   const { walletBalance } = useAuth()
 
-  const fmtShort = (n) => {
-    if (!n || n <= 0) return '₹0'
-    if (n >= 100000) return `₹${(n / 100000).toFixed(1).replace(/\.0$/, '')}L`
-    if (n >= 1000)   return `₹${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`
-    return `₹${Math.round(n)}`
-  }
-
   const navItems = [
     { to: '/',        label: 'Home',       icon: Home },
     { to: '/orders',  label: 'My Orders',  icon: ClipboardList },
@@ -148,7 +141,7 @@ export default function Navbar() {
                   fontSize: 11, fontWeight: 900, color: '#fff',
                 }}>₹</div>
                 <span style={{ color: '#c4b5fd', fontWeight: 700, fontSize: 12, whiteSpace: 'nowrap' }}>
-                  {fmtShort(walletBalance ?? 0)}
+                  {fmtP(walletBalance ?? 0)}
                 </span>
               </Link>
 
@@ -425,7 +418,7 @@ export default function Navbar() {
         @media (max-width: 639px) {
           .drawer-logout { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important; }
         }
-        @media (max-width: 380px) {
+        @media (max-width: 480px) {
           .nav-brand-text { display: none !important; }
         }
       `}</style>
