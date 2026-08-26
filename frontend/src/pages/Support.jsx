@@ -95,8 +95,6 @@ export default function SupportWidget() {
     finally { setSending(false) }
   }
 
-  if (!user) return null
-
   return (
     <>
       <style>{`
@@ -149,7 +147,7 @@ export default function SupportWidget() {
             <span style={{ fontWeight: 800, fontSize: 14, color: '#fff', flex: 1 }}>
               {view === 'list' ? 'Need help?' : view === 'new' ? 'Talk to us' : active?.subject}
             </span>
-            {view === 'list' && (
+            {view === 'list' && user && (
               <button onClick={() => { setView('new'); setError('') }}
                 style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: '#c4b5fd', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Plus size={12} /> Ask a question
@@ -161,7 +159,21 @@ export default function SupportWidget() {
           <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
 
             {/* LIST */}
-            {view === 'list' && (
+            {view === 'list' && !user && (
+              <div>
+                <div style={{ textAlign: 'center', padding: '24px 0 12px' }}>
+                  <MessageCircle size={28} style={{ color: 'rgba(124,58,237,0.4)', marginBottom: 8 }} />
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>We're here to help</div>
+                  <button onClick={() => navigate('/auth')} style={{
+                    marginTop: 12, padding: '8px 20px', borderRadius: 20, border: 'none',
+                    background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
+                    color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                  }}>Log in to chat</button>
+                </div>
+                <FAQ />
+              </div>
+            )}
+            {view === 'list' && user && (
               loading ? (
                 <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>Loading…</div>
               ) : tickets.length === 0 ? (
@@ -196,7 +208,7 @@ export default function SupportWidget() {
             )}
 
             {/* NEW TICKET */}
-            {view === 'new' && (
+            {view === 'new' && user && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '8px 12px', color: '#f87171', fontSize: 12 }}>{error}</div>}
                 <input
@@ -220,7 +232,7 @@ export default function SupportWidget() {
             )}
 
             {/* THREAD */}
-            {view === 'thread' && active && (
+            {view === 'thread' && active && user && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {active.messages.map((m, i) => (
                   <div key={i} style={{
