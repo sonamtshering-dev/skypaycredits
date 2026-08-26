@@ -97,21 +97,12 @@ export default function SupportWidget() {
 
   return (
     <>
-      <style>{`
-        .sup-fab { bottom: 24px !important; }
-        .sup-panel { bottom: 88px !important; }
-        @media (max-width: 639px) {
-          .sup-fab { bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px) !important; }
-          .sup-panel { bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 76px) !important; }
-        }
-      `}</style>
-
       {/* Floating button */}
       <button
         className="sup-fab"
         onClick={() => { setOpen(o => !o); if (!open) { setView('list'); setActive(null) } }}
         style={{
-          position: 'fixed', right: 24, zIndex: 9999,
+          zIndex: 9999,
           width: 52, height: 52, borderRadius: '50%',
           background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
           border: '2px solid rgba(124,58,237,0.5)',
@@ -127,7 +118,7 @@ export default function SupportWidget() {
       {/* Panel */}
       {open && (
         <div className="sup-panel" style={{
-          position: 'fixed', right: 24, zIndex: 9999,
+          zIndex: 9999,
           width: 340, maxHeight: 520,
           background: '#0a061a', border: '1px solid rgba(124,58,237,0.3)',
           borderRadius: 20, display: 'flex', flexDirection: 'column',

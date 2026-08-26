@@ -127,6 +127,24 @@ export default function Navbar() {
 
               {isAdmin && <Link to="/admin" className="hide-mobile btn btn-ghost btn-sm">Admin</Link>}
 
+              {/* Mobile wallet pill — show-mobile */}
+              <Link to="/wallet" className="show-mobile" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5, textDecoration: 'none',
+                background: 'rgba(124,58,237,0.15)',
+                border: '1px solid rgba(124,58,237,0.35)',
+                borderRadius: 30, padding: '4px 10px 4px 4px',
+              }}>
+                <div style={{
+                  width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                  background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 900, color: '#fff',
+                }}>₹</div>
+                <span style={{ color: '#c4b5fd', fontWeight: 700, fontSize: 12, whiteSpace: 'nowrap' }}>
+                  {fmtP(walletBalance ?? 0)}
+                </span>
+              </Link>
+
               {/* Profile avatar — desktop dropdown */}
               <div style={{ position: 'relative' }}>
                 <button onClick={() => {

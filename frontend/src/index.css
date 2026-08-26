@@ -156,3 +156,23 @@ tr:hover td { background: rgba(76,0,176,0.04); }
 ::-webkit-scrollbar-thumb { background: rgba(76,0,176,0.4); border-radius: 10px; }
 
 @media (max-width: 768px) { .hide-mobile { display: none !important; } }
+
+/* Support widget — reliable fixed position on iOS */
+.sup-fab {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 24px !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+.sup-panel {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 88px !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+@media (max-width: 639px) {
+  .sup-fab   { bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px) !important; }
+  .sup-panel { bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 76px) !important; }
+}
