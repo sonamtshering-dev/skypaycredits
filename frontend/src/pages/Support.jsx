@@ -145,7 +145,7 @@ export default function SupportWidget() {
               </button>
             )}
             <span style={{ fontWeight: 800, fontSize: 14, color: '#fff', flex: 1 }}>
-              {view === 'list' ? 'Need help?' : view === 'new' ? 'Talk to us' : active?.subject}
+              {view === 'list' ? 'Chat with us' : view === 'new' ? 'Talk to us' : active?.subject}
             </span>
             {view === 'list' && user && (
               <button onClick={() => { setView('new'); setError('') }}
