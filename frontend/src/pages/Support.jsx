@@ -72,7 +72,7 @@ export default function SupportWidget() {
       <button
         onClick={() => { setOpen(o => !o); if (!open) { setView('list'); setActive(null) } }}
         style={{
-          position: 'fixed', bottom: 24, left: 24, zIndex: 9998,
+          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
           width: 52, height: 52, borderRadius: '50%',
           background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
           border: '2px solid rgba(124,58,237,0.5)',
@@ -88,7 +88,7 @@ export default function SupportWidget() {
       {/* Panel */}
       {open && (
         <div style={{
-          position: 'fixed', bottom: 88, left: 24, zIndex: 9998,
+          position: 'fixed', bottom: 88, right: 24, zIndex: 9999,
           width: 340, maxHeight: 520,
           background: '#0a061a', border: '1px solid rgba(124,58,237,0.3)',
           borderRadius: 20, display: 'flex', flexDirection: 'column',

@@ -161,29 +161,6 @@ export default function Footer() {
         </div>
       </footer>
 
-      {/* WhatsApp sticky float button */}
-      {settings.whatsappSupport && (
-        <a
-          href={waLink(settings.whatsappSupport)}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Chat on WhatsApp"
-          className="wa-float"
-          style={{
-            position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
-            width: 56, height: 56, borderRadius: '50%',
-            background: '#25d366',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(37,211,102,0.5)',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            textDecoration: 'none',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(37,211,102,0.7)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)';    e.currentTarget.style.boxShadow = '0 4px 20px rgba(37,211,102,0.5)' }}
-        >
-          <WhatsAppIcon size={30} color="#fff" />
-        </a>
-      )}
     </>
   )
 }
