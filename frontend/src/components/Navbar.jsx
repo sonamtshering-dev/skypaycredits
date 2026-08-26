@@ -81,7 +81,7 @@ export default function Navbar() {
           }}>
             {[
               { code: 'INR', symbol: '₹', activeColor: '#f59e0b', activeBg: '#f59e0b' },
-              { code: 'PHP', symbol: '$', activeColor: '#22d3ee', activeBg: '#22d3ee' },
+              { code: 'PHP', symbol: '₱', activeColor: '#22d3ee', activeBg: '#22d3ee' },
             ].map(({ code, symbol, activeColor, activeBg }) => {
               const active = currency === code
               return (
