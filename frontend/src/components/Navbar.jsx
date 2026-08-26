@@ -72,33 +72,59 @@ export default function Navbar() {
 
           <div style={{ flex: 1 }} />
 
-          {/* Currency toggle — visible to everyone */}
-          <button
-            onClick={toggleCurrency}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '5px 11px', borderRadius: 20,
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.14)',
-              color: '#fff', fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
-            title="Switch currency"
-          >
-            {currency === 'INR' ? '🇮🇳 INR' : '🇵🇭 PHP'}
-          </button>
+          {/* Currency toggle pill */}
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            background: 'rgba(10,15,35,0.85)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 30, padding: 3, gap: 2, flexShrink: 0,
+          }}>
+            {[
+              { code: 'INR', symbol: '₹', activeColor: '#f59e0b', activeBg: '#f59e0b' },
+              { code: 'PHP', symbol: '$', activeColor: '#22d3ee', activeBg: '#22d3ee' },
+            ].map(({ code, symbol, activeColor, activeBg }) => {
+              const active = currency === code
+              return (
+                <button key={code} onClick={toggleCurrency} style={{
+                  width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                  background: active ? activeBg : 'transparent',
+                  color: active ? '#000' : 'rgba(255,255,255,0.45)',
+                  fontWeight: 900, fontSize: 13,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: active ? `0 0 10px ${activeColor}55` : 'none',
+                  transition: 'all 0.2s',
+                }}>{symbol}</button>
+              )
+            })}
+          </div>
 
           {/* Desktop nav */}
           {user ? (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <Link to="/orders" className="hide-mobile btn btn-ghost btn-sm">Orders</Link>
-              <Link to="/wallet" className="hide-mobile btn btn-ghost btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                <Wallet size={13} />
-                {walletBalance > 0 ? fmtP(walletBalance) : 'Wallet'}
+
+              {/* Wallet balance pill */}
+              <Link to="/wallet" className="hide-mobile" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7, textDecoration: 'none',
+                background: 'rgba(10,15,35,0.85)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 30, padding: '3px 14px 3px 3px',
+              }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                  background: 'linear-gradient(135deg,#f59e0b,#d97706)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14, fontWeight: 900,
+                }}>
+                  {settings.logo
+                    ? <img src={settings.logo} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
+                    : '🪙'}
+                </div>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>
+                  {walletBalance > 0 ? fmtP(walletBalance) : fmtP(0)}
+                </span>
               </Link>
+
               {isAdmin && <Link to="/admin" className="hide-mobile btn btn-ghost btn-sm">Admin</Link>}
 
               {/* Profile avatar — desktop dropdown */}
