@@ -7,6 +7,37 @@ import { useNavigate } from 'react-router-dom'
 const statusColor = { open: '#facc15', replied: '#4ade80', closed: '#6b7280' }
 const statusLabel = { open: 'Open', replied: 'Replied', closed: 'Closed' }
 
+const FAQS = [
+  { q: 'How long does delivery take?', a: 'Most top-ups are delivered instantly within a few seconds. If delayed, it usually completes within 10 minutes.' },
+  { q: 'What payment methods are accepted?', a: 'We accept Wallet balance and UPI / online payments.' },
+  { q: 'My order failed — what happens?', a: 'If an order fails after payment, the amount is automatically refunded to your wallet within minutes.' },
+  { q: 'How do I add funds to my wallet?', a: 'Go to Wallet from the bottom nav and tap "Add Funds" to top up via UPI.' },
+  { q: 'Which Player ID do I enter?', a: 'Enter the in-game User ID shown in your game profile. For MLBB also enter your Zone ID.' },
+]
+
+function FAQ() {
+  const [open, setOpen] = useState(null)
+  return (
+    <div style={{ marginTop: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' }}>FAQ</div>
+      {FAQS.map((f, i) => (
+        <div key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+          <button onClick={() => setOpen(open === i ? null : i)} style={{
+            width: '100%', textAlign: 'left', background: 'none', border: 'none',
+            padding: '10px 0', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+          }}>
+            <span style={{ color: '#e5e7eb', fontSize: 13, fontWeight: 600 }}>{f.q}</span>
+            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 16, lineHeight: 1, flexShrink: 0, transform: open === i ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s' }}>+</span>
+          </button>
+          {open === i && (
+            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, lineHeight: 1.6, paddingBottom: 10 }}>{f.a}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function SupportWidget() {
   const { user } = useAuth()
   const navigate  = useNavigate()
@@ -134,10 +165,13 @@ export default function SupportWidget() {
               loading ? (
                 <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>Loading…</div>
               ) : tickets.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 40 }}>
-                  <MessageCircle size={32} style={{ color: 'rgba(124,58,237,0.4)', marginBottom: 10 }} />
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No tickets yet</div>
-                  <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 4 }}>Create one if you need help</div>
+                <div>
+                  <div style={{ textAlign: 'center', padding: '28px 0 16px' }}>
+                    <MessageCircle size={28} style={{ color: 'rgba(124,58,237,0.4)', marginBottom: 8 }} />
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No tickets yet</div>
+                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 3 }}>Create one if you need help</div>
+                  </div>
+                  <FAQ />
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -156,6 +190,7 @@ export default function SupportWidget() {
                       </div>
                     </button>
                   ))}
+                  <FAQ />
                 </div>
               )
             )}
