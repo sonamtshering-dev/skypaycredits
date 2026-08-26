@@ -105,6 +105,7 @@ app.use("/api/banners",                    require("./routes/bannerRoutes"))
 app.use("/api/coupons",   adminLimiter,    require("./routes/couponRoutes"))
 app.use("/api/wallet",    orderLimiter,    require("./routes/walletRoutes"))
 app.use("/api/admin/wallet", adminLimiter, require("./routes/adminWalletRoutes"))
+app.use("/api/tickets",    orderLimiter, require("./routes/ticketRoutes"))
 
 app.get("/", (req, res) => res.json({ status: "✓ API running" }))
 

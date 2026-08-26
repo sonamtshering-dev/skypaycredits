@@ -1,9 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Wrench, KeyRound } from 'lucide-react'
 import { useAuth } from './context/AuthContext'
 import { useSettings } from './context/SettingsContext'
 
 import { lazy, Suspense } from 'react'
+import SupportWidget from './pages/Support'
 
 import Home          from './pages/Home'
 import Auth          from './pages/Auth'
@@ -27,6 +28,7 @@ const AdminSettings = lazy(() => import('./admin/AdminSettings'))
 const AdminBanners  = lazy(() => import('./admin/AdminBanners'))
 const AdminCoupons  = lazy(() => import('./admin/AdminCoupons'))
 const AdminWallet   = lazy(() => import('./admin/AdminWallet'))
+const AdminSupport  = lazy(() => import('./admin/AdminSupport'))
 
 function Loader() {
   return (
@@ -59,6 +61,7 @@ function GuestRoute({ children }) {
 export default function App() {
   const { settings, settingsLoaded } = useSettings()
   const { user, loading, isAdmin } = useAuth()
+  const location = useLocation()
 
   if (loading || !settingsLoaded) return <Loader />
 
@@ -113,6 +116,7 @@ export default function App() {
 
   return (
     <Suspense fallback={null}>
+    {!location.pathname.startsWith('/admin') && <SupportWidget />}
     <Routes>
       <Route path="/"                 element={<Home />} />
       <Route path="/recharge/:gameId" element={<Recharge />} />
@@ -139,6 +143,7 @@ export default function App() {
         <Route path="banners"   element={<AdminBanners />} />
         <Route path="coupons"   element={<AdminCoupons />} />
         <Route path="wallet"    element={<AdminWallet />} />
+        <Route path="support"   element={<AdminSupport />} />
         <Route path="settings"  element={<AdminSettings />} />
       </Route>
 
