@@ -150,7 +150,7 @@ export default function SupportWidget() {
             {view === 'list' && user && (
               <button onClick={() => { setView('new'); setError('') }}
                 style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: '#c4b5fd', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Plus size={12} /> Ask a question
+                <Plus size={12} /> Chat with us
               </button>
             )}
           </div>
@@ -181,7 +181,7 @@ export default function SupportWidget() {
                   <div style={{ textAlign: 'center', padding: '28px 0 16px' }}>
                     <MessageCircle size={28} style={{ color: 'rgba(124,58,237,0.4)', marginBottom: 8 }} />
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>We're here to help</div>
-                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 3 }}>Check the FAQ below or tap "Ask a question"</div>
+                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 3 }}>Check the FAQ below or tap "Chat with us"</div>
                   </div>
                   <FAQ />
                 </div>
