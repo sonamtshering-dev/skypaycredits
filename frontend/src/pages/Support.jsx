@@ -121,7 +121,7 @@ export default function SupportWidget() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: '#fff', transition: 'transform 0.15s',
         }}
-        title="Support"
+        title="Chat with us"
       >
         {open ? <X size={20} /> : <MessageCircle size={20} />}
       </button>
@@ -147,12 +147,12 @@ export default function SupportWidget() {
               </button>
             )}
             <span style={{ fontWeight: 800, fontSize: 14, color: '#fff', flex: 1 }}>
-              {view === 'list' ? 'Support' : view === 'new' ? 'New Ticket' : active?.subject}
+              {view === 'list' ? 'Need help?' : view === 'new' ? 'Talk to us' : active?.subject}
             </span>
             {view === 'list' && (
               <button onClick={() => { setView('new'); setError('') }}
                 style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: '#c4b5fd', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Plus size={12} /> New
+                <Plus size={12} /> Ask a question
               </button>
             )}
           </div>
@@ -168,8 +168,8 @@ export default function SupportWidget() {
                 <div>
                   <div style={{ textAlign: 'center', padding: '28px 0 16px' }}>
                     <MessageCircle size={28} style={{ color: 'rgba(124,58,237,0.4)', marginBottom: 8 }} />
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No tickets yet</div>
-                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 3 }}>Create one if you need help</div>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>We're here to help</div>
+                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 3 }}>Check the FAQ below or tap "Ask a question"</div>
                   </div>
                   <FAQ />
                 </div>
@@ -200,12 +200,12 @@ export default function SupportWidget() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '8px 12px', color: '#f87171', fontSize: 12 }}>{error}</div>}
                 <input
-                  placeholder="Subject"
+                  placeholder="What do you need help with?"
                   value={subject} onChange={e => setSubject(e.target.value)}
                   style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '9px 12px', color: '#fff', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box' }}
                 />
                 <textarea
-                  placeholder="Describe your issue…"
+                  placeholder="Tell us more — order ID, game name, what happened…"
                   value={text} onChange={e => setText(e.target.value)}
                   rows={4}
                   style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '9px 12px', color: '#fff', fontSize: 13, outline: 'none', resize: 'vertical', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }}
@@ -215,7 +215,7 @@ export default function SupportWidget() {
                   background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
                   color: '#fff', fontWeight: 700, fontSize: 13, cursor: sending ? 'wait' : 'pointer',
                   opacity: sending ? 0.7 : 1,
-                }}>{sending ? 'Sending…' : 'Submit Ticket'}</button>
+                }}>{sending ? 'Sending…' : 'Send message'}</button>
               </div>
             )}
 
@@ -240,7 +240,7 @@ export default function SupportWidget() {
                 ))}
                 <div ref={bottomRef} />
                 {active.status === 'closed' && (
-                  <div style={{ textAlign: 'center', padding: '8px', color: 'rgba(255,255,255,0.3)', fontSize: 12, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>Ticket closed</div>
+                  <div style={{ textAlign: 'center', padding: '8px', color: 'rgba(255,255,255,0.3)', fontSize: 12, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>This conversation is closed</div>
                 )}
                 {error && <div style={{ color: '#f87171', fontSize: 12 }}>{error}</div>}
               </div>
@@ -251,7 +251,7 @@ export default function SupportWidget() {
           {view === 'thread' && active && active.status !== 'closed' && (
             <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: 8 }}>
               <input
-                placeholder="Reply…"
+                placeholder="Type your message…"
                 value={replyText} onChange={e => setReplyText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply() } }}
                 style={{ flex: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 13, outline: 'none' }}
