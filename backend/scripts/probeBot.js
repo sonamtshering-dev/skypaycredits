@@ -2,7 +2,7 @@
 // Run: node -r dotenv/config scripts/probeBot.js
 const { TelegramClient } = require('telegram')
 const { StringSession }  = require('telegram/sessions')
-const { NewMessage }     = require('telegram/events')
+const { NewMessage, MessageEdited } = require('telegram/events')
 
 const BOT = 'gameidchecker_bot'
 
@@ -16,16 +16,32 @@ const BOT = 'gameidchecker_bot'
   await client.connect()
   console.log('Connected. Sending /start to bot...\n')
 
-  const waitReply = (afterId, timeoutMs = 8000) => new Promise((resolve, reject) => {
-    const timer = setTimeout(() => { client.removeEventHandler(h); reject(new Error('timeout')) }, timeoutMs)
-    const h = async (ev) => {
-      const m = ev.message
-      if (!m.out && m.id > afterId) {
-        clearTimeout(timer); client.removeEventHandler(h)
-        resolve(m.text)
-      }
+  const waitReply = (afterId, timeoutMs = 15000) => new Promise((resolve, reject) => {
+    let done = false
+    const finish = (t) => {
+      if (done) return; done = true
+      clearTimeout(timer)
+      client.removeEventHandler(hN)
+      client.removeEventHandler(hE)
+      resolve(t)
     }
-    client.addEventHandler(h, new NewMessage({ chats: [BOT] }))
+    const timer = setTimeout(() => {
+      if (done) return; done = true
+      client.removeEventHandler(hN)
+      client.removeEventHandler(hE)
+      reject(new Error('timeout'))
+    }, timeoutMs)
+    const accept = (m) => {
+      if (m.out || m.id <= afterId) return
+      const t = (m.text || '').trim()
+      // Print interim messages but keep waiting
+      if (/verif|🔍/i.test(t) && t.length < 60) { console.log('  [interim]', t); return }
+      finish(t)
+    }
+    const hN = async (ev) => accept(ev.message)
+    const hE = async (ev) => accept(ev.message)
+    client.addEventHandler(hN, new NewMessage({}))
+    client.addEventHandler(hE, new MessageEdited({}))
   })
 
   // Step 1: /ml — MLBB region check

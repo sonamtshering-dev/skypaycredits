@@ -1,7 +1,7 @@
 // Telegram MTProto client — queries @gameidchecker_bot /ml and parses the result
 const { TelegramClient } = require('telegram')
 const { StringSession }  = require('telegram/sessions')
-const { NewMessage }     = require('telegram/events')
+const { NewMessage, MessageEdited } = require('telegram/events')
 
 const BOT = 'gameidchecker_bot'
 let _client = null
@@ -28,22 +28,40 @@ function _sendAndWait(client, command, timeoutMs = 20000) {
         const sent = await client.sendMessage(BOT, { message: command })
 
         const text = await new Promise((res, rej) => {
+          let done = false
+
+          const finish = (t) => {
+            if (done) return
+            done = true
+            clearTimeout(timer)
+            client.removeEventHandler(hNew)
+            client.removeEventHandler(hEdit)
+            res(t)
+          }
+
           const timer = setTimeout(() => {
-            client.removeEventHandler(h)
+            if (done) return
+            done = true
+            client.removeEventHandler(hNew)
+            client.removeEventHandler(hEdit)
             rej(new Error('Bot did not respond in time'))
           }, timeoutMs)
 
-          const h = async (ev) => {
-            const m = ev.message
+          const accept = (m) => {
             if (m.out || m.id <= sent.id) return
             const t = (m.text || '').trim()
-            // Skip "Verifying..." interim message — wait for the real reply
-            if (/verif|🔍/i.test(t) && t.length < 60) return
-            clearTimeout(timer)
-            client.removeEventHandler(h)
-            res(t)
+            // Bot edits its "Verifying..." message in-place with the real result,
+            // so we listen for both new messages AND edits.
+            // Skip the initial interim message either way.
+            if (!t || (/verif|🔍/i.test(t) && t.length < 60)) return
+            finish(t)
           }
-          client.addEventHandler(h, new NewMessage({ chats: [BOT] }))
+
+          const hNew  = async (ev) => accept(ev.message)
+          const hEdit = async (ev) => accept(ev.message)
+
+          client.addEventHandler(hNew,  new NewMessage({}))
+          client.addEventHandler(hEdit, new MessageEdited({}))
         })
 
         resolve(text)
