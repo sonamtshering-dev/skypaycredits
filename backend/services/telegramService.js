@@ -60,8 +60,10 @@ function _sendAndWait(client, command, timeoutMs = 20000) {
           const hNew  = async (ev) => accept(ev.message)
           const hEdit = async (ev) => accept(ev.message)
 
-          client.addEventHandler(hNew,  new NewMessage({}))
-          client.addEventHandler(hEdit, new MessageEdited({}))
+          // chats filter keeps IDs scoped to the bot's dialog (IDs are per-dialog).
+          // MessageEdited catches the in-place edit from "Verifying..." → real result.
+          client.addEventHandler(hNew,  new NewMessage({ chats: [BOT] }))
+          client.addEventHandler(hEdit, new MessageEdited({ chats: [BOT] }))
         })
 
         resolve(text)

@@ -40,8 +40,8 @@ const BOT = 'gameidchecker_bot'
     }
     const hN = async (ev) => accept(ev.message)
     const hE = async (ev) => accept(ev.message)
-    client.addEventHandler(hN, new NewMessage({}))
-    client.addEventHandler(hE, new MessageEdited({}))
+    client.addEventHandler(hN, new NewMessage({ chats: [BOT] }))
+    client.addEventHandler(hE, new MessageEdited({ chats: [BOT] }))
   })
 
   // Step 1: /ml — MLBB region check
