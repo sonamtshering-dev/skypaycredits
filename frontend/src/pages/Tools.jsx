@@ -1,40 +1,22 @@
 import { useState } from 'react'
-import { Search, CheckCircle, XCircle, Loader2, Globe, Diamond, ChevronRight } from 'lucide-react'
+import { Search, XCircle, Loader2, Globe, Diamond, RotateCcw } from 'lucide-react'
 import api from '../api/axios'
 import theme from '../theme'
-
-const ZONE_LABELS = {
-  '5505': 'MY / SG / BN (SEA)',
-  '5506': 'PH (Philippines)',
-  '5509': 'ID (Indonesia)',
-  '5510': 'TH (Thailand)',
-  '5517': 'VN (Vietnam)',
-  '5500': 'US (Americas)',
-  '5508': 'EU (Europe)',
-  '5519': 'SA (South Asia)',
-  '5521': 'IN (India)',
-  '5522': 'MENA (Middle East)',
-  '5561': 'NA (North Africa)',
-}
-
-function zoneLabel(z) {
-  return ZONE_LABELS[z] || `Zone ${z}`
-}
 
 export default function Tools() {
   const [userId, setUserId]   = useState('')
   const [zoneId, setZoneId]   = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult]   = useState(null)
+  const [reply, setReply]     = useState(null)
   const [error, setError]     = useState('')
 
   const lookup = async (e) => {
     e.preventDefault()
     if (!userId.trim() || !zoneId.trim()) return setError('Enter both User ID and Zone ID.')
-    setError(''); setResult(null); setLoading(true)
+    setError(''); setReply(null); setLoading(true)
     try {
       const r = await api.post('/tools/mlbb', { userId: userId.trim(), zoneId: zoneId.trim() })
-      setResult(r.data)
+      setReply(r.data.reply)
     } catch (err) {
       setError(err.response?.data?.message || 'Lookup failed. Try again.')
     } finally {
@@ -42,7 +24,7 @@ export default function Tools() {
     }
   }
 
-  const reset = () => { setResult(null); setError(''); setUserId(''); setZoneId('') }
+  const reset = () => { setReply(null); setError(''); setUserId(''); setZoneId('') }
 
   return (
     <div style={{
@@ -72,106 +54,85 @@ export default function Tools() {
             MLBB Checker
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginTop: 6, marginBottom: 0 }}>
-            Check player nickname, region & double diamond eligibility instantly.
+            Check region &amp; double diamond eligibility instantly.
           </p>
         </div>
 
         {/* Input card */}
-        <div style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.09)',
-          borderRadius: 16, padding: '20px 18px',
-          marginBottom: 16,
-        }}>
-          <form onSubmit={lookup} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
-                Mobile Legends User ID
-              </label>
-              <input
-                value={userId}
-                onChange={e => setUserId(e.target.value)}
-                placeholder="e.g. 123456789"
-                inputMode="numeric"
-                style={inputStyle}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
-                Zone ID (Server ID)
-              </label>
-              <input
-                value={zoneId}
-                onChange={e => setZoneId(e.target.value)}
-                placeholder="e.g. 5506"
-                inputMode="numeric"
-                style={inputStyle}
-              />
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 5 }}>
-                Find it in game → Profile → tap your avatar → Zone ID shown in brackets
+        {!reply && (
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            borderRadius: 16, padding: '20px 18px',
+            marginBottom: 16,
+          }}>
+            <form onSubmit={lookup} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Mobile Legends User ID</label>
+                <input
+                  value={userId}
+                  onChange={e => setUserId(e.target.value)}
+                  placeholder="e.g. 123456789"
+                  inputMode="numeric"
+                  style={inputStyle}
+                />
               </div>
-            </div>
-
-            {error && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(239,68,68,0.09)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 12px', color: '#f87171', fontSize: 13 }}>
-                <XCircle size={14} />
-                {error}
+              <div>
+                <label style={labelStyle}>Zone ID (Server ID)</label>
+                <input
+                  value={zoneId}
+                  onChange={e => setZoneId(e.target.value)}
+                  placeholder="e.g. 5506"
+                  inputMode="numeric"
+                  style={inputStyle}
+                />
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 5 }}>
+                  Find it in-game → Profile → tap your avatar → Zone ID shown in brackets
+                </div>
               </div>
-            )}
 
-            <button type="submit" disabled={loading} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              padding: '13px 20px', borderRadius: 12, fontWeight: 800, fontSize: 14,
-              background: loading ? 'rgba(255,255,255,0.06)' : theme.grad,
-              border: 'none', color: loading ? 'rgba(255,255,255,0.3)' : '#fff',
-              cursor: loading ? 'default' : 'pointer',
-              transition: 'all 0.2s',
-            }}>
-              {loading ? <Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Search size={16} />}
-              {loading ? 'Looking up…' : 'Check Player'}
-            </button>
-          </form>
-        </div>
+              {error && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(239,68,68,0.09)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 12px', color: '#f87171', fontSize: 13 }}>
+                  <XCircle size={14} /> {error}
+                </div>
+              )}
 
-        {/* Results */}
-        {result && (
+              <button type="submit" disabled={loading} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '13px 20px', borderRadius: 12, fontWeight: 800, fontSize: 14,
+                background: loading ? 'rgba(255,255,255,0.06)' : theme.grad,
+                border: 'none', color: loading ? 'rgba(255,255,255,0.3)' : '#fff',
+                cursor: loading ? 'default' : 'pointer',
+              }}>
+                {loading
+                  ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Checking…</>
+                  : <><Search size={16} /> Check Player</>
+                }
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Bot reply */}
+        {reply && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-            {/* Region / Nickname card */}
-            <ResultCard
-              icon={<Globe size={18} color="#9b6dff" />}
-              label="Region Check"
-              accent="#9b6dff"
-              rows={[
-                { key: 'Nickname', value: result.username, highlight: true },
-                { key: 'Server / Region', value: zoneLabel(result.zoneId) },
-                { key: 'User ID', value: result.userId },
-              ]}
-            />
-
-            {/* Double Diamond card */}
-            {result.doubleDD !== null && (
-              <ResultCard
-                icon={<Diamond size={18} color={result.doubleDD ? '#facc15' : 'rgba(255,255,255,0.3)'} />}
-                label="Double Diamond"
-                accent={result.doubleDD ? '#facc15' : 'rgba(255,255,255,0.25)'}
-                rows={[]}
-                badge={result.doubleDD
-                  ? { text: 'ELIGIBLE', color: '#facc15', bg: 'rgba(250,204,21,0.1)', border: 'rgba(250,204,21,0.25)' }
-                  : { text: 'NOT ELIGIBLE', color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' }
-                }
-                note={result.doubleDD
-                  ? 'This account has never made a purchase — first top-up gets double diamonds!'
-                  : 'This account has already used the first-purchase bonus.'
-                }
-              />
-            )}
-
-            {result.doubleDD === null && (
-              <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.22)', padding: '8px 0' }}>
-                Double diamond status unavailable for this account
+            <div style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(109,40,217,0.25)',
+              borderRadius: 16, padding: '18px 18px',
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(155,109,255,0.6)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12 }}>
+                Result
               </div>
-            )}
+              {/* Render bot reply text preserving line breaks */}
+              <pre style={{
+                margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                fontFamily: 'inherit', fontSize: 14, lineHeight: 1.75,
+                color: 'rgba(255,255,255,0.85)',
+              }}>
+                {reply}
+              </pre>
+            </div>
 
             <button onClick={reset} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -179,13 +140,13 @@ export default function Tools() {
               background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
               color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
             }}>
-              Check another player
+              <RotateCcw size={14} /> Check another player
             </button>
           </div>
         )}
 
-        {/* Info section — only when no result */}
-        {!result && (
+        {/* Info — only when idle */}
+        {!reply && (
           <div style={{ marginTop: 8 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12 }}>
               What we check
@@ -222,52 +183,10 @@ export default function Tools() {
   )
 }
 
-function ResultCard({ icon, label, accent, rows, badge, note }) {
-  return (
-    <div style={{
-      background: 'rgba(255,255,255,0.04)',
-      border: `1px solid rgba(255,255,255,0.09)`,
-      borderRadius: 16, padding: '16px 18px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: badge || rows.length ? 14 : 0 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 10,
-          background: `rgba(255,255,255,0.05)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-        }}>{icon}</div>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)' }}>{label}</span>
-        <CheckCircle size={14} color="#4ade80" style={{ marginLeft: 'auto' }} />
-      </div>
-
-      {rows.map(r => (
-        <div key={r.key} style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '7px 0',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-        }}>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{r.key}</span>
-          <span style={{ fontSize: r.highlight ? 15 : 13, fontWeight: r.highlight ? 800 : 600, color: r.highlight ? '#fff' : 'rgba(255,255,255,0.7)', letterSpacing: r.highlight ? '-0.3px' : 0 }}>
-            {r.value}
-          </span>
-        </div>
-      ))}
-
-      {badge && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '6px 14px', borderRadius: 20,
-            background: badge.bg, border: `1px solid ${badge.border}`,
-            color: badge.color, fontSize: 12, fontWeight: 800, letterSpacing: 1.5,
-          }}>
-            {badge.text}
-          </div>
-          {note && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>{note}</div>}
-        </div>
-      )}
-    </div>
-  )
+const labelStyle = {
+  display: 'block', fontSize: 11, fontWeight: 700,
+  color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
+  letterSpacing: 1.2, marginBottom: 6,
 }
 
 const inputStyle = {
