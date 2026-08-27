@@ -18,12 +18,13 @@ export function CurrencyProvider({ children }) {
   const sym = currency === 'PHP' ? '₱' : '₹'
 
   // fmt(inr, decimals=2) — formats an INR amount in the active currency
+  // PHP always uses 2 decimal places regardless of decimals param (conversion never produces whole numbers)
   const fmt = (inr, decimals = 2) => {
     const n = Number(inr)
     if (inr == null || inr === '' || isNaN(n)) return sym + '0'
     if (currency === 'PHP') {
       const php = n * phpRate
-      return '₱' + php.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+      return '₱' + php.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     }
     return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
   }
