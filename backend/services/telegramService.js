@@ -14,7 +14,7 @@ async function _getClient() {
     new StringSession(process.env.TG_SESSION || ''),
     parseInt(process.env.TG_API_ID),
     process.env.TG_API_HASH,
-    { connectionRetries: 3, baseLogger: { log: () => {} } }
+    { connectionRetries: 3 }
   )
   await _client.connect()
   return _client
