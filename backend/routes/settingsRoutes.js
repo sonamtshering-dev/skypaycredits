@@ -56,6 +56,7 @@ router.get("/", async (req, res) => {
       instagram:       settings.instagram,
       facebook:        settings.facebook,
       purchasesEnabled: settings.purchasesEnabled,
+      phpRate:          settings.phpRate,
     }
     _settingsCache = safe
     _settingsCacheAt = now
