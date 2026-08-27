@@ -3,7 +3,7 @@ const User               = require('../models/User')
 const WalletTransaction  = require('../models/WalletTransaction')
 const RedeemCode         = require('../models/RedeemCode')
 const WalletAuditLog     = require('../models/WalletAuditLog')
-const { MAX_BALANCE }    = require('../config/wallet')
+const { MAX_BALANCE, MAX_BALANCE_RESELLER } = require('../config/wallet')
 
 function sha256(str) {
   return crypto.createHash('sha256').update(str).digest('hex')
@@ -42,11 +42,12 @@ async function creditWallet(userId, amountPaise, type, referenceId, description,
   )
   if (!user) return { ok: false, error: 'User not found or wallet is blocked' }
 
-  // Check max balance cap
-  if (user.walletBalance + amountPaise > MAX_BALANCE) {
+  // Check max balance cap (resellers get a higher limit)
+  const cap = ['reseller', 'admin'].includes(user.role) ? MAX_BALANCE_RESELLER : MAX_BALANCE
+  if (user.walletBalance + amountPaise > cap) {
     // Rollback
     await User.findByIdAndUpdate(userId, { $inc: { walletBalance: -amountPaise } })
-    return { ok: false, error: `Wallet balance would exceed maximum limit of ₹${MAX_BALANCE / 100}` }
+    return { ok: false, error: `Wallet balance would exceed maximum limit of ₹${cap / 100}` }
   }
 
   const balanceBefore = user.walletBalance
