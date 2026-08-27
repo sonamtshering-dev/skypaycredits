@@ -1,7 +1,6 @@
 // Telegram MTProto client — queries @gameidchecker_bot /ml and parses the result
 const { TelegramClient } = require('telegram')
 const { StringSession }  = require('telegram/sessions')
-const { NewMessage, MessageEdited } = require('telegram/events')
 
 const BOT = 'gameidchecker_bot'
 let _client = null
@@ -21,57 +20,31 @@ async function _getClient() {
 // Serialize all bot requests — one at a time to avoid reply mixing
 let _queue = Promise.resolve()
 
-function _sendAndWait(client, command, timeoutMs = 20000) {
-  return new Promise((resolve, reject) => {
-    _queue = _queue.then(async () => {
-      try {
-        const sent = await client.sendMessage(BOT, { message: command })
+// Poll the bot conversation until a real reply appears (not the interim "Verifying" message).
+// Works whether the bot sends a new message or edits its existing one in-place.
+async function _sendAndWait(client, command, timeoutMs = 25000) {
+  const sent = await client.sendMessage(BOT, { message: command })
 
-        const text = await new Promise((res, rej) => {
-          let done = false
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 2000))
+    const msgs = await client.getMessages(BOT, { limit: 5 })
+    for (const m of msgs) {
+      if (m.out || m.id < sent.id) continue          // skip our own or older messages
+      const t = (m.text || '').trim()
+      if (!t) continue
+      if (/verif|🔍/i.test(t) && t.length < 60) continue  // skip interim
+      return t
+    }
+  }
+  throw new Error('Bot did not respond in time')
+}
 
-          const finish = (t) => {
-            if (done) return
-            done = true
-            clearTimeout(timer)
-            client.removeEventHandler(hNew)
-            client.removeEventHandler(hEdit)
-            res(t)
-          }
-
-          const timer = setTimeout(() => {
-            if (done) return
-            done = true
-            client.removeEventHandler(hNew)
-            client.removeEventHandler(hEdit)
-            rej(new Error('Bot did not respond in time'))
-          }, timeoutMs)
-
-          const accept = (m) => {
-            if (m.out || m.id <= sent.id) return
-            const t = (m.text || '').trim()
-            // Bot edits its "Verifying..." message in-place with the real result,
-            // so we listen for both new messages AND edits.
-            // Skip the initial interim message either way.
-            if (!t || (/verif|🔍/i.test(t) && t.length < 60)) return
-            finish(t)
-          }
-
-          const hNew  = async (ev) => accept(ev.message)
-          const hEdit = async (ev) => accept(ev.message)
-
-          // chats filter keeps IDs scoped to the bot's dialog (IDs are per-dialog).
-          // MessageEdited catches the in-place edit from "Verifying..." → real result.
-          client.addEventHandler(hNew,  new NewMessage({ chats: [BOT] }))
-          client.addEventHandler(hEdit, new MessageEdited({ chats: [BOT] }))
-        })
-
-        resolve(text)
-      } catch (err) {
-        reject(err)
-      }
-    })
-  })
+function _queued(client, command) {
+  let resolve, reject
+  const p = new Promise((res, rej) => { resolve = res; reject = rej })
+  _queue = _queue.then(() => _sendAndWait(client, command).then(resolve, reject))
+  return p
 }
 
 // Parse the /ml reply which looks like:
@@ -116,7 +89,7 @@ function parseMLReply(text) {
 // Main export
 async function queryMLBB(userId, zoneId) {
   const client = await _getClient()
-  const mlText  = await _sendAndWait(client, `/ml ${userId} ${zoneId}`)
+  const mlText  = await _queued(client, `/ml ${userId} ${zoneId}`)
   const parsed  = parseMLReply(mlText)
 
   // Check for bot error responses
