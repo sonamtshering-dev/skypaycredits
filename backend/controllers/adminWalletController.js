@@ -247,7 +247,10 @@ exports.refundToWallet = async (req, res) => {
     if (order.status === 'Refunded') return res.status(400).json({ message: 'Order already refunded' })
 
     const reason     = (req.body.reason || 'Admin refund').trim().slice(0, 200)
-    const amountPaise = Math.round(order.price * 100)
+    // Use walletAmountUsed when set (partial-wallet orders) to avoid over-refunding
+    const amountPaise = order.walletAmountUsed > 0
+      ? order.walletAmountUsed
+      : Math.round(order.price * 100)
 
     // Atomic idempotency guard
     const updated = await Order.findOneAndUpdate(

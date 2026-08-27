@@ -30,25 +30,29 @@ async function _audit(actorId, actorRole, action, targetUserId, opts = {}) {
   })
 }
 
-// Credit wallet — always succeeds if user exists and wallet is active
+// Credit wallet — only credits if user exists, wallet active, and cap not exceeded
 // Returns { ok, balanceBefore, balanceAfter, error }
 async function creditWallet(userId, amountPaise, type, referenceId, description, performedBy, ipAddress) {
   if (!amountPaise || amountPaise <= 0) return { ok: false, error: 'Amount must be positive' }
 
+  // Fetch role first so we can determine the correct cap
+  const userDoc = await User.findById(userId).select('walletBalance walletStatus role').lean()
+  if (!userDoc) return { ok: false, error: 'User not found or wallet is blocked' }
+  if (userDoc.walletStatus === 'blocked') return { ok: false, error: 'User not found or wallet is blocked' }
+
+  const cap = ['reseller', 'admin'].includes(userDoc.role) ? MAX_BALANCE_RESELLER : MAX_BALANCE
+
+  // Atomic: only increment if balance stays within cap — no rollback needed
   const user = await User.findOneAndUpdate(
-    { _id: userId, walletStatus: { $ne: 'blocked' } },
+    {
+      _id: userId,
+      walletStatus: { $ne: 'blocked' },
+      walletBalance: { $lte: cap - amountPaise },
+    },
     { $inc: { walletBalance: amountPaise } },
     { new: false }
   )
-  if (!user) return { ok: false, error: 'User not found or wallet is blocked' }
-
-  // Check max balance cap (resellers get a higher limit)
-  const cap = ['reseller', 'admin'].includes(user.role) ? MAX_BALANCE_RESELLER : MAX_BALANCE
-  if (user.walletBalance + amountPaise > cap) {
-    // Rollback
-    await User.findByIdAndUpdate(userId, { $inc: { walletBalance: -amountPaise } })
-    return { ok: false, error: `Wallet balance would exceed maximum limit of ₹${cap / 100}` }
-  }
+  if (!user) return { ok: false, error: `Wallet balance would exceed maximum limit of ₹${cap / 100}` }
 
   const balanceBefore = user.walletBalance
   const balanceAfter  = user.walletBalance + amountPaise
