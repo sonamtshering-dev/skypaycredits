@@ -5,6 +5,7 @@ const Game    = require("../models/Game")
 const Pack    = require("../models/Pack")
 const { verifyPlayer, getServers } = require("../services/rechargeService")
 const { protect } = require("../middlewares/authMiddleware")
+const isProd = process.env.NODE_ENV === 'production'
 
 // POST /api/recharge/verify-player
 // Works for all providers: smile, g2bulk, moogold, manual
@@ -56,7 +57,7 @@ router.get("/servers/:gameId", protect, async (req, res) => {
     const servers = await getServers(src.provider || "g2bulk", src.providerGameId || "", "")
     res.json({ servers })
   } catch (err) {
-    res.status(500).json({ servers: [], message: err.message })
+    res.status(500).json({ servers: [], message: isProd ? 'Could not load servers' : err.message })
   }
 })
 

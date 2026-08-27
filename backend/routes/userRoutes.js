@@ -1,5 +1,6 @@
 const securityLog = require('../services/securityLogger')
 const express = require("express")
+const isProd = process.env.NODE_ENV === 'production'
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').substring(0, 100)
 }
@@ -45,7 +46,7 @@ router.put("/me", protect, async (req, res) => {
     const user = await User.findByIdAndUpdate(req.user._id, { name }, { new: true }).select("-password")
     res.json(user)
   } catch (err) {
-    res.status(400).json({ message: err.message })
+    res.status(400).json({ message: isProd ? 'Update failed' : err.message })
   }
 })
 

@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
     cacheAt = now
     res.json(cache)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: 'Something went wrong' })
   }
 })
 

@@ -304,6 +304,6 @@ exports.getPaymentStatusByOrder = async (req, res) => {
 
     res.json({ status: data.data?.status?.toUpperCase() || "PENDING", amount: data.data?.amount })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: isProd ? "Payment service error" : err.message })
   }
 }

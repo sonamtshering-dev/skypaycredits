@@ -2,6 +2,7 @@ const express = require('express')
 const router  = express.Router()
 const Ticket  = require('../models/Ticket')
 const { protect, adminOnly } = require('../middlewares/authMiddleware')
+const isProd = process.env.NODE_ENV === 'production'
 
 // POST /api/tickets — customer creates ticket
 router.post('/', protect, async (req, res) => {
@@ -17,7 +18,7 @@ router.post('/', protect, async (req, res) => {
     })
     res.status(201).json(ticket)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: isProd ? 'Something went wrong' : err.message })
   }
 })
 
@@ -27,7 +28,7 @@ router.get('/my', protect, async (req, res) => {
     const tickets = await Ticket.find({ userId: req.user._id }).sort({ updatedAt: -1 }).limit(20)
     res.json(tickets)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: isProd ? 'Something went wrong' : err.message })
   }
 })
 
@@ -46,7 +47,7 @@ router.post('/:id/message', protect, async (req, res) => {
     await ticket.save()
     res.json(ticket)
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: isProd ? 'Something went wrong' : err.message })
   }
 })
 

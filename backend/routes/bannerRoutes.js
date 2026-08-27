@@ -43,7 +43,7 @@ router.get("/", async (req, res) => {
   try {
     const banners = await Banner.find({ active: true }).sort({ createdAt: -1 })
     res.json(banners)
-  } catch (err) { res.status(500).json({ message: err.message }) }
+  } catch (err) { res.status(500).json({ message: 'Something went wrong' }) }
 })
 
 // GET /api/banners/all — admin (all including inactive)
