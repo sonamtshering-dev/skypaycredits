@@ -1,4 +1,4 @@
-// Telegram MTProto client — queries @gameidchecker_bot and returns structured replies
+// Telegram MTProto client — queries @gameidchecker_bot /ml and parses the result
 const { TelegramClient } = require('telegram')
 const { StringSession }  = require('telegram/sessions')
 const { NewMessage }     = require('telegram/events')
@@ -36,11 +36,9 @@ function _sendAndWait(client, command, timeoutMs = 20000) {
           const h = async (ev) => {
             const m = ev.message
             if (m.out || m.id <= sent.id) return
-
             const t = (m.text || '').trim()
-            // Skip transient "Verifying..." messages and retry
-            if (/verif|🔍/i.test(t)) return
-
+            // Skip "Verifying..." interim message — wait for the real reply
+            if (/verif|🔍/i.test(t) && t.length < 60) return
             clearTimeout(timer)
             client.removeEventHandler(h)
             res(t)
@@ -56,60 +54,64 @@ function _sendAndWait(client, command, timeoutMs = 20000) {
   })
 }
 
-// Parse /ml reply → { username, zone }
-function parseML(text) {
-  // Common formats the bot uses:
-  // "Name: PlayerName\nZone: 5506"
-  // "👤 PlayerName\n🌍 Region..."
-  // Just extract lines that look like a name
+// Parse the /ml reply which looks like:
+// ✅ PLAYER VERIFIED
+// 👤 IGN: YT
+// 🌍 Region: India
+// 🎮 ID: 100893609 (2521)
+//
+// 🎁 DOUBLE DIAMONDS PACKS
+// ❌ 50+50 (claimed)
+// ❌ 150+150 (claimed)
+// ✅ 250+250
+// ✅ 500+500
+function parseMLReply(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
 
   let username = null
+  let region   = null
+  const packs  = []
+
   for (const line of lines) {
-    const m = line.match(/(?:name|username|player|user)[:\s]+(.+)/i)
-    if (m) { username = m[1].trim(); break }
-  }
-  // Fallback: first non-emoji, non-label line
-  if (!username) {
-    for (const line of lines) {
-      if (!/^[🎁📦✅❌🔍👤🌍💎]/.test(line) && !/^(zone|region|id|server|status)/i.test(line)) {
-        username = line.replace(/^[^a-zA-Z0-9]+/, '').trim()
-        if (username.length > 1) break
-      }
+    // IGN: YT
+    const ignM = line.match(/IGN[:\s]+(.+)/i)
+    if (ignM) { username = ignM[1].trim(); continue }
+
+    // Region: India
+    const regionM = line.match(/Region[:\s]+(.+)/i)
+    if (regionM) { region = regionM[1].trim(); continue }
+
+    // Pack lines: ❌ 50+50 (claimed)  or  ✅ 500+500
+    const packM = line.match(/(\d+\+\d+)/)
+    if (packM) {
+      const claimable = line.trimStart().startsWith('✅') ||
+                        (line.includes('Yes') && !line.includes('claimed'))
+      packs.push({ size: packM[1], claimable })
     }
   }
 
-  return { username: username || null, raw: text }
+  return { username, region, packs, raw: text }
 }
 
-// Parse /ddml reply → array of { size, claimable }
-function parseDDML(text) {
-  const packs = []
-  const sections = text.split(/Pack\s*🎁\s*/i).slice(1)
-  for (const sec of sections) {
-    const sizeM   = sec.match(/^(\d+\+\d+)/i)
-    const claimM  = sec.match(/Claimable[:\s]+(Yes|No)/i)
-    if (sizeM) {
-      packs.push({
-        size:      sizeM[1],
-        claimable: claimM?.[1]?.toLowerCase() === 'yes',
-      })
-    }
-  }
-  return packs
-}
-
-// Main export — query both /ml and /ddml, return structured result
+// Main export
 async function queryMLBB(userId, zoneId) {
   const client = await _getClient()
+  const mlText  = await _sendAndWait(client, `/ml ${userId} ${zoneId}`)
+  const parsed  = parseMLReply(mlText)
 
-  const mlText   = await _sendAndWait(client, `/ml ${userId} ${zoneId}`)
-  const ddmlText = await _sendAndWait(client, `/ddml ${userId} ${zoneId}`)
+  // Check for bot error responses
+  if (!parsed.username && (mlText.includes('Error') || mlText.includes('not found') || mlText.includes('invalid'))) {
+    throw new Error('Player not found. Check your User ID and Zone ID.')
+  }
 
-  const ml   = parseML(mlText)
-  const packs = parseDDML(ddmlText)
-
-  return { username: ml.username, mlRaw: mlText, packs, ddRaw: ddmlText, userId, zoneId }
+  return {
+    username: parsed.username,
+    region:   parsed.region,
+    packs:    parsed.packs,
+    userId,
+    zoneId,
+    raw:      mlText,
+  }
 }
 
 module.exports = { queryMLBB }

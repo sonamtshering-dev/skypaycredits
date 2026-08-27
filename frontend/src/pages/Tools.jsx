@@ -113,7 +113,7 @@ export default function Tools() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 <Row label="Nickname" value={data.username || '—'} highlight />
-                <Row label="Server / Region" value={ZONE_LABELS[data.zoneId] || `Zone ${data.zoneId}`} />
+                <Row label="Region" value={data.region || ZONE_LABELS[data.zoneId] || `Zone ${data.zoneId}`} />
                 <Row label="User ID" value={data.userId} />
                 <Row label="Zone ID" value={data.zoneId} />
               </div>
