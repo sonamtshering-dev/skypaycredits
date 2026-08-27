@@ -1,22 +1,36 @@
 import { useState } from 'react'
-import { Search, XCircle, Loader2, Globe, Diamond, RotateCcw } from 'lucide-react'
+import { Search, XCircle, Loader2, Globe, Diamond, RotateCcw, CheckCircle } from 'lucide-react'
 import api from '../api/axios'
 import theme from '../theme'
+
+const ZONE_LABELS = {
+  '5505': 'MY/SG/BN', '5506': 'Philippines', '5509': 'Indonesia',
+  '5510': 'Thailand',  '5517': 'Vietnam',     '5500': 'Americas',
+  '5508': 'Europe',    '5519': 'South Asia',  '5521': 'India',
+  '5522': 'MENA',      '5561': 'N. Africa',   '2521': 'Indonesia (VIP)',
+}
+
+const PACK_LABELS = {
+  '50+50':   { buy: 50,  bonus: 50  },
+  '150+150': { buy: 150, bonus: 150 },
+  '250+250': { buy: 250, bonus: 250 },
+  '500+500': { buy: 500, bonus: 500 },
+}
 
 export default function Tools() {
   const [userId, setUserId]   = useState('')
   const [zoneId, setZoneId]   = useState('')
   const [loading, setLoading] = useState(false)
-  const [reply, setReply]     = useState(null)
+  const [data, setData]       = useState(null)
   const [error, setError]     = useState('')
 
   const lookup = async (e) => {
     e.preventDefault()
     if (!userId.trim() || !zoneId.trim()) return setError('Enter both User ID and Zone ID.')
-    setError(''); setReply(null); setLoading(true)
+    setError(''); setData(null); setLoading(true)
     try {
       const r = await api.post('/tools/mlbb', { userId: userId.trim(), zoneId: zoneId.trim() })
-      setReply(r.data.reply)
+      setData(r.data)
     } catch (err) {
       setError(err.response?.data?.message || 'Lookup failed. Try again.')
     } finally {
@@ -24,22 +38,17 @@ export default function Tools() {
     }
   }
 
-  const reset = () => { setReply(null); setError(''); setUserId(''); setZoneId('') }
+  const reset = () => { setData(null); setError(''); setUserId(''); setZoneId('') }
+
+  const allEligible = data?.packs?.length > 0 && data.packs.every(p => p.claimable)
+  const anyEligible = data?.packs?.some(p => p.claimable)
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#000',
-      paddingBottom: 100,
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      {/* Background glow */}
+    <div style={{ minHeight: '100vh', background: '#000', paddingBottom: 100, position: 'relative', overflow: 'hidden' }}>
       <div style={{
-        position: 'fixed', top: 0, left: '50%',
-        transform: 'translateX(-50%)',
+        position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
         width: 600, height: 400,
-        background: 'radial-gradient(ellipse, rgba(76,0,176,0.14) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(76,0,176,0.13) 0%, transparent 70%)',
         pointerEvents: 'none', zIndex: 0,
       }} />
 
@@ -47,47 +56,26 @@ export default function Tools() {
 
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(155,109,255,0.7)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>
-            Free Tools
-          </div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px', margin: 0 }}>
-            MLBB Checker
-          </h1>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(155,109,255,0.7)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>Free Tools</div>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px', margin: 0 }}>MLBB Checker</h1>
           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginTop: 6, marginBottom: 0 }}>
-            Check region &amp; double diamond eligibility instantly.
+            Check player info &amp; double diamond eligibility.
           </p>
         </div>
 
-        {/* Input card */}
-        {!reply && (
-          <div style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.09)',
-            borderRadius: 16, padding: '20px 18px',
-            marginBottom: 16,
-          }}>
+        {/* Input */}
+        {!data && (
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 16, padding: '20px 18px', marginBottom: 16 }}>
             <form onSubmit={lookup} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={labelStyle}>Mobile Legends User ID</label>
-                <input
-                  value={userId}
-                  onChange={e => setUserId(e.target.value)}
-                  placeholder="e.g. 123456789"
-                  inputMode="numeric"
-                  style={inputStyle}
-                />
+                <label style={labelStyle}>User ID</label>
+                <input value={userId} onChange={e => setUserId(e.target.value)} placeholder="e.g. 100893609" inputMode="numeric" style={inputStyle} />
               </div>
               <div>
-                <label style={labelStyle}>Zone ID (Server ID)</label>
-                <input
-                  value={zoneId}
-                  onChange={e => setZoneId(e.target.value)}
-                  placeholder="e.g. 5506"
-                  inputMode="numeric"
-                  style={inputStyle}
-                />
+                <label style={labelStyle}>Zone ID</label>
+                <input value={zoneId} onChange={e => setZoneId(e.target.value)} placeholder="e.g. 2521" inputMode="numeric" style={inputStyle} />
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 5 }}>
-                  Find it in-game → Profile → tap your avatar → Zone ID shown in brackets
+                  Find in-game → Profile → tap avatar → Zone ID in brackets
                 </div>
               </div>
 
@@ -105,34 +93,100 @@ export default function Tools() {
                 cursor: loading ? 'default' : 'pointer',
               }}>
                 {loading
-                  ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Checking…</>
-                  : <><Search size={16} /> Check Player</>
-                }
+                  ? <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Checking with bot…</>
+                  : <><Search size={16} /> Check Player</>}
               </button>
             </form>
           </div>
         )}
 
-        {/* Bot reply */}
-        {reply && (
+        {/* Results */}
+        {data && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(109,40,217,0.25)',
-              borderRadius: 16, padding: '18px 18px',
-            }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(155,109,255,0.6)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12 }}>
-                Result
+
+            {/* Region card */}
+            <div style={cardStyle}>
+              <div style={cardHeader}>
+                <div style={iconBox('#9b6dff')}><Globe size={16} color="#9b6dff" /></div>
+                <span style={cardLabel}>Player Info</span>
+                <CheckCircle size={14} color="#4ade80" style={{ marginLeft: 'auto' }} />
               </div>
-              {/* Render bot reply text preserving line breaks */}
-              <pre style={{
-                margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                fontFamily: 'inherit', fontSize: 14, lineHeight: 1.75,
-                color: 'rgba(255,255,255,0.85)',
-              }}>
-                {reply}
-              </pre>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                <Row label="Nickname" value={data.username || '—'} highlight />
+                <Row label="Server / Region" value={ZONE_LABELS[data.zoneId] || `Zone ${data.zoneId}`} />
+                <Row label="User ID" value={data.userId} />
+                <Row label="Zone ID" value={data.zoneId} />
+              </div>
             </div>
+
+            {/* Double Diamond card */}
+            {data.packs?.length > 0 && (
+              <div style={cardStyle}>
+                <div style={cardHeader}>
+                  <div style={iconBox('#facc15')}><Diamond size={16} color="#facc15" /></div>
+                  <span style={cardLabel}>Double Diamond</span>
+                  <span style={{
+                    marginLeft: 'auto', fontSize: 11, fontWeight: 800, letterSpacing: 1,
+                    padding: '3px 10px', borderRadius: 20,
+                    background: anyEligible ? 'rgba(250,204,21,0.1)' : 'rgba(239,68,68,0.1)',
+                    border: `1px solid ${anyEligible ? 'rgba(250,204,21,0.25)' : 'rgba(239,68,68,0.25)'}`,
+                    color: anyEligible ? '#facc15' : '#f87171',
+                  }}>
+                    {allEligible ? 'ALL ELIGIBLE' : anyEligible ? 'PARTIAL' : 'NOT ELIGIBLE'}
+                  </span>
+                </div>
+
+                {/* Pack grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+                  {data.packs.map(pack => {
+                    const info = PACK_LABELS[pack.size]
+                    return (
+                      <div key={pack.size} style={{
+                        background: pack.claimable ? 'rgba(250,204,21,0.06)' : 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${pack.claimable ? 'rgba(250,204,21,0.2)' : 'rgba(255,255,255,0.07)'}`,
+                        borderRadius: 12, padding: '12px 14px',
+                      }}>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
+                          💎 {info ? `${info.buy} gems` : pack.size}
+                        </div>
+                        <div style={{ fontSize: 18, fontWeight: 900, color: pack.claimable ? '#facc15' : 'rgba(255,255,255,0.3)', letterSpacing: '-0.5px', marginBottom: 6 }}>
+                          {info ? `+${info.bonus}` : '—'}
+                        </div>
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          fontSize: 11, fontWeight: 700,
+                          color: pack.claimable ? '#4ade80' : '#f87171',
+                        }}>
+                          {pack.claimable ? <CheckCircle size={11} /> : <XCircle size={11} />}
+                          {pack.claimable ? 'Eligible' : 'Used'}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 10, lineHeight: 1.5 }}>
+                  {allEligible
+                    ? 'This account has never purchased — all double diamond packs are available.'
+                    : anyEligible
+                      ? 'Some packs are still claimable on this account.'
+                      : 'This account has already used all double diamond bonuses.'}
+                </div>
+              </div>
+            )}
+
+            {/* Raw fallback if no packs parsed */}
+            {(!data.packs || data.packs.length === 0) && data.ddRaw && (
+              <div style={cardStyle}>
+                <div style={cardHeader}>
+                  <div style={iconBox('#facc15')}><Diamond size={16} color="#facc15" /></div>
+                  <span style={cardLabel}>Double Diamond</span>
+                </div>
+                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit', fontSize: 13, lineHeight: 1.7, color: 'rgba(255,255,255,0.7)' }}>
+                  {data.ddRaw}
+                </pre>
+              </div>
+            )}
 
             <button onClick={reset} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -145,22 +199,16 @@ export default function Tools() {
           </div>
         )}
 
-        {/* Info — only when idle */}
-        {!reply && (
+        {/* Info cards — idle only */}
+        {!data && (
           <div style={{ marginTop: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12 }}>
-              What we check
-            </div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12 }}>What we check</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { icon: <Globe size={15} color="#9b6dff" />, title: 'Region Check', desc: 'Confirms the player exists on that server and shows their nickname.' },
-                { icon: <Diamond size={15} color="#facc15" />, title: 'Double Diamond', desc: 'Tells you if the first-purchase bonus (double diamonds) is still available.' },
+                { icon: <Globe size={15} color="#9b6dff" />, title: 'Region Check', desc: 'Shows player nickname and server region.' },
+                { icon: <Diamond size={15} color="#facc15" />, title: 'Double Diamond', desc: 'Shows eligibility for all 4 first-purchase diamond bonus packs.' },
               ].map(t => (
-                <div key={t.title} style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 12,
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-                  borderRadius: 12, padding: '12px 14px',
-                }}>
+                <div key={t.title} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '12px 14px' }}>
                   <div style={{ marginTop: 1 }}>{t.icon}</div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.8)', marginBottom: 3 }}>{t.title}</div>
@@ -171,7 +219,6 @@ export default function Tools() {
             </div>
           </div>
         )}
-
       </div>
 
       <style>{`
@@ -183,17 +230,35 @@ export default function Tools() {
   )
 }
 
-const labelStyle = {
-  display: 'block', fontSize: 11, fontWeight: 700,
-  color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
-  letterSpacing: 1.2, marginBottom: 6,
+function Row({ label, value, highlight }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{label}</span>
+      <span style={{ fontSize: highlight ? 15 : 13, fontWeight: highlight ? 800 : 600, color: highlight ? '#fff' : 'rgba(255,255,255,0.7)', letterSpacing: highlight ? '-0.3px' : 0 }}>{value}</span>
+    </div>
+  )
 }
 
+const cardStyle = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.09)',
+  borderRadius: 16, padding: '16px 18px',
+}
+const cardHeader = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }
+const cardLabel  = { fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)' }
+
+function iconBox(color) {
+  return {
+    width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+    background: `rgba(255,255,255,0.05)`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  }
+}
+
+const labelStyle = { display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }
 const inputStyle = {
   width: '100%', boxSizing: 'border-box',
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 10, padding: '11px 13px',
-  color: '#fff', fontSize: 15, outline: 'none',
+  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 10, padding: '11px 13px', color: '#fff', fontSize: 15, outline: 'none',
   transition: 'border-color 0.2s, background 0.2s',
 }

@@ -29,14 +29,14 @@ const BOT = 'gameidchecker_bot'
   })
 
   // Step 1: /ml — MLBB region check
-  let sent = await client.sendMessage(BOT, { message: '/ml 422761992 5506' })
+  let sent = await client.sendMessage(BOT, { message: '/ml 100893609 2521' })
   try {
     const r = await waitReply(sent.id, 12000)
     console.log('--- /ml reply ---\n', r, '\n')
   } catch { console.log('No reply to /ml\n') }
 
   // Step 2: /ddml — Double Diamond check
-  sent = await client.sendMessage(BOT, { message: '/ddml 422761992 5506' })
+  sent = await client.sendMessage(BOT, { message: '/ddml 100893609 2521' })
   try {
     const r = await waitReply(sent.id, 12000)
     console.log('--- /ddml reply ---\n', r, '\n')
