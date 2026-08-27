@@ -95,7 +95,8 @@ export default function WalletPage() {
   const handleTopup = async e => {
     e.preventDefault()
     setTopupErr(''); setTopupResult(null)
-    if (!amountPaise || amountPaise < 2000) return setTopupErr(`Minimum topup is ${fmtP(2000)}`)
+    if (!amountPaise || amountPaise < 2000) return setTopupErr(`Minimum deposit is ${fmtP(2000)}`)
+    if (amountPaise > 200000) return setTopupErr(`Maximum ₹2,000 per transaction. To add more, complete multiple payments (e.g. ₹2,000 + ₹2,000).`)
     setTopupLoading(true)
     try {
       const { data } = await api.post('/wallet/topup', { amount: amountPaise })
@@ -289,7 +290,7 @@ export default function WalletPage() {
                         onChange={e => setAmount(e.target.value)}
                       />
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>
-                        Min ₹{isReseller ? '200' : '20'} · Max ₹2,000
+                        Min ₹{isReseller ? '200' : '20'} · Max ₹2,000 per transaction · Need more? Make separate payments
                       </div>
                     </div>
 
