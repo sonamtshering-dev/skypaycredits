@@ -28,33 +28,19 @@ const BOT = 'gameidchecker_bot'
     client.addEventHandler(h, new NewMessage({ chats: [BOT] }))
   })
 
-  // Step 1: /help — list all commands
-  let sent = await client.sendMessage(BOT, { message: '/help' })
-  try {
-    const r = await waitReply(sent.id, 8000)
-    console.log('--- /help reply ---\n', r, '\n')
-  } catch { console.log('No reply to /help\n') }
-
-  // Step 2: /check — common MLBB check command
-  sent = await client.sendMessage(BOT, { message: '/check 422761992 5506' })
+  // Step 1: /ml — MLBB region check
+  let sent = await client.sendMessage(BOT, { message: '/ml 422761992 5506' })
   try {
     const r = await waitReply(sent.id, 12000)
-    console.log('--- /check reply ---\n', r, '\n')
-  } catch { console.log('No reply to /check\n') }
+    console.log('--- /ml reply ---\n', r, '\n')
+  } catch { console.log('No reply to /ml\n') }
 
-  // Step 3: /id — another common variant
-  sent = await client.sendMessage(BOT, { message: '/id 422761992 5506' })
+  // Step 2: /ddml — Double Diamond check
+  sent = await client.sendMessage(BOT, { message: '/ddml 422761992 5506' })
   try {
     const r = await waitReply(sent.id, 12000)
-    console.log('--- /id reply ---\n', r, '\n')
-  } catch { console.log('No reply to /id\n') }
-
-  // Step 4: /region
-  sent = await client.sendMessage(BOT, { message: '/region 422761992 5506' })
-  try {
-    const r = await waitReply(sent.id, 12000)
-    console.log('--- /region reply ---\n', r, '\n')
-  } catch { console.log('No reply to /region\n') }
+    console.log('--- /ddml reply ---\n', r, '\n')
+  } catch { console.log('No reply to /ddml\n') }
 
   await client.disconnect()
   process.exit(0)
