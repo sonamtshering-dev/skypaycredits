@@ -86,8 +86,8 @@ export default function AdminSettings() {
         <div className="form-group">
           <label>PHP Exchange Rate <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, fontSize: 11 }}>(1 INR = ? PHP · shown when customers switch to ₱)</span></label>
           <input style={inp} type="number" step="0.0001" min="0.01"
-            value={form.phpRate ?? 0.67}
-            onChange={e => set('phpRate', parseFloat(e.target.value) || 0.67)}
+            value={form.phpRate ?? ''}
+            onChange={e => set('phpRate', e.target.value)}
             placeholder="0.67" />
         </div>
 
