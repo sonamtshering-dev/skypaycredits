@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
       return res.json(cache)
     }
     const [games, banners, settings] = await Promise.all([
-      Game.find({ active: true }).sort({ sortOrder: 1, name: 1 }).lean(),
+      Game.find({ active: true }).sort({ sortOrder: 1, name: 1 }).select('-provider -providerGameId -providerUrl -regions.provider -regions.providerGameId').lean(),
       Banner.find({ active: true }).sort({ createdAt: -1 }).lean(),
       Settings.findOne().lean(),
     ])

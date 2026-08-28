@@ -56,12 +56,14 @@ function extractFiles(files) {
   return map
 }
 
+const PUBLIC_GAME_FIELDS = '-provider -providerGameId -providerUrl -regions.provider -regions.providerGameId'
+
 // GET /api/games — public
 router.get("/", async (req, res) => {
   try {
     const filter = { active: true }
     if (req.query.category) filter.category = req.query.category
-    const games = await Game.find(filter).sort({ sortOrder: 1, name: 1 })
+    const games = await Game.find(filter).sort({ sortOrder: 1, name: 1 }).select(PUBLIC_GAME_FIELDS)
     res.json(games)
   } catch (err) {
     res.status(500).json({ message: 'Something went wrong' })
@@ -94,8 +96,8 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params
     const isObjectId = /^[a-f\d]{24}$/i.test(id)
     const game = isObjectId
-      ? await Game.findById(id)
-      : await Game.findOne({ slug: id })
+      ? await Game.findById(id).select(PUBLIC_GAME_FIELDS)
+      : await Game.findOne({ slug: id }).select(PUBLIC_GAME_FIELDS)
     if (!game) return res.status(404).json({ message: "Game not found" })
     res.json(game)
   } catch (err) {
