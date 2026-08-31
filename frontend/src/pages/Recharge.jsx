@@ -190,9 +190,23 @@ export default function Recharge() {
   return (
     <>
       <Navbar />
-      <div className="container" style={{ paddingTop: 24, paddingBottom: 80, maxWidth: 700, position: 'relative', zIndex: 1 }}>
+      <style>{`
+        .rc-layout { display: flex; flex-direction: column; gap: 20px; }
+        .rc-right  { display: flex; flex-direction: column; gap: 20px; }
+        @media (min-width: 768px) {
+          .rc-layout { flex-direction: row; align-items: flex-start; gap: 28px; }
+          .rc-left   { width: 380px; flex-shrink: 0; position: sticky; top: 80px; }
+          .rc-right  { flex: 1; min-width: 0; }
+          .rc-pack-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; }
+        }
+        @media (min-width: 1100px) {
+          .rc-left { width: 420px; }
+          .rc-pack-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)) !important; }
+        }
+      `}</style>
+      <div className="container" style={{ paddingTop: 24, paddingBottom: 80, position: 'relative', zIndex: 1 }}>
 
-        {/* Game header */}
+        {/* Game header — full width */}
         <div style={{
           display: 'flex', gap: 16, alignItems: 'center', marginBottom: 24,
           background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)',
@@ -220,142 +234,90 @@ export default function Recharge() {
           </div>
         )}
 
-        {/* Section 1: Player ID */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-              background: 'linear-gradient(135deg,#ef4444,#dc2626)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontWeight: 900, fontSize: 15,
-            }}>1</div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {fields.map(f => f.label).join(' & ')}
-            </div>
-          </div>
+        {/* Two-column on desktop, single-column on mobile */}
+        <div className="rc-layout">
 
-          <div style={{
-            background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20,
-          }}>
-            <div style={{ display: 'grid', gridTemplateColumns: fields.length > 1 ? 'repeat(auto-fit, minmax(160px, 1fr))' : '1fr', gap: 12 }}>
-              {fields.map((field, fieldIdx) => (
-                servers.length > 0 && fieldIdx > 0 ? (
-                  <select
-                    key={field.name}
-                    className="form-input"
-                    value={playerData[field.name] || ''}
-                    onChange={e => {
-                      const next = { ...playerData, [field.name]: e.target.value }
-                      setPlayerData(next)
-                      scheduleVerify(next)
-                    }}
-                  >
-                    <option value="">Select {field.label}</option>
-                    {servers.map(s => (
-                      <option key={s.serverId} value={s.serverId}>{s.serverName}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    key={field.name}
-                    className="form-input"
-                    placeholder={field.label}
-                    value={playerData[field.name] || ''}
-                    onChange={e => {
-                      const next = { ...playerData, [field.name]: e.target.value }
-                      setPlayerData(next)
-                      scheduleVerify(next)
-                    }}
-                  />
-                )
-              ))}
-            </div>
+          {/* LEFT: Player ID + Order Summary */}
+          <div className="rc-left">
 
-            {verifying && (
-              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>
-                <div style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-                Verifying player…
-              </div>
-            )}
-            {!verifying && verified && (
-              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: '#4ade80' }}>
-                <CheckCircle size={15} />
-                <span>
-                  {username || playerData[fields[0]?.name]}
-                  {playerData[fields[1]?.name] ? ` · ${servers.find(s => s.serverId === playerData[fields[1]?.name])?.serverName || playerData[fields[1]?.name]}` : ''}
-                </span>
-              </div>
-            )}
-            {!verifying && verifyError && (
-              <div style={{ marginTop: 12, fontSize: 12, color: '#f87171', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <XCircle size={13} /> {verifyError}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Section 2: Select Pack */}
-        <div ref={packSectionRef} style={{ marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-              background: 'linear-gradient(135deg,#ef4444,#dc2626)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontWeight: 900, fontSize: 15,
-            }}>2</div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Select Package
-            </div>
-          </div>
-
-          {packs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 16, color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>
-              No packs available for this region yet.
-            </div>
-          ) : (() => {
-            // Group packs by sectionName
-            const sections = []
-            const seen = []
-            packs.forEach(pack => {
-              const sec = pack.sectionName || ''
-              if (!seen.includes(sec)) { seen.push(sec); sections.push(sec) }
-            })
-            return sections.map(sec => (
-              <div key={sec || '__default'} style={{ marginBottom: 8 }}>
-                {sec && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                    <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.06)' }} />
-                    <span style={{
-                      fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)',
-                      textTransform: 'uppercase', letterSpacing: 2,
-                    }}>{sec}</span>
-                    <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.06)' }} />
-                  </div>
-                )}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
-                  {packs.filter(p => (p.sectionName || '') === sec).map(pack => (
-                    <PackCard
-                      key={pack._id} pack={pack} fmt={fmt}
-                      isReseller={isReseller}
-                      selected={selectedPack?._id === pack._id}
-                      onClick={() => {
-                        setSelectedPack(pack)
-                        setTimeout(() => {
-                          checkoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }, 150)
-                      }}
-                    />
-                  ))}
+            {/* Section 1: Player ID */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: 'linear-gradient(135deg,#ef4444,#dc2626)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontWeight: 900, fontSize: 15,
+                }}>1</div>
+                <div style={{ fontWeight: 800, fontSize: 15, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {fields.map(f => f.label).join(' & ')}
                 </div>
               </div>
-            ))
-          })()}
-        </div>
 
-        {/* Section 3: Order Summary — appears when pack selected */}
-        {selectedPack && (
-          <div ref={checkoutRef} style={{ marginTop: 8, marginBottom: 40 }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20,
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: fields.length > 1 ? 'repeat(auto-fit, minmax(140px, 1fr))' : '1fr', gap: 12 }}>
+                  {fields.map((field, fieldIdx) => (
+                    servers.length > 0 && fieldIdx > 0 ? (
+                      <select
+                        key={field.name}
+                        className="form-input"
+                        value={playerData[field.name] || ''}
+                        onChange={e => {
+                          const next = { ...playerData, [field.name]: e.target.value }
+                          setPlayerData(next)
+                          scheduleVerify(next)
+                        }}
+                      >
+                        <option value="">Select {field.label}</option>
+                        {servers.map(s => (
+                          <option key={s.serverId} value={s.serverId}>{s.serverName}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        key={field.name}
+                        className="form-input"
+                        placeholder={field.label}
+                        value={playerData[field.name] || ''}
+                        onChange={e => {
+                          const next = { ...playerData, [field.name]: e.target.value }
+                          setPlayerData(next)
+                          scheduleVerify(next)
+                        }}
+                      />
+                    )
+                  ))}
+                </div>
+
+                {verifying && (
+                  <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>
+                    <div style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                    Verifying player…
+                  </div>
+                )}
+                {!verifying && verified && (
+                  <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: '#4ade80' }}>
+                    <CheckCircle size={15} />
+                    <span>
+                      {username || playerData[fields[0]?.name]}
+                      {playerData[fields[1]?.name] ? ` · ${servers.find(s => s.serverId === playerData[fields[1]?.name])?.serverName || playerData[fields[1]?.name]}` : ''}
+                    </span>
+                  </div>
+                )}
+                {!verifying && verifyError && (
+                  <div style={{ marginTop: 12, fontSize: 12, color: '#f87171', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <XCircle size={13} /> {verifyError}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Section 3: Order Summary — appears when pack selected */}
+            {selectedPack && (
+              <div ref={checkoutRef} style={{ marginBottom: 40 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: 8, flexShrink: 0,
@@ -495,6 +457,66 @@ export default function Recharge() {
             </div>
           </div>
         )}
+
+          </div>{/* end rc-left */}
+
+          {/* RIGHT: Pack Selection */}
+          <div className="rc-right">
+            <div ref={packSectionRef}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: 'linear-gradient(135deg,#ef4444,#dc2626)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontWeight: 900, fontSize: 15,
+                }}>2</div>
+                <div style={{ fontWeight: 800, fontSize: 15, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Select Package
+                </div>
+              </div>
+
+              {packs.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 16, color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>
+                  No packs available for this region yet.
+                </div>
+              ) : (() => {
+                const sections = []
+                const seen = []
+                packs.forEach(pack => {
+                  const sec = pack.sectionName || ''
+                  if (!seen.includes(sec)) { seen.push(sec); sections.push(sec) }
+                })
+                return sections.map(sec => (
+                  <div key={sec || '__default'} style={{ marginBottom: 8 }}>
+                    {sec && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                        <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.06)' }} />
+                        <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: 2 }}>{sec}</span>
+                        <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.06)' }} />
+                      </div>
+                    )}
+                    <div className="rc-pack-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+                      {packs.filter(p => (p.sectionName || '') === sec).map(pack => (
+                        <PackCard
+                          key={pack._id} pack={pack} fmt={fmt}
+                          isReseller={isReseller}
+                          selected={selectedPack?._id === pack._id}
+                          onClick={() => {
+                            setSelectedPack(pack)
+                            setTimeout(() => {
+                              checkoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            }, 150)
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              })()}
+            </div>
+          </div>{/* end rc-right */}
+
+        </div>{/* end rc-layout */}
 
       </div>
       <Footer />
