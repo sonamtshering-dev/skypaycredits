@@ -49,7 +49,10 @@ export default function PaymentSuccess() {
             <>
               <div style={{ width: 56, height: 56, border: '4px solid rgba(139,92,246,0.2)', borderTopColor: '#8b5cf6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 24px' }} />
               <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', marginBottom: 8 }}>Verifying Payment...</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Please wait, this may take a few seconds</div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 16 }}>Confirming your transaction, please wait</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '8px 12px' }}>
+                Do not close this page
+              </div>
               <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </>
           )}
