@@ -98,7 +98,8 @@ export default function Home() {
         @media (min-width: 768px)  { .game-grid { grid-template-columns: repeat(5, 1fr); } }
         @media (min-width: 1024px) { .game-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }
         .banner-thumbs { display: none; }
-        @media (min-width: 768px)  { .banner-thumbs { display: flex; } }
+        .banner-dots   { display: flex; }
+        @media (min-width: 768px)  { .banner-thumbs { display: flex; } .banner-dots { display: none; } }
       `}</style>
       <Navbar />
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -307,9 +308,9 @@ function BannerCarousel({ banners }) {
         )}
       </div>
 
-      {/* Dot indicators (mobile only) */}
+      {/* Dot indicators (mobile only — hidden on desktop via CSS) */}
       {banners.length > 1 && (
-        <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 5 }}>
+        <div className="banner-dots" style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', gap: 5 }}>
           {banners.map((_, i) => (
             <div key={i} onClick={() => setIdx(i)} style={{
               width: i === idx ? 20 : 6, height: 4, borderRadius: 2,
