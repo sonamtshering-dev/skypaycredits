@@ -96,7 +96,9 @@ export default function Home() {
         .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(8px, 1.5vw, 16px); }
         @media (min-width: 540px)  { .game-grid { grid-template-columns: repeat(4, 1fr); } }
         @media (min-width: 768px)  { .game-grid { grid-template-columns: repeat(5, 1fr); } }
-        @media (min-width: 1024px) { .game-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
+        @media (min-width: 1024px) { .game-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }
+        .banner-thumbs { display: none; }
+        @media (min-width: 768px)  { .banner-thumbs { display: flex; } }
       `}</style>
       <Navbar />
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -104,7 +106,7 @@ export default function Home() {
         <div className="container" style={{ paddingTop: 12, paddingBottom: 60 }}>
           {/* Category filter tabs */}
           {!loading && games.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0 16px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', padding: '8px 0 16px', overflowX: 'auto', scrollbarWidth: 'none' }}>
               <div style={{ display: 'flex', gap: 8, width: 'max-content' }}>
                 {availableCats.map(c => {
                   const active = activeCat === c.key
@@ -226,40 +228,92 @@ function BannerCarousel({ banners }) {
   const [idx, setIdx] = useState(0)
   useEffect(() => {
     if (banners.length <= 1) return
-    const t = setInterval(() => setIdx(i => (i + 1) % banners.length), 4000)
+    const t = setInterval(() => setIdx(i => (i + 1) % banners.length), 5000)
     return () => clearInterval(t)
   }, [banners.length])
   const b = banners[idx]
+  const pad = 'clamp(20px, 3vw, 44px)'
   return (
-    <div style={{ position: 'relative', maxWidth: 1100, margin: '0 auto', padding: '20px 16px 0' }}>
-      <div style={{
-        borderRadius: 20, overflow: 'hidden', position: 'relative',
-        height: 'clamp(160px, 28vw, 280px)',
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(255,255,255,0.09)',
-        cursor: b.link ? 'pointer' : 'default',
-      }} onClick={() => b.link && window.open(b.link, '_blank')}>
-        {b.image && (
-          <img key={idx} src={b.image} alt={b.title || ''}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
-        )}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,6,18,0.6) 0%, transparent 50%)' }} />
-        {b.title && (
-          <div style={{ position: 'absolute', bottom: 16, left: 20, color: '#fff', fontWeight: 900, fontSize: 'clamp(14px,3vw,22px)', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>{b.title}</div>
+    <div style={{ position: 'relative', width: '100%', height: 'clamp(260px, 40vw, 500px)', overflow: 'hidden', background: '#060612' }}>
+      {b.image && (
+        <img key={idx} src={b.image} alt={b.title || ''}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
+      )}
+      {/* dark gradient — heavy on left so text is readable */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(100deg, rgba(6,6,18,0.94) 0%, rgba(6,6,18,0.7) 38%, rgba(6,6,18,0.25) 65%, transparent 100%)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,6,18,0.9) 0%, transparent 40%)' }} />
+
+      {/* Main content row */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: pad, gap: 24 }}>
+
+        {/* Left: text + CTA */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            display: 'inline-block', background: 'rgba(124,58,237,0.88)',
+            borderRadius: 5, padding: '3px 12px', fontSize: 'clamp(10px,1vw,12px)',
+            fontWeight: 800, color: '#fff', marginBottom: 10,
+          }}>🔥 Featured</div>
+          {b.title && (
+            <div style={{
+              fontWeight: 900, fontSize: 'clamp(20px, 2.8vw, 38px)', color: '#fff',
+              marginBottom: 8, lineHeight: 1.15, textShadow: '0 2px 20px rgba(0,0,0,1)',
+            }}>{b.title}</div>
+          )}
+          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 'clamp(12px, 1.1vw, 15px)', marginBottom: 20 }}>
+            Top up instantly · Best rates guaranteed
+          </div>
+          {b.link && (
+            <button
+              onClick={() => window.open(b.link, '_blank')}
+              style={{
+                background: 'linear-gradient(135deg,#4c00b0,#7c3aed)', border: 'none',
+                borderRadius: 9, padding: 'clamp(8px,1vw,12px) clamp(18px,2vw,28px)',
+                fontSize: 'clamp(12px,1.1vw,15px)', fontWeight: 800, color: '#fff',
+                cursor: 'pointer', boxShadow: '0 4px 20px rgba(76,0,176,0.5)',
+              }}>Top Up Now →</button>
+          )}
+          {!b.link && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'linear-gradient(135deg,#4c00b0,#7c3aed)', borderRadius: 9,
+              padding: 'clamp(8px,1vw,12px) clamp(18px,2vw,28px)',
+              fontSize: 'clamp(12px,1.1vw,15px)', fontWeight: 800, color: '#fff',
+              boxShadow: '0 4px 20px rgba(76,0,176,0.5)',
+            }}>Browse Top-Ups →</div>
+          )}
+        </div>
+
+        {/* Right: thumbnail strip (desktop only) */}
+        {banners.length > 1 && (
+          <div className="banner-thumbs" style={{ flexDirection: 'column', gap: 10, flexShrink: 0 }}>
+            {banners.map((bn, i) => (
+              <div key={i} onClick={() => setIdx(i)} style={{
+                width: 'clamp(80px, 7vw, 120px)', height: 'clamp(52px, 4.8vw, 80px)',
+                borderRadius: 8, overflow: 'hidden', cursor: 'pointer', flexShrink: 0,
+                border: `2px solid ${i === idx ? '#7c3aed' : 'rgba(255,255,255,0.12)'}`,
+                opacity: i === idx ? 1 : 0.45,
+                transition: 'all 0.2s', background: '#111',
+              }}>
+                {bn.image && <img src={bn.image} alt={bn.title || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              </div>
+            ))}
+          </div>
         )}
       </div>
+
+      {/* Dot indicators (mobile only) */}
       {banners.length > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, paddingTop: 10 }}>
+        <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 5 }}>
           {banners.map((_, i) => (
             <div key={i} onClick={() => setIdx(i)} style={{
-              width: i === idx ? 20 : 6, height: 6, borderRadius: 3,
+              width: i === idx ? 20 : 6, height: 4, borderRadius: 2,
               background: i === idx ? theme.primary : 'rgba(255,255,255,0.25)',
               transition: 'all 0.3s', cursor: 'pointer',
             }} />
           ))}
         </div>
       )}
-      <style>{`@keyframes bannerFade { from { opacity: 0.5; } to { opacity: 1; } }`}</style>
+      <style>{`@keyframes bannerFade { from { opacity: 0.6; } to { opacity: 1; } }`}</style>
     </div>
   )
 }
