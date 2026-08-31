@@ -136,7 +136,7 @@ export default function Home() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
               {visibleGames.length > 0 && (
                 <div>
-                  <SectionHeader icon={<Gamepad2 size={20} color="#8b5cf6" />} title="Games" />
+                  <SectionHeader icon={<Gamepad2 size={18} color="#8b5cf6" />} title="Games" count={visibleGames.length} />
                   <div className="game-grid">
                     {visibleGames.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
@@ -146,7 +146,7 @@ export default function Home() {
               )}
               {visibleVouchers.length > 0 && (
                 <div>
-                  <SectionHeader icon={<Gift size={20} color="#f59e0b" />} title="Gift Cards & Vouchers" />
+                  <SectionHeader icon={<Gift size={18} color="#f59e0b" />} title="Gift Cards & Vouchers" count={visibleVouchers.length} />
                   <div className="game-grid">
                     {visibleVouchers.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} isVoucher />
@@ -156,7 +156,7 @@ export default function Home() {
               )}
               {visibleViaLogin.length > 0 && (
                 <div>
-                  <SectionHeader icon={<Globe size={20} color="#06b6d4" />} title="Via Login" />
+                  <SectionHeader icon={<Globe size={18} color="#06b6d4" />} title="Via Login" count={visibleViaLogin.length} />
                   <div className="game-grid">
                     {visibleViaLogin.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
@@ -166,7 +166,7 @@ export default function Home() {
               )}
               {visibleGifting.length > 0 && (
                 <div>
-                  <SectionHeader icon={<Handshake size={20} color="#a78bfa" />} title="Via Gifting" />
+                  <SectionHeader icon={<Handshake size={18} color="#a78bfa" />} title="Via Gifting" count={visibleGifting.length} />
                   <div className="game-grid">
                     {visibleGifting.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
@@ -176,7 +176,7 @@ export default function Home() {
               )}
               {visibleOtt.length > 0 && (
                 <div>
-                  <SectionHeader icon={<Tv size={20} color="#ec4899" />} title="OTT" />
+                  <SectionHeader icon={<Tv size={18} color="#ec4899" />} title="OTT" count={visibleOtt.length} />
                   <div className="game-grid">
                     {visibleOtt.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
@@ -186,7 +186,7 @@ export default function Home() {
               )}
               {visibleSmm.length > 0 && (
                 <div>
-                  <SectionHeader icon={<Share2 size={20} color="#10b981" />} title="SMM" />
+                  <SectionHeader icon={<Share2 size={18} color="#10b981" />} title="SMM" count={visibleSmm.length} />
                   <div className="game-grid">
                     {visibleSmm.map(game => (
                       <GameCard key={game._id} game={game} onClick={() => handleGameClick(game)} />
@@ -214,12 +214,18 @@ export default function Home() {
   )
 }
 
-function SectionHeader({ icon, title }) {
+function SectionHeader({ icon, title, count }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ width: 4, height: 22, borderRadius: 2, background: 'linear-gradient(to bottom,#7c3aed,#4c00b0)', flexShrink: 0 }} />
       <span style={{ display: 'flex', alignItems: 'center' }}>{icon}</span>
-      <h2 style={{ fontWeight: 900, fontSize: 18, color: '#fff', margin: 0 }}>{title}</h2>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)', marginLeft: 4 }} />
+      <h2 style={{ fontWeight: 900, fontSize: 17, color: '#fff', margin: 0, letterSpacing: 0.3 }}>{title}</h2>
+      {count != null && (
+        <div style={{ background: 'rgba(124,58,237,0.18)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 20, padding: '2px 9px', fontSize: 11, fontWeight: 700, color: '#a78bfa' }}>
+          {count}
+        </div>
+      )}
+      <div style={{ flex: 1 }} />
     </div>
   )
 }
