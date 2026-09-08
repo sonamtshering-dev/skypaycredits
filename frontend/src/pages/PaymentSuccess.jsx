@@ -62,7 +62,7 @@ export default function PaymentSuccess() {
               <div style={{ marginBottom: 16 }}><CheckCircle size={64} color="#22c55e" /></div>
               <div style={{ fontWeight: 900, fontSize: 24, color: '#fff', marginBottom: 8 }}>Payment Successful!</div>
               <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>
-                {isWallet ? 'Your wallet has been topped up' : 'Your diamonds are being delivered automatically'}
+                {isWallet ? 'Your wallet has been topped up' : 'Your order is being processed automatically'}
               </div>
               <div style={{ fontSize: 13, color: '#8b5cf6' }}>
                 {isWallet ? 'Redirecting to wallet…' : 'Redirecting to orders...'}
@@ -75,7 +75,7 @@ export default function PaymentSuccess() {
               <div style={{ marginBottom: 16 }}><XCircle size={64} color="#ef4444" /></div>
               <div style={{ fontWeight: 900, fontSize: 22, color: '#fff', marginBottom: 20 }}>Payment Failed or Cancelled</div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 24 }}>
-                If you completed payment, please check your orders page. Contact support if diamonds were not delivered.
+                If you completed payment, please check your orders page. Contact support if your order was not delivered.
               </div>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                 <button className="btn btn-primary" onClick={() => navigate(-2)}>Try Again</button>

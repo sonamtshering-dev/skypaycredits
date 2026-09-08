@@ -77,7 +77,7 @@ export default function Navbar() {
             display: 'flex', alignItems: 'center',
             background: 'rgba(10,15,35,0.85)',
             border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 30, padding: 3, gap: 2, flexShrink: 0,
+            borderRadius: 30, padding: 2, gap: 1, flexShrink: 0,
           }}>
             {[
               { code: 'INR', symbol: '₹', activeColor: '#f59e0b', activeBg: '#f59e0b' },
@@ -86,12 +86,12 @@ export default function Navbar() {
               const active = currency === code
               return (
                 <button key={code} onClick={toggleCurrency} style={{
-                  width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                  width: 22, height: 22, borderRadius: '50%', border: 'none', cursor: 'pointer',
                   background: active ? activeBg : 'transparent',
                   color: active ? '#000' : 'rgba(255,255,255,0.45)',
-                  fontWeight: 900, fontSize: 13,
+                  fontWeight: 900, fontSize: 11,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: active ? `0 0 10px ${activeColor}55` : 'none',
+                  boxShadow: active ? `0 0 8px ${activeColor}55` : 'none',
                   transition: 'all 0.2s',
                 }}>{symbol}</button>
               )
@@ -105,22 +105,22 @@ export default function Navbar() {
 
               {/* Wallet balance pill */}
               <Link to="/wallet" className="hide-mobile" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 7, textDecoration: 'none',
+                display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none',
                 background: 'rgba(10,15,35,0.85)',
                 border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 30, padding: '3px 14px 3px 3px',
+                borderRadius: 30, padding: '2px 12px 2px 2px',
               }}>
                 <div style={{
-                  width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                  width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
                   background: 'linear-gradient(135deg,#f59e0b,#d97706)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, fontWeight: 900,
+                  fontSize: 11, fontWeight: 900,
                 }}>
                   {settings.logo
-                    ? <img src={settings.logo} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
+                    ? <img src={settings.logo} alt="" style={{ width: 17, height: 17, borderRadius: '50%', objectFit: 'cover' }} />
                     : '🪙'}
                 </div>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: 12, whiteSpace: 'nowrap' }}>
                   {walletBalance > 0 ? fmtP(walletBalance) : fmtP(0)}
                 </span>
               </Link>
@@ -129,18 +129,18 @@ export default function Navbar() {
 
               {/* Mobile wallet pill — show-mobile */}
               <Link to="/wallet" className="show-mobile" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5, textDecoration: 'none',
+                display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none',
                 background: 'rgba(124,58,237,0.15)',
                 border: '1px solid rgba(124,58,237,0.35)',
-                borderRadius: 30, padding: '4px 10px 4px 4px',
+                borderRadius: 30, padding: '2px 9px 2px 2px',
               }}>
                 <div style={{
-                  width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                  width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
                   background: 'linear-gradient(135deg,#7c3aed,#4c00b0)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 900, color: '#fff',
+                  fontSize: 10, fontWeight: 900, color: '#fff',
                 }}>₹</div>
-                <span style={{ color: '#c4b5fd', fontWeight: 700, fontSize: 12, whiteSpace: 'nowrap' }}>
+                <span style={{ color: '#c4b5fd', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>
                   {fmtP(walletBalance ?? 0)}
                 </span>
               </Link>
@@ -418,7 +418,7 @@ export default function Navbar() {
         @media (max-width: 639px) {
           .drawer-logout { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important; }
         }
-        @media (max-width: 480px) {
+        @media (max-width: 359px) {
           .nav-brand-text { display: none !important; }
         }
       `}</style>

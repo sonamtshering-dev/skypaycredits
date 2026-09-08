@@ -46,6 +46,15 @@ export default function Recharge() {
   const [couponError, setCouponError]     = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
 
+  // Phone gate — for existing users with no phone number
+  const [showPhoneGate, setShowPhoneGate]         = useState(false)
+  const [pgPhone, setPgPhone]                     = useState('')
+  const [pgOtpSent, setPgOtpSent]                 = useState(false)
+  const [pgOtp, setPgOtp]                         = useState('')
+  const [pgLoading, setPgLoading]                 = useState(false)
+  const [pgError, setPgError]                     = useState('')
+  const [pgCooldown, setPgCooldown]               = useState(0)
+
   const rawFields = region?.fields?.length ? region.fields : game?.fields
   const fields = (rawFields && rawFields.length > 0) ? rawFields : [
     { name: 'userId', label: 'User ID' },
@@ -164,8 +173,9 @@ export default function Recharge() {
     if (!selectedPack) return setCouponError('Select a pack first')
     setCouponLoading(true); setCouponError(''); setCouponApplied(null)
     try {
+      const couponBase = (isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price
       const { data } = await api.post('/coupons/validate', {
-        code: couponCode.trim(), price: selectedPack.price, gameId,
+        code: couponCode.trim(), price: couponBase, gameId,
       })
       setCouponApplied(data)
     } catch (err) {
@@ -175,7 +185,8 @@ export default function Recharge() {
 
   const removeCoupon = () => { setCouponApplied(null); setCouponCode(''); setCouponError('') }
 
-  const finalPrice = couponApplied ? couponApplied.finalPrice : selectedPack?.price
+  const basePrice = (isReseller && selectedPack?.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack?.price
+  const finalPrice = couponApplied ? couponApplied.finalPrice : basePrice
 
   const activeProvider   = region?.provider || packs[0]?.provider || ''
   const isFintopup       = activeProvider === 'fintopup'
@@ -338,7 +349,12 @@ export default function Recharge() {
               ['Account ID', (playerData[fields[0]?.name] || '—') + (playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : '')],
               ...(username && username !== playerData[fields[0]?.name] ? [['Player Name', username]] : []),
               ['Pack', selectedPack.title],
-              ['Original Price', fmt((isReseller && selectedPack.resellerPrice > 0) ? selectedPack.resellerPrice : selectedPack.price, 0)]
+              ...(isReseller && selectedPack.resellerPrice > 0 ? [
+                ['Original Price', fmt(selectedPack.price, 0)],
+                ['Your Price', fmt(selectedPack.resellerPrice, 0)],
+              ] : [
+                ['Price', fmt(selectedPack.price, 0)],
+              ])
             ].map(([label, val]) => (
                 <div key={label} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -437,6 +453,7 @@ export default function Recharge() {
                   if (!user) { navigate('/auth'); return }
                   if (!playerData[fields[0]?.name]) { setError('Enter your Player ID'); return }
                   if (!selectedPack) { setError('Select a pack'); return }
+                  if (!user.phone) { setShowPhoneGate(true); return }
                   setShowPaySheet(true)
                 }}
                 disabled={paying}
@@ -520,6 +537,90 @@ export default function Recharge() {
 
       </div>
       <Footer />
+
+      {/* ── Phone Gate Modal ── */}
+      {showPhoneGate && (
+        <>
+          <div onClick={() => setShowPhoneGate(false)} style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)' }} />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+            zIndex: 10002, width: 'min(92vw, 400px)',
+            background: 'rgba(10,6,28,0.98)', border: '1px solid rgba(124,58,237,0.35)',
+            borderRadius: 20, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 16,
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>📱</div>
+              <div style={{ fontWeight: 900, fontSize: 18, color: '#fff', marginBottom: 4 }}>Add Your Phone Number</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>Required to complete your order. We'll send a one-time code to verify.</div>
+            </div>
+
+            {!pgOtpSent ? (
+              <>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="tel" inputMode="numeric" placeholder="10-digit mobile number"
+                    value={pgPhone}
+                    onChange={e => setPgPhone(e.target.value.replace(/\D/g,'').slice(0,10))}
+                    style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '11px 14px', color: '#fff', fontSize: 15, outline: 'none' }}
+                  />
+                  <button
+                    onClick={async () => {
+                      setPgError('')
+                      if (!/^[6-9]\d{9}$/.test(pgPhone)) return setPgError('Enter a valid 10-digit number')
+                      setPgLoading(true)
+                      try {
+                        await api.post('/auth/send-phone-otp', { phone: pgPhone })
+                        setPgOtpSent(true); setPgOtp('')
+                        let c = 30; setPgCooldown(c)
+                        const t = setInterval(() => { c--; setPgCooldown(c); if (c <= 0) clearInterval(t) }, 1000)
+                      } catch (err) { setPgError(err.response?.data?.message || 'Failed to send OTP') }
+                      finally { setPgLoading(false) }
+                    }}
+                    disabled={pgLoading}
+                    style={{ padding: '11px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4c00b0)', border: 'none', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap', opacity: pgLoading ? 0.6 : 1 }}
+                  >{pgLoading ? '…' : 'Send OTP'}</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
+                  Code sent to <strong style={{ color: '#c4b5fd' }}>+91 {pgPhone}</strong>
+                  <button onClick={() => { setPgOtpSent(false); setPgOtp('') }} style={{ marginLeft: 8, background: 'none', border: 'none', color: '#7c3aed', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Change</button>
+                </div>
+                <input
+                  type="tel" inputMode="numeric" placeholder="Enter 6-digit OTP"
+                  value={pgOtp}
+                  onChange={e => setPgOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '13px 14px', color: '#fff', fontSize: 18, outline: 'none', textAlign: 'center', letterSpacing: 6, fontWeight: 700 }}
+                />
+                <button
+                  onClick={async () => {
+                    setPgError('')
+                    if (pgOtp.length !== 6) return setPgError('Enter the 6-digit code')
+                    setPgLoading(true)
+                    try {
+                      const { data } = await api.post('/auth/verify-phone-otp-pre', { phone: pgPhone, otp: pgOtp })
+                      await api.post('/auth/add-phone', { phoneVerifiedToken: data.token })
+                      await refreshWallet()
+                      setShowPhoneGate(false)
+                      setShowPaySheet(true)
+                    } catch (err) { setPgError(err.response?.data?.message || 'Incorrect code') }
+                    finally { setPgLoading(false) }
+                  }}
+                  disabled={pgLoading || pgOtp.length !== 6}
+                  style={{ width: '100%', padding: '14px', borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#4c00b0)', border: 'none', color: '#fff', fontWeight: 900, fontSize: 15, cursor: 'pointer', opacity: (pgLoading || pgOtp.length !== 6) ? 0.5 : 1 }}
+                >{pgLoading ? 'Verifying…' : 'Verify & Continue to Checkout'}</button>
+                {pgCooldown > 0
+                  ? <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Resend in {pgCooldown}s</div>
+                  : <button onClick={() => { setPgOtpSent(false); setPgOtp('') }} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: 13, cursor: 'pointer', fontWeight: 700 }}>Resend OTP</button>
+                }
+              </>
+            )}
+
+            {pgError && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px', color: '#f87171', fontSize: 13 }}>{pgError}</div>}
+          </div>
+        </>
+      )}
 
       {/* ── Payment Bottom Sheet ── */}
       {showPaySheet && (

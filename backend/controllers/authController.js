@@ -60,10 +60,10 @@ exports.register = async (req, res) => {
     const emailToken = req.body.emailVerifiedToken
     const phoneToken = req.body.phoneVerifiedToken
 
-    if (!name || !email || !password)
-      return res.status(400).json({ message: "Name, email and password are required" })
+    if (!name || !email || !password || !rawPhone)
+      return res.status(400).json({ message: "Name, email, phone and password are required" })
 
-    const phone = rawPhone ? rawPhone.replace(/\s/g, '') : ''
+    const phone = rawPhone.replace(/\s/g, '')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       return res.status(400).json({ message: "Invalid email address" })
     if (password.length < 8)
@@ -87,7 +87,18 @@ exports.register = async (req, res) => {
       } catch {
         return res.status(400).json({ message: "Email verification expired. Please verify again." })
       }
-      const user = await User.create({ name, email, password, ...(phone ? { phone } : {}), isEmailVerified: true })
+      if (!phoneToken)
+        return res.status(400).json({ message: "Phone verification is required." })
+      try {
+        const phonePayload = jwt.verify(phoneToken, process.env.JWT_SECRET)
+        const phone10 = phone.replace(/^\+?91/, '').replace(/\D/g,'').slice(-10)
+        const normalizedPhone = `91${phone10}`
+        if (phonePayload.type !== 'phone-verified' || phonePayload.phone !== normalizedPhone)
+          return res.status(400).json({ message: "Phone verification expired. Please verify again." })
+      } catch {
+        return res.status(400).json({ message: "Phone verification expired. Please verify again." })
+      }
+      const user = await User.create({ name, email, password, phone, isEmailVerified: true })
       const token = makeToken(user._id, user.tokenVersion || 0)
       res.cookie("token", token, { httpOnly: true, secure: isProd, sameSite: "strict", maxAge: 7*24*60*60*1000 })
       securityLog.loginSuccess(user._id, req.ip)
@@ -367,7 +378,30 @@ exports.getMe = async (req, res) => {
     avatar: u.avatar, createdAt: u.createdAt,
     walletBalance: u.walletBalance || 0,
     walletStatus:  u.walletStatus  || 'active',
+    phone: u.phone || '',
   })
+}
+
+// ── Add / verify phone for existing users ─────────────
+exports.addPhone = async (req, res) => {
+  try {
+    const phoneToken = req.body.phoneVerifiedToken
+    if (!phoneToken) return res.status(400).json({ message: "Phone verification token required" })
+    let phonePayload
+    try {
+      phonePayload = jwt.verify(phoneToken, process.env.JWT_SECRET)
+      if (phonePayload.type !== 'phone-verified')
+        return res.status(400).json({ message: "Invalid phone token" })
+    } catch {
+      return res.status(400).json({ message: "Phone verification expired. Please verify again." })
+    }
+    const taken = await User.findOne({ phone: phonePayload.phone, isEmailVerified: true, _id: { $ne: req.user._id } })
+    if (taken) return res.status(400).json({ message: "Phone number already registered to another account" })
+    const user = await User.findByIdAndUpdate(req.user._id, { phone: phonePayload.phone }, { new: true })
+    res.json({ message: "Phone saved", phone: user.phone })
+  } catch (err) {
+    res.status(500).json({ message: "Failed to save phone" })
+  }
 }
 
 // ── Update profile (name only) ────────────────────────

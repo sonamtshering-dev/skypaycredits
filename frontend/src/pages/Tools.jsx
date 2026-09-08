@@ -95,7 +95,20 @@ export default function Tools() {
                 <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '-0.4px', marginBottom: 4 }}>
                   {data.username || '—'}
                 </div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 14 }}>{data.region || '—'}</div>
+                <div style={{ marginBottom: 14 }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontSize: 11, fontWeight: 700, letterSpacing: 0.4,
+                    padding: '4px 10px 4px 7px', borderRadius: 20,
+                    background: 'rgba(124,58,237,0.12)',
+                    border: '1px solid rgba(124,58,237,0.28)',
+                    color: '#c4b5fd',
+                  }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.8, color: 'rgba(196,181,253,0.55)', textTransform: 'uppercase' }}>Region</span>
+                    <span style={{ width: 1, height: 10, background: 'rgba(124,58,237,0.35)', display: 'inline-block' }} />
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#e9d5ff' }}>{data.region || '—'}</span>
+                  </span>
+                </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Chip label="User ID" value={data.userId} />
                   <Chip label="Zone ID" value={data.zoneId} />

@@ -99,7 +99,8 @@ export default function Home() {
         @media (min-width: 1024px) { .game-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }
         .banner-thumbs { display: none; }
         .banner-dots   { display: flex; }
-        @media (min-width: 768px)  { .banner-thumbs { display: flex; } .banner-dots { display: none; } }
+        .banner-featured { display: none; }
+        @media (min-width: 768px)  { .banner-thumbs { display: flex; } .banner-dots { display: none; } .banner-featured { display: inline-block; } }
       `}</style>
       <Navbar />
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -255,8 +256,8 @@ function BannerCarousel({ banners }) {
 
         {/* Left: text + CTA */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            display: 'inline-block', background: 'rgba(124,58,237,0.88)',
+          <div className="banner-featured" style={{
+            background: 'rgba(124,58,237,0.88)',
             borderRadius: 5, padding: '3px 12px', fontSize: 'clamp(10px,1vw,12px)',
             fontWeight: 800, color: '#fff', marginBottom: 10,
           }}>🔥 Featured</div>

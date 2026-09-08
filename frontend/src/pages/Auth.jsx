@@ -236,6 +236,7 @@ export default function Auth() {
     e.preventDefault(); setError('')
     if (!name) return setError('Enter your name')
     if (!emailOtpVerified) return setError('Please verify your email first')
+    if (!phoneOtpVerified) return setError('Please verify your phone number first')
     if (!password) return setError('Enter a password')
     if (password.length < 8) return setError('Password must be at least 8 characters')
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) return setError('Password needs uppercase, lowercase and a number')
@@ -245,6 +246,7 @@ export default function Auth() {
       const { data } = await api.post('/auth/register', {
         name, email, phone, password,
         emailVerifiedToken: emailVerifiedToken,
+        phoneVerifiedToken: phoneVerifiedToken,
       })
       login(data.token, data.user); navigate('/')
     } catch (err) { setError(err.response?.data?.message || 'Registration failed') }
@@ -605,13 +607,30 @@ export default function Auth() {
                     </div>
                   )}
 
-                  {/* Phone (optional, no OTP) */}
+                  {/* Phone + Send OTP */}
                   <div className="form-group">
-                    <label>Phone (optional)</label>
-                    <input style={inp} type="tel" inputMode="numeric" placeholder="Mobile number"
-                      value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,'').slice(0,15))}
-                      autoComplete="off" />
+                    <label>Phone number</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input style={{ ...inp, flex: 1 }} type="tel" inputMode="numeric" placeholder="10-digit mobile number"
+                        value={phone} onChange={e => { setPhone(e.target.value.replace(/\D/g,'').slice(0,15)); setPhoneOtpSent(false); setPhoneOtpVerified(false); setPhoneVerifiedToken('') }}
+                        disabled={phoneOtpVerified} autoComplete="off" />
+                      {!phoneOtpVerified && (
+                        <SendOtpBtn onClick={handleSendPhoneOtp} loading={phoneOtpLoading} sent={phoneOtpSent} cooldown={phoneResend} />
+                      )}
+                      {phoneOtpVerified && <VerifiedBadge />}
+                    </div>
+                    {phoneOtpError && <div style={{ ...errBox, marginTop: 6 }}>{phoneOtpError}</div>}
                   </div>
+
+                  {/* Phone OTP boxes */}
+                  {phoneOtpSent && !phoneOtpVerified && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <OtpBoxes value={phoneOtp} onChange={setPhoneOtp} disabled={phoneOtpLoading} />
+                      <button type="button" onClick={handleVerifyPhoneOtp} disabled={phoneOtpLoading || phoneOtp.replace(/\s/g,'').length !== 6} style={btn(phoneOtpLoading || phoneOtp.replace(/\s/g,'').length !== 6)}>
+                        {phoneOtpLoading ? 'Verifying…' : 'Verify Phone'}
+                      </button>
+                    </div>
+                  )}
 
                   {/* Password — always visible */}
                   <div className="form-group">
@@ -628,7 +647,7 @@ export default function Auth() {
 
                   {error && <div style={errBox}>{error}</div>}
 
-                  <button type="submit" disabled={loading || !emailOtpVerified} style={btn(loading || !emailOtpVerified)}>
+                  <button type="submit" disabled={loading || !emailOtpVerified || !phoneOtpVerified} style={btn(loading || !emailOtpVerified || !phoneOtpVerified)}>
                     {loading ? 'Creating account…' : 'Create Account'}
                   </button>
                 </form>
