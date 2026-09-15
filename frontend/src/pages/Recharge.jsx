@@ -202,16 +202,17 @@ export default function Recharge() {
     <>
       <Navbar />
       <style>{`
-        .rc-layout { display: flex; flex-direction: column; gap: 20px; }
-        .rc-right  { display: flex; flex-direction: column; gap: 20px; }
+        .rc-layout  { display: flex; flex-direction: column; gap: 20px; }
+        .rc-right   { display: flex; flex-direction: column; gap: 20px; }
         @media (min-width: 768px) {
-          .rc-layout { flex-direction: row; align-items: flex-start; gap: 28px; }
-          .rc-left   { width: 380px; flex-shrink: 0; position: sticky; top: 80px; }
-          .rc-right  { flex: 1; min-width: 0; }
+          .rc-layout  { display: grid; grid-template-columns: 380px 1fr; grid-template-rows: auto 1fr; gap: 28px; align-items: start; }
+          .rc-player  { grid-column: 1; grid-row: 1; }
+          .rc-right   { grid-column: 2; grid-row: 1 / 3; min-width: 0; }
+          .rc-summary { grid-column: 1; grid-row: 2; position: sticky; top: 80px; }
           .rc-pack-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; }
         }
         @media (min-width: 1100px) {
-          .rc-left { width: 420px; }
+          .rc-layout { grid-template-columns: 420px 1fr; }
           .rc-pack-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)) !important; }
         }
       `}</style>
@@ -248,10 +249,8 @@ export default function Recharge() {
         {/* Two-column on desktop, single-column on mobile */}
         <div className="rc-layout">
 
-          {/* LEFT: Player ID + Order Summary */}
-          <div className="rc-left">
-
-            {/* Section 1: Player ID */}
+          {/* Section 1: Player ID */}
+          <div className="rc-player">
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                 <div style={{
@@ -325,157 +324,7 @@ export default function Recharge() {
                 )}
               </div>
             </div>
-
-            {/* Section 3: Order Summary — appears when pack selected */}
-            {selectedPack && (
-              <div ref={checkoutRef} style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                background: 'linear-gradient(135deg,#ef4444,#dc2626)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontWeight: 900, fontSize: 15,
-              }}>3</div>
-              <div style={{ fontWeight: 800, fontSize: 15, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Coupon & Summary
-              </div>
-            </div>
-
-            <div style={{
-              background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', marginBottom: 16,
-            }}>
-              {[
-              ['Account ID', (playerData[fields[0]?.name] || '—') + (playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : '')],
-              ...(username && username !== playerData[fields[0]?.name] ? [['Player Name', username]] : []),
-              ['Pack', selectedPack.title],
-              ...(isReseller && selectedPack.resellerPrice > 0 ? [
-                ['Original Price', fmt(selectedPack.price, 0)],
-                ['Your Price', fmt(selectedPack.resellerPrice, 0)],
-              ] : [
-                ['Price', fmt(selectedPack.price, 0)],
-              ])
-            ].map(([label, val]) => (
-                <div key={label} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
-                }}>
-                  <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>{label}</span>
-                  <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{val}</span>
-                </div>
-              ))}
-              {couponApplied && (
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
-                  background: 'rgba(34,197,94,0.06)',
-                }}>
-                  <span style={{ color: '#4ade80', fontSize: 14, display: 'flex', alignItems: 'center', gap: 5 }}><Ticket size={13} /> Coupon ({couponApplied.code})</span>
-                  <span style={{ color: '#4ade80', fontWeight: 700, fontSize: 14 }}>-{fmt(couponApplied.discount, 0)}</span>
-                </div>
-              )}
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '16px 20px', background: theme.alpha(0.08),
-                borderTop: `1px solid ${theme.alpha(0.2)}`,
-              }}>
-                <span style={{ color: '#fff', fontWeight: 900, fontSize: 16, letterSpacing: 1 }}>TOTAL</span>
-                <span style={{ color: theme.primary, fontWeight: 900, fontSize: 22 }}>{fmt(finalPrice, 0)}</span>
-              </div>
-            </div>
-
-            {/* Coupon Input */}
-            {!couponApplied ? (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    style={{
-                      flex: 1, background: 'rgba(255,255,255,0.07)',
-                      border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10,
-                      padding: '11px 14px', color: '#fff', fontSize: 14, outline: 'none',
-                    }}
-                    placeholder="Enter coupon code"
-                    value={couponCode}
-                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                    onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
-                  />
-                  <button onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim()} style={{
-                    padding: '11px 18px', borderRadius: 10, fontWeight: 700, fontSize: 14,
-                    background: theme.grad, border: 'none', color: '#fff',
-                    cursor: couponLoading || !couponCode.trim() ? 'not-allowed' : 'pointer',
-                    opacity: couponLoading || !couponCode.trim() ? 0.6 : 1,
-                    whiteSpace: 'nowrap',
-                  }}>{couponLoading ? '…' : 'Apply'}</button>
-                </div>
-                {couponError && <div style={{ color: '#f87171', fontSize: 12, marginTop: 6 }}>{couponError}</div>}
-              </div>
-            ) : (
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
-                borderRadius: 10, padding: '10px 14px', marginBottom: 14,
-              }}>
-                <span style={{ color: '#4ade80', fontSize: 13, fontWeight: 700 }}>✓ {couponApplied.message}</span>
-                <button onClick={removeCoupon} style={{
-                  background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
-                  fontSize: 18, cursor: 'pointer', padding: 0, lineHeight: 1,
-                }}>×</button>
-              </div>
-            )}
-
-            {paySuccess ? (
-              <div style={{
-                textAlign: 'center', padding: '28px 20px',
-                background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14,
-              }}>
-                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px', display: 'block' }}>
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-                <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 6 }}>Order Placed!</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 4 }}>{paySuccess.packName} · ₹{paySuccess.amount}</div>
-                <div style={{ color: '#4ade80', fontSize: 13, marginBottom: 20 }}>Paid from wallet · Balance updated</div>
-                <button className="btn btn-primary" onClick={() => navigate('/orders')} style={{ padding: '10px 28px' }}>
-                  View Orders
-                </button>
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 12 }}>Redirecting in 3 seconds…</div>
-              </div>
-            ) : settings.purchasesEnabled === false ? (
-              <div style={{
-                width: '100%', padding: '16px', borderRadius: 14, textAlign: 'center',
-                fontWeight: 800, fontSize: 15, color: '#f87171',
-                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-              }}>
-                Purchases are temporarily disabled. Please check back soon.
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  if (!user) { navigate('/auth'); return }
-                  if (!playerData[fields[0]?.name]) { setError('Enter your Player ID'); return }
-                  if (!selectedPack) { setError('Select a pack'); return }
-                  if (!user.phone) { setShowPhoneGate(true); return }
-                  setShowPaySheet(true)
-                }}
-                disabled={paying}
-                style={{
-                  width: '100%', padding: '17px', borderRadius: 14, cursor: 'pointer',
-                  fontWeight: 900, fontSize: 17, letterSpacing: 0.3,
-                  background: theme.grad, border: 'none', color: '#fff',
-                  opacity: paying ? 0.5 : 1,
-                  boxShadow: '0 0 30px rgba(109,40,217,0.4), inset 0 1px 0 rgba(255,255,255,0.12)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}
-              >
-                {!user ? <><Lock size={14} />Login to Checkout</> : <>Checkout <ArrowRight size={15} /></>}
-              </button>
-            )}
-            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-              <Lock size={11} /> Secure payment
-            </div>
-          </div>
-        )}
-
-          </div>{/* end rc-left */}
+          </div>{/* end rc-player */}
 
           {/* RIGHT: Pack Selection */}
           <div className="rc-right">
@@ -532,6 +381,157 @@ export default function Recharge() {
               })()}
             </div>
           </div>{/* end rc-right */}
+
+          {/* Section 3: Order Summary — appears when pack selected */}
+          {selectedPack && (
+            <div className="rc-summary">
+              <div ref={checkoutRef} style={{ marginBottom: 40 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: 'linear-gradient(135deg,#ef4444,#dc2626)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontWeight: 900, fontSize: 15,
+                  }}>3</div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Coupon & Summary
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', marginBottom: 16,
+                }}>
+                  {[
+                    ['Account ID', (playerData[fields[0]?.name] || '—') + (playerData[fields[1]?.name] ? ` / ${playerData[fields[1]?.name]}` : '')],
+                    ...(username && username !== playerData[fields[0]?.name] ? [['Player Name', username]] : []),
+                    ['Pack', selectedPack.title],
+                    ...(isReseller && selectedPack.resellerPrice > 0 ? [
+                      ['Original Price', fmt(selectedPack.price, 0)],
+                      ['Your Price', fmt(selectedPack.resellerPrice, 0)],
+                    ] : [
+                      ['Price', fmt(selectedPack.price, 0)],
+                    ])
+                  ].map(([label, val]) => (
+                    <div key={label} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+                    }}>
+                      <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>{label}</span>
+                      <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{val}</span>
+                    </div>
+                  ))}
+                  {couponApplied && (
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+                      background: 'rgba(34,197,94,0.06)',
+                    }}>
+                      <span style={{ color: '#4ade80', fontSize: 14, display: 'flex', alignItems: 'center', gap: 5 }}><Ticket size={13} /> Coupon ({couponApplied.code})</span>
+                      <span style={{ color: '#4ade80', fontWeight: 700, fontSize: 14 }}>-{fmt(couponApplied.discount, 0)}</span>
+                    </div>
+                  )}
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '16px 20px', background: theme.alpha(0.08),
+                    borderTop: `1px solid ${theme.alpha(0.2)}`,
+                  }}>
+                    <span style={{ color: '#fff', fontWeight: 900, fontSize: 16, letterSpacing: 1 }}>TOTAL</span>
+                    <span style={{ color: theme.primary, fontWeight: 900, fontSize: 22 }}>{fmt(finalPrice, 0)}</span>
+                  </div>
+                </div>
+
+                {/* Coupon Input */}
+                {!couponApplied ? (
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        style={{
+                          flex: 1, background: 'rgba(255,255,255,0.07)',
+                          border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10,
+                          padding: '11px 14px', color: '#fff', fontSize: 14, outline: 'none',
+                        }}
+                        placeholder="Enter coupon code"
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                        onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                      />
+                      <button onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim()} style={{
+                        padding: '11px 18px', borderRadius: 10, fontWeight: 700, fontSize: 14,
+                        background: theme.grad, border: 'none', color: '#fff',
+                        cursor: couponLoading || !couponCode.trim() ? 'not-allowed' : 'pointer',
+                        opacity: couponLoading || !couponCode.trim() ? 0.6 : 1,
+                        whiteSpace: 'nowrap',
+                      }}>{couponLoading ? '…' : 'Apply'}</button>
+                    </div>
+                    {couponError && <div style={{ color: '#f87171', fontSize: 12, marginTop: 6 }}>{couponError}</div>}
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+                    borderRadius: 10, padding: '10px 14px', marginBottom: 14,
+                  }}>
+                    <span style={{ color: '#4ade80', fontSize: 13, fontWeight: 700 }}>✓ {couponApplied.message}</span>
+                    <button onClick={removeCoupon} style={{
+                      background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+                      fontSize: 18, cursor: 'pointer', padding: 0, lineHeight: 1,
+                    }}>×</button>
+                  </div>
+                )}
+
+                {paySuccess ? (
+                  <div style={{
+                    textAlign: 'center', padding: '28px 20px',
+                    background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14,
+                  }}>
+                    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px', display: 'block' }}>
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 6 }}>Order Placed!</div>
+                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 4 }}>{paySuccess.packName} · ₹{paySuccess.amount}</div>
+                    <div style={{ color: '#4ade80', fontSize: 13, marginBottom: 20 }}>Paid from wallet · Balance updated</div>
+                    <button className="btn btn-primary" onClick={() => navigate('/orders')} style={{ padding: '10px 28px' }}>
+                      View Orders
+                    </button>
+                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 12 }}>Redirecting in 3 seconds…</div>
+                  </div>
+                ) : settings.purchasesEnabled === false ? (
+                  <div style={{
+                    width: '100%', padding: '16px', borderRadius: 14, textAlign: 'center',
+                    fontWeight: 800, fontSize: 15, color: '#f87171',
+                    background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                  }}>
+                    Purchases are temporarily disabled. Please check back soon.
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (!user) { navigate('/auth'); return }
+                      if (!playerData[fields[0]?.name]) { setError('Enter your Player ID'); return }
+                      if (!selectedPack) { setError('Select a pack'); return }
+                      if (!user.phone) { setShowPhoneGate(true); return }
+                      setShowPaySheet(true)
+                    }}
+                    disabled={paying}
+                    style={{
+                      width: '100%', padding: '17px', borderRadius: 14, cursor: 'pointer',
+                      fontWeight: 900, fontSize: 17, letterSpacing: 0.3,
+                      background: theme.grad, border: 'none', color: '#fff',
+                      opacity: paying ? 0.5 : 1,
+                      boxShadow: '0 0 30px rgba(109,40,217,0.4), inset 0 1px 0 rgba(255,255,255,0.12)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    }}
+                  >
+                    {!user ? <><Lock size={14} />Login to Checkout</> : <>Checkout <ArrowRight size={15} /></>}
+                  </button>
+                )}
+                <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <Lock size={11} /> Secure payment
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>{/* end rc-layout */}
 
