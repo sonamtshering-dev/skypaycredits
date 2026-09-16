@@ -95,6 +95,8 @@ exports.createTopup = async (req, res) => {
       currency:           'INR',
       customer_reference: req.user.name?.substring(0, 128) || 'Customer',
       redirect_url:       `${FRONTEND}/payment/success?order_id=${order._id}&type=wallet`,
+      auto_redirect:      true,
+      redirect_delay:     3,
     }
     const rawBody = JSON.stringify(bodyObj)
 

@@ -16,7 +16,7 @@ const Pack      = require("../models/Pack")
 const Coupon    = require("../models/Coupon")
 const { processRecharge } = require("../services/rechargeService")
 const { protect, adminOnly, validateObjectId } = require("../middlewares/authMiddleware")
-const { debitWallet } = require("../services/walletService")
+const { debitWallet, creditWallet } = require("../services/walletService")
 const WalletTransaction = require("../models/WalletTransaction")
 const { sendOrderConfirmationEmail } = require("../services/emailService")
 const Settings = require("../models/Settings")
@@ -357,6 +357,22 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
     const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true })
     if (!order) return res.status(404).json({ message: "Order not found" })
     securityLog.adminAction(req.user._id, `update_order:${JSON.stringify(update)}`, req.params.id)
+
+    // Credit wallet for topup orders when admin manually completes them
+    if (status === 'Completed' && order.orderType === 'wallet_topup' && !order.walletCredited) {
+      const topupPaise = order.walletAmountTopup || Math.round(order.price * 100)
+      const creditResult = await creditWallet(
+        order.userId, topupPaise, 'topup',
+        order._id.toString(), 'Wallet topup (admin approved)',
+        req.user._id, req.ip
+      )
+      if (creditResult.ok) {
+        await Order.findByIdAndUpdate(order._id, { walletCredited: true })
+        console.log('[WALLET] Admin-approved topup credited:', order._id, topupPaise)
+      } else {
+        console.error('[WALLET] Admin topup credit failed:', order._id, creditResult.error)
+      }
+    }
 
     // Send billing email on completion
     if (status === 'Completed') {

@@ -60,6 +60,7 @@ async function triggerRechargeIfNeeded(paymentId) {
         { _id: order._id, walletCredited: { $ne: true } },
         { walletCredited: true, status: 'Completed' }
       )
+      console.log('[WALLET] Topup credited:', order._id, topupPaise)
     }
     return order
   }
