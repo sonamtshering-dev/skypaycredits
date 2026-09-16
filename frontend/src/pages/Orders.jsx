@@ -123,7 +123,7 @@ function OrderCard({ order }) {
           <div style={{ paddingTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px' }}>
             {[
               ['Order ID', '#' + (order._id?.slice(-8).toUpperCase() || '—')],
-              ['Amount',   order.amount ? `${order.currency || ''} ${order.amount}` : '—'],
+              ['Amount',   order.price ? `₹${order.price}` : '—'],
               ['Payment',  order.paymentStatus || '—'],
               ['Date',     new Date(order.createdAt).toLocaleString()],
               ['Player ID', order.playerData?.userId || order.playerId || '—'],
