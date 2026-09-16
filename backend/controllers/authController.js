@@ -100,7 +100,7 @@ exports.register = async (req, res) => {
       }
       const user = await User.create({ name, email, password, phone, isEmailVerified: true })
       const token = makeToken(user._id, user.tokenVersion || 0)
-      res.cookie("token", token, { httpOnly: true, secure: isProd, sameSite: "strict", maxAge: 7*24*60*60*1000 })
+      res.cookie("token", token, { httpOnly: true, secure: isProd, sameSite: "lax", maxAge: 7*24*60*60*1000 })
       securityLog.loginSuccess(user._id, req.ip)
       return res.status(201).json({ token, user: { _id: user._id, name: user.name, email: user.email, role: user.role } })
     }
@@ -161,7 +161,7 @@ exports.verifyOTP = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 7*24*60*60*1000
     })
     securityLog.loginSuccess(user._id, req.ip)
@@ -202,7 +202,7 @@ exports.verifyPhoneOTP = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 7*24*60*60*1000
     })
     securityLog.loginSuccess(user._id, req.ip)
@@ -324,7 +324,7 @@ exports.login = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: isProd,
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 7*24*60*60*1000
     })
     res.json({
@@ -363,7 +363,7 @@ exports.verifyAdminOTP = async (req, res) => {
     securityLog.loginSuccess(user._id, req.ip)
 
     const token = makeToken(user._id, user.tokenVersion || 0)
-    res.cookie('token', token, { httpOnly: true, secure: isProd, sameSite: 'strict', maxAge: 7*24*60*60*1000 })
+    res.cookie('token', token, { httpOnly: true, secure: isProd, sameSite: 'lax', maxAge: 7*24*60*60*1000 })
     res.json({ token, user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } })
   } catch (err) {
     res.status(500).json({ message: isProd ? 'Verification failed' : err.message })
@@ -639,7 +639,7 @@ exports.googleAuth = async (req, res) => {
     }
 
     const token = makeToken(user._id, user.tokenVersion || 0)
-    res.cookie('token', token, { httpOnly: true, secure: isProd, sameSite: 'strict', maxAge: 7*24*60*60*1000 })
+    res.cookie('token', token, { httpOnly: true, secure: isProd, sameSite: 'lax', maxAge: 7*24*60*60*1000 })
     securityLog.loginSuccess(user._id, req.ip)
     res.json({ token, user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } })
   } catch (err) {

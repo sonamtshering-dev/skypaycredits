@@ -7,19 +7,22 @@ const { protect } = require("../middlewares/authMiddleware")
 // Rate limit OTP endpoints
 const otpLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 min
-  max: 5, // 5 attempts per 10 min
+  max: 15, // 15 attempts per 10 min per IP
+  skipSuccessfulRequests: true,
   message: { message: "Too many OTP attempts, try again later" }
 })
 
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10,
+  max: 20,
+  skipSuccessfulRequests: true,
   message: { message: "Too many registration attempts, try again in an hour" }
 })
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 20,
+  max: 50, // 50 per IP per 15 min — CGNAT/shared IPs can have many legitimate users
+  skipSuccessfulRequests: true,
   message: { message: "Too many login attempts, try again later" }
 })
 
