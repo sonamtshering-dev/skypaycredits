@@ -310,7 +310,7 @@ router.post("/", protect, async (req, res) => {
 
     res.status(201).json(order)
   } catch (err) {
-    res.status(400).json({ message: err.message })
+    res.status(400).json({ message: safeError(err) })
   }
 })
 
@@ -359,18 +359,27 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
     securityLog.adminAction(req.user._id, `update_order:${JSON.stringify(update)}`, req.params.id)
 
     // Credit wallet for topup orders when admin manually completes them
-    if (status === 'Completed' && order.orderType === 'wallet_topup' && !order.walletCredited) {
-      const topupPaise = order.walletAmountTopup || Math.round(order.price * 100)
-      const creditResult = await creditWallet(
-        order.userId, topupPaise, 'topup',
-        order._id.toString(), 'Wallet topup (admin approved)',
-        req.user._id, req.ip
+    // Atomic claim — prevents double-credit if two admins click simultaneously
+    if (status === 'Completed' && order.orderType === 'wallet_topup') {
+      const claimedOrder = await Order.findOneAndUpdate(
+        { _id: order._id, orderType: 'wallet_topup', walletCredited: { $ne: true } },
+        { walletCredited: true },
+        { new: false }
       )
-      if (creditResult.ok) {
-        await Order.findByIdAndUpdate(order._id, { walletCredited: true })
-        console.log('[WALLET] Admin-approved topup credited:', order._id, topupPaise)
-      } else {
-        console.error('[WALLET] Admin topup credit failed:', order._id, creditResult.error)
+      if (claimedOrder) {
+        const topupPaise = claimedOrder.walletAmountTopup || Math.round(claimedOrder.price * 100)
+        const creditResult = await creditWallet(
+          claimedOrder.userId, topupPaise, 'topup',
+          claimedOrder._id.toString(), 'Wallet topup (admin approved)',
+          req.user._id, req.ip
+        )
+        if (creditResult.ok) {
+          console.log('[WALLET] Admin-approved topup credited:', claimedOrder._id, topupPaise)
+        } else {
+          // Rollback the claim so admin can retry
+          await Order.findByIdAndUpdate(claimedOrder._id, { walletCredited: false })
+          console.error('[WALLET] Admin topup credit failed:', claimedOrder._id, creditResult.error)
+        }
       }
     }
 
@@ -404,7 +413,7 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
 
     res.json(order)
   } catch (err) {
-    res.status(400).json({ message: err.message })
+    res.status(400).json({ message: safeError(err) })
   }
 })
 

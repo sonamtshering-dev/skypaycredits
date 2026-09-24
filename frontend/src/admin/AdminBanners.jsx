@@ -6,7 +6,8 @@ export default function AdminBanners() {
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal]     = useState(false)
-  const [file, setFile]       = useState(null)
+  const [fileDesktop, setFileDesktop] = useState(null)
+  const [fileMobile, setFileMobile]   = useState(null)
   const [link, setLink]       = useState('')
   const [title, setTitle]     = useState('')
   const [saving, setSaving]   = useState(false)
@@ -22,13 +23,16 @@ export default function AdminBanners() {
 
   const add = async e => {
     e.preventDefault()
-    if (!file) return setError('Please select an image')
+    if (!fileDesktop && !fileMobile) return setError('Upload at least one image')
     setSaving(true); setError('')
     try {
       const fd = new FormData()
-      fd.append('image', file); fd.append('link', link); fd.append('title', title)
+      if (fileDesktop) fd.append('image', fileDesktop)
+      if (fileMobile)  fd.append('imageMobile', fileMobile)
+      fd.append('link', link)
+      fd.append('title', title)
       await api.post('/banners', fd)
-      setModal(false); setFile(null); setLink(''); setTitle(''); load()
+      setModal(false); setFileDesktop(null); setFileMobile(null); setLink(''); setTitle(''); load()
     } catch (e) { setError(e.response?.data?.message || 'Upload failed') }
     finally { setSaving(false) }
   }
@@ -54,6 +58,28 @@ export default function AdminBanners() {
         <button className="btn btn-primary" onClick={() => { setModal(true); setError('') }}>+ Add Banner</button>
       </div>
 
+      {/* Ratio guide */}
+      <div style={{
+        display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap',
+      }}>
+        {[
+          { label: 'PC / Desktop', ratio: '3:1', size: '1200 × 400 px', icon: '🖥️' },
+          { label: 'Mobile', ratio: '2:1', size: '750 × 375 px', icon: '📱' },
+        ].map(({ label, ratio, size, icon }) => (
+          <div key={label} style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10, padding: '10px 16px',
+          }}>
+            <span style={{ fontSize: 18 }}>{icon}</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>{label}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Ratio {ratio} · {size}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60 }}><div className="spinner" /></div>
       ) : banners.length === 0 ? (
@@ -64,8 +90,19 @@ export default function AdminBanners() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
           {banners.map(b => (
             <div key={b._id} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 14, overflow: 'hidden' }}>
-              <div style={{ height: 130, background: 'rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+              {/* Desktop preview */}
+              <div style={{ height: 110, background: 'rgba(255,255,255,0.04)', overflow: 'hidden', position: 'relative' }}>
                 {b.image && <img src={b.image} alt={b.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                <span style={{ position: 'absolute', top: 6, left: 6, fontSize: 10, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: '2px 6px' }}>🖥️ PC</span>
+              </div>
+              {/* Mobile preview */}
+              <div style={{ height: 75, background: 'rgba(255,255,255,0.02)', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}>
+                {(b.imageMobile || b.image) && (
+                  <img src={b.imageMobile || b.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: b.imageMobile ? 1 : 0.4 }} />
+                )}
+                <span style={{ position: 'absolute', top: 4, left: 6, fontSize: 10, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: '2px 6px' }}>
+                  📱 Mobile{!b.imageMobile ? ' (using PC)' : ''}
+                </span>
               </div>
               <div style={{ padding: '12px 14px' }}>
                 <div style={{ fontWeight: 700, color: '#fff', fontSize: 14, marginBottom: 8 }}>{b.title || 'Untitled'}</div>
@@ -86,16 +123,48 @@ export default function AdminBanners() {
 
       {modal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={() => setModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'rgba(12,8,28,0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, background: 'rgba(12,8,28,0.98)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <h2 style={{ fontWeight: 900, fontSize: 18, color: '#fff' }}>Add Banner</h2>
               <button onClick={() => setModal(false)} style={{ background: 'none', color: 'rgba(255,255,255,0.4)', fontSize: 20 }}>✕</button>
             </div>
-            <form onSubmit={add} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="form-group">
-                <label>Image *</label>
-                <input type="file" accept="image/*" onChange={e => setFile(e.target.files[0])} style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }} />
+            <form onSubmit={add} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Desktop image */}
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 16 }}>🖥️</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>PC / Desktop Image</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Ratio 3:1 · Recommended 1200 × 400 px</div>
+                  </div>
+                </div>
+                <input type="file" accept="image/*" onChange={e => setFileDesktop(e.target.files[0])} style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }} />
+                {fileDesktop && (
+                  <div style={{ marginTop: 8, height: 70, borderRadius: 8, overflow: 'hidden', background: '#111' }}>
+                    <img src={URL.createObjectURL(fileDesktop)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
               </div>
+
+              {/* Mobile image */}
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 16 }}>📱</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>Mobile Image</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Ratio 2:1 · Recommended 750 × 375 px</div>
+                  </div>
+                </div>
+                <input type="file" accept="image/*" onChange={e => setFileMobile(e.target.files[0])} style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }} />
+                {fileMobile && (
+                  <div style={{ marginTop: 8, height: 55, borderRadius: 8, overflow: 'hidden', background: '#111' }}>
+                    <img src={URL.createObjectURL(fileMobile)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
+                {!fileMobile && <div style={{ marginTop: 6, fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>Optional — PC image will be used if skipped</div>}
+              </div>
+
               <div className="form-group">
                 <label>Title</label>
                 <input style={inp} placeholder="Banner title" value={title} onChange={e => setTitle(e.target.value)} />

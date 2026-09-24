@@ -244,12 +244,12 @@ function BannerCarousel({ banners }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: 'clamp(260px, 40vw, 500px)', overflow: 'hidden', background: '#060612' }}>
       {b.image && (
-        <img key={idx} src={b.image} alt={b.title || ''}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
+        <picture key={idx} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+          {b.imageMobile && <source media="(max-width: 767px)" srcSet={b.imageMobile} />}
+          <img src={b.image} alt={b.title || ''}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
+        </picture>
       )}
-      {/* dark gradient — heavy on left so text is readable */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(100deg, rgba(6,6,18,0.94) 0%, rgba(6,6,18,0.7) 38%, rgba(6,6,18,0.25) 65%, transparent 100%)' }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,6,18,0.9) 0%, transparent 40%)' }} />
 
       {/* Main content row */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: pad, gap: 24 }}>
@@ -302,7 +302,7 @@ function BannerCarousel({ banners }) {
                 opacity: i === idx ? 1 : 0.45,
                 transition: 'all 0.2s', background: '#111',
               }}>
-                {bn.image && <img src={bn.image} alt={bn.title || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                {bn.image && <img src={bn.imageMobile || bn.image} alt={bn.title || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
               </div>
             ))}
           </div>

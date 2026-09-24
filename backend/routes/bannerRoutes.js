@@ -10,10 +10,11 @@ const { protect, adminOnly, validateObjectId } = require("../middlewares/authMid
 
 // Simple inline Banner model
 const bannerSchema = new mongoose.Schema({
-  title:  { type: String, default: "" },
-  image:  { type: String, default: "" },
-  link:   { type: String, default: "" },
-  active: { type: Boolean, default: true },
+  title:       { type: String, default: "" },
+  image:       { type: String, default: "" },
+  imageMobile: { type: String, default: "" },
+  link:        { type: String, default: "" },
+  active:      { type: Boolean, default: true },
 }, { timestamps: true })
 const Banner = mongoose.models.Banner || mongoose.model("Banner", bannerSchema)
 
@@ -37,6 +38,10 @@ const upload = multer({
     else cb(new Error('Only image files are allowed'), false)
   }
 })
+const uploadBoth = upload.fields([
+  { name: 'image',       maxCount: 1 },
+  { name: 'imageMobile', maxCount: 1 },
+])
 
 // GET /api/banners — public
 router.get("/", async (req, res) => {
@@ -63,12 +68,13 @@ function isSafeUrl(url) {
 }
 
 // POST /api/banners — admin
-router.post("/", protect, adminOnly, upload.single("image"), async (req, res) => {
+router.post("/", protect, adminOnly, uploadBoth, async (req, res) => {
   try {
     const body = { ...req.body }
     if (body.link !== undefined && !isSafeUrl(body.link))
       return res.status(400).json({ message: "Invalid banner link URL" })
-    if (req.file) body.image = `/uploads/banners/${req.file.filename}`
+    if (req.files?.image?.[0])       body.image       = `/uploads/banners/${req.files.image[0].filename}`
+    if (req.files?.imageMobile?.[0]) body.imageMobile = `/uploads/banners/${req.files.imageMobile[0].filename}`
     const banner = await Banner.create(body)
     res.status(201).json(banner)
   } catch (err) { res.status(400).json({ message: err.message }) }
@@ -77,7 +83,7 @@ router.post("/", protect, adminOnly, upload.single("image"), async (req, res) =>
 // PUT /api/banners/:id — admin
 router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
   try {
-    const { title, link, active, image } = req.body
+    const { title, link, active, image, imageMobile } = req.body
     const update = {}
     if (title !== undefined) update.title = title
     if (link !== undefined) {
@@ -86,6 +92,7 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
     }
     if (active !== undefined) update.active = active === 'true' || active === true
     if (image !== undefined) update.image = image
+    if (imageMobile !== undefined) update.imageMobile = imageMobile
     const banner = await Banner.findByIdAndUpdate(req.params.id, update, { new: true })
     if (!banner) return res.status(404).json({ message: "Banner not found" })
     res.json(banner)

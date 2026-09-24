@@ -24,6 +24,16 @@ export default function Profile() {
   const [pwMsg, setPwMsg]       = useState('')
   const [pwErr, setPwErr]       = useState('')
 
+  // Change phone
+  const [showPhoneForm, setShowPhoneForm] = useState(false)
+  const [cpPhone, setCpPhone]             = useState('')
+  const [cpOtpSent, setCpOtpSent]         = useState(false)
+  const [cpOtp, setCpOtp]                 = useState('')
+  const [cpLoading, setCpLoading]         = useState(false)
+  const [cpMsg, setCpMsg]                 = useState('')
+  const [cpErr, setCpErr]                 = useState('')
+  const [cpCooldown, setCpCooldown]       = useState(0)
+
   const handleUpdateProfile = async e => {
     e.preventDefault()
     setSaving(true); setMsg(''); setErr('')
@@ -141,6 +151,93 @@ export default function Profile() {
                 cursor: 'pointer', opacity: saving ? 0.7 : 1,
               }}>{saving ? 'Saving…' : 'Save Changes'}</button>
             </form>
+          </div>
+
+          {/* Change phone */}
+          <div style={card}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showPhoneForm ? 16 : 0 }}>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Phone Number</div>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 3 }}>
+                  {user?.phone ? `+91 ${user.phone.slice(0,2)}••••${user.phone.slice(-2)}` : 'Not added'}
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowPhoneForm(v => !v); setCpPhone(''); setCpOtpSent(false); setCpOtp(''); setCpMsg(''); setCpErr(''); setCpCooldown(0) }}
+                style={{
+                  padding: '7px 16px', borderRadius: 20, fontSize: 13, fontWeight: 700,
+                  background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)',
+                  color: '#a78bfa', cursor: 'pointer',
+                }}
+              >{showPhoneForm ? 'Cancel' : user?.phone ? 'Change' : 'Add'}</button>
+            </div>
+
+            {showPhoneForm && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {!cpOtpSent ? (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="tel" inputMode="numeric" placeholder="10-digit mobile number"
+                      value={cpPhone}
+                      onChange={e => setCpPhone(e.target.value.replace(/\D/g,'').slice(0,10))}
+                      style={{ ...inp, flex: 1 }}
+                    />
+                    <button
+                      onClick={async () => {
+                        setCpErr(''); setCpMsg('')
+                        if (!/^[6-9]\d{9}$/.test(cpPhone)) return setCpErr('Enter a valid 10-digit number')
+                        setCpLoading(true)
+                        try {
+                          await api.post('/auth/send-phone-otp', { phone: cpPhone })
+                          setCpOtpSent(true); setCpOtp('')
+                          let c = 30; setCpCooldown(c)
+                          const t = setInterval(() => { c--; setCpCooldown(c); if (c <= 0) clearInterval(t) }, 1000)
+                        } catch (e) { setCpErr(e.response?.data?.message || 'Failed to send OTP') }
+                        finally { setCpLoading(false) }
+                      }}
+                      disabled={cpLoading}
+                      style={{ padding: '11px 16px', borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4c00b0)', border: 'none', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap', opacity: cpLoading ? 0.6 : 1 }}
+                    >{cpLoading ? '…' : 'Send OTP'}</button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
+                      Code sent to <strong style={{ color: '#c4b5fd' }}>+91 {cpPhone}</strong>
+                      <button onClick={() => { setCpOtpSent(false); setCpOtp('') }} style={{ marginLeft: 8, background: 'none', border: 'none', color: '#7c3aed', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Change</button>
+                    </div>
+                    <input
+                      type="tel" inputMode="numeric" placeholder="Enter 6-digit OTP"
+                      value={cpOtp}
+                      onChange={e => setCpOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
+                      style={{ ...inp, textAlign: 'center', letterSpacing: 6, fontSize: 18, fontWeight: 700 }}
+                    />
+                    <button
+                      onClick={async () => {
+                        setCpErr(''); setCpMsg('')
+                        if (cpOtp.length !== 6) return setCpErr('Enter the 6-digit code')
+                        setCpLoading(true)
+                        try {
+                          const { data } = await api.post('/auth/verify-phone-otp-pre', { phone: cpPhone, otp: cpOtp })
+                          await api.post('/auth/add-phone', { phoneVerifiedToken: data.token })
+                          login(localStorage.getItem('token'), { ...user, phone: cpPhone })
+                          setCpMsg('Phone number updated!')
+                          setShowPhoneForm(false)
+                        } catch (e) { setCpErr(e.response?.data?.message || 'Incorrect code') }
+                        finally { setCpLoading(false) }
+                      }}
+                      disabled={cpLoading || cpOtp.length !== 6}
+                      style={{ padding: '12px', borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4c00b0)', border: 'none', color: '#fff', fontWeight: 900, fontSize: 14, cursor: 'pointer', opacity: (cpLoading || cpOtp.length !== 6) ? 0.5 : 1 }}
+                    >{cpLoading ? 'Verifying…' : 'Verify & Save'}</button>
+                    {cpCooldown > 0
+                      ? <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Resend in {cpCooldown}s</div>
+                      : <button onClick={() => { setCpOtpSent(false); setCpOtp('') }} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: 13, cursor: 'pointer', fontWeight: 700 }}>Resend OTP</button>
+                    }
+                  </>
+                )}
+                {cpErr && <div style={{ color: '#f87171', fontSize: 13, background: 'rgba(239,68,68,0.08)', padding: '8px 12px', borderRadius: 8 }}>{cpErr}</div>}
+              </div>
+            )}
+            {cpMsg && !showPhoneForm && <div style={{ color: '#4ade80', fontSize: 13, background: 'rgba(34,197,94,0.08)', padding: '8px 12px', borderRadius: 8, marginTop: 12 }}>{cpMsg}</div>}
           </div>
 
           {/* Change password */}
