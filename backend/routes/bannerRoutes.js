@@ -80,10 +80,10 @@ router.post("/", protect, adminOnly, uploadBoth, async (req, res) => {
   } catch (err) { res.status(400).json({ message: err.message }) }
 })
 
-// PUT /api/banners/:id — admin
-router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
+// PUT /api/banners/:id — admin (supports optional file uploads for image/imageMobile)
+router.put("/:id", protect, adminOnly, validateObjectId, uploadBoth, async (req, res) => {
   try {
-    const { title, link, active, image, imageMobile } = req.body
+    const { title, link, active } = req.body
     const update = {}
     if (title !== undefined) update.title = title
     if (link !== undefined) {
@@ -91,8 +91,8 @@ router.put("/:id", protect, adminOnly, validateObjectId, async (req, res) => {
       update.link = link
     }
     if (active !== undefined) update.active = active === 'true' || active === true
-    if (image !== undefined) update.image = image
-    if (imageMobile !== undefined) update.imageMobile = imageMobile
+    if (req.files?.image?.[0])       update.image       = `/uploads/banners/${req.files.image[0].filename}`
+    if (req.files?.imageMobile?.[0]) update.imageMobile = `/uploads/banners/${req.files.imageMobile[0].filename}`
     const banner = await Banner.findByIdAndUpdate(req.params.id, update, { new: true })
     if (!banner) return res.status(404).json({ message: "Banner not found" })
     res.json(banner)

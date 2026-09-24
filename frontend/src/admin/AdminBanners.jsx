@@ -12,6 +12,10 @@ export default function AdminBanners() {
   const [title, setTitle]     = useState('')
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState('')
+  const [editId, setEditId]   = useState(null)
+  const [editFile, setEditFile] = useState(null)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editErr, setEditErr] = useState('')
 
   const load = () => {
     api.get('/banners/all')
@@ -106,7 +110,7 @@ export default function AdminBanners() {
               </div>
               <div style={{ padding: '12px 14px' }}>
                 <div style={{ fontWeight: 700, color: '#fff', fontSize: 14, marginBottom: 8 }}>{b.title || 'Untitled'}</div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                   <button onClick={() => toggle(b._id, b.active)} style={{
                     flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                     background: b.active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.07)',
@@ -115,6 +119,32 @@ export default function AdminBanners() {
                   }}>{b.active ? 'Active' : 'Inactive'}</button>
                   <button onClick={() => del(b._id)} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>Delete</button>
                 </div>
+                {/* Upload / replace mobile image */}
+                {editId === b._id ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <input type="file" accept="image/*" onChange={e => setEditFile(e.target.files[0])} style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }} />
+                    {editErr && <div style={{ color: '#f87171', fontSize: 11 }}>{editErr}</div>}
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={async () => {
+                        if (!editFile) return setEditErr('Pick a file first')
+                        setEditSaving(true); setEditErr('')
+                        try {
+                          const fd = new FormData(); fd.append('imageMobile', editFile)
+                          await api.put(`/banners/${b._id}`, fd)
+                          setEditId(null); setEditFile(null); load()
+                        } catch (e) { setEditErr(e.response?.data?.message || 'Upload failed') }
+                        finally { setEditSaving(false) }
+                      }} disabled={editSaving} style={{ flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa' }}>
+                        {editSaving ? 'Saving…' : 'Save'}
+                      </button>
+                      <button onClick={() => { setEditId(null); setEditFile(null); setEditErr('') }} style={{ padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}>✕</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => { setEditId(b._id); setEditFile(null); setEditErr('') }} style={{ width: '100%', padding: '5px 0', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', color: '#c4b5fd' }}>
+                    📱 {b.imageMobile ? 'Replace Mobile Image' : 'Set Mobile Image'}
+                  </button>
+                )}
               </div>
             </div>
           ))}

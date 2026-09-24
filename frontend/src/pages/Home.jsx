@@ -104,9 +104,9 @@ export default function Home() {
         .banner-wrap { height: clamp(260px, 40vw, 500px); }
         .banner-img-mobile { display: none; }
         @media (max-width: 767px) {
-          .banner-wrap        { height: 300px; margin: 0 12px; border-radius: 12px; }
-          .banner-img-desktop { display: none; }
-          .banner-img-mobile  { display: block; }
+          .banner-wrap { height: 300px; margin: 0 12px; border-radius: 12px; }
+          .banner-wrap.has-mobile .banner-img-desktop { display: none; }
+          .banner-wrap.has-mobile .banner-img-mobile  { display: block; }
         }
       `}</style>
       <Navbar />
@@ -249,7 +249,7 @@ function BannerCarousel({ banners }) {
   const b = banners[idx]
   const pad = 'clamp(20px, 3vw, 44px)'
   return (
-    <div className="banner-wrap" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: '#060612' }}>
+    <div className={`banner-wrap${b.imageMobile ? ' has-mobile' : ''}`} style={{ position: 'relative', width: '100%', overflow: 'hidden', background: '#060612' }}>
       {b.image && (
         <>
           <img key={`d-${idx}`} src={b.image} alt={b.title || ''} className="banner-img banner-img-desktop"
