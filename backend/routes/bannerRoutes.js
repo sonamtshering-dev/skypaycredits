@@ -73,7 +73,7 @@ router.post("/", protect, adminOnly, uploadBoth, async (req, res) => {
     const body = { ...req.body }
     if (body.link !== undefined && !isSafeUrl(body.link))
       return res.status(400).json({ message: "Invalid banner link URL" })
-    console.log('[BANNER POST] files keys:', Object.keys(req.files || {}))
+    console.log('[BANNER POST] files:', JSON.stringify(Object.entries(req.files||{}).map(([k,v])=>({field:k,count:v.length,names:v.map(f=>f.fieldname+':'+f.originalname)}))))
     if (req.files?.image?.[0])       body.image       = `/uploads/banners/${req.files.image[0].filename}`
     if (req.files?.imageMobile?.[0]) body.imageMobile = `/uploads/banners/${req.files.imageMobile[0].filename}`
     console.log('[BANNER POST] imageMobile set:', body.imageMobile)
