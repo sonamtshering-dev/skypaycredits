@@ -101,6 +101,12 @@ export default function Home() {
         .banner-dots   { display: flex; }
         .banner-featured { display: none; }
         @media (min-width: 768px)  { .banner-thumbs { display: flex; } .banner-dots { display: none; } .banner-featured { display: inline-block; } }
+        .banner-wrap { height: clamp(260px, 40vw, 500px); }
+        .banner-img  { object-fit: cover; }
+        @media (max-width: 767px) {
+          .banner-wrap { height: auto; aspect-ratio: 2/1; }
+          .banner-img  { object-fit: contain; }
+        }
       `}</style>
       <Navbar />
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -242,12 +248,12 @@ function BannerCarousel({ banners }) {
   const b = banners[idx]
   const pad = 'clamp(20px, 3vw, 44px)'
   return (
-    <div style={{ position: 'relative', width: '100%', height: 'clamp(260px, 40vw, 500px)', overflow: 'hidden', background: '#060612' }}>
+    <div className="banner-wrap" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: '#060612' }}>
       {b.image && (
         <picture key={idx} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
           {b.imageMobile && <source media="(max-width: 767px)" srcSet={b.imageMobile} />}
-          <img src={b.image} alt={b.title || ''}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
+          <img src={b.image} alt={b.title || ''} className="banner-img"
+            style={{ width: '100%', height: '100%', animation: 'bannerFade 0.5s ease' }} />
         </picture>
       )}
 
