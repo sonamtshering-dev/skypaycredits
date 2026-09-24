@@ -254,22 +254,8 @@ function BannerCarousel({ banners }) {
       {/* Main content row */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: pad, gap: 24 }}>
 
-        {/* Left: text + CTA */}
+        {/* Left: CTA only */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="banner-featured" style={{
-            background: 'rgba(124,58,237,0.88)',
-            borderRadius: 5, padding: '3px 12px', fontSize: 'clamp(10px,1vw,12px)',
-            fontWeight: 800, color: '#fff', marginBottom: 10,
-          }}>🔥 Featured</div>
-          {b.title && (
-            <div style={{
-              fontWeight: 900, fontSize: 'clamp(20px, 2.8vw, 38px)', color: '#fff',
-              marginBottom: 8, lineHeight: 1.15, textShadow: '0 2px 20px rgba(0,0,0,1)',
-            }}>{b.title}</div>
-          )}
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 'clamp(12px, 1.1vw, 15px)', marginBottom: 20 }}>
-            Top up instantly · Best rates guaranteed
-          </div>
           {b.link && (
             <button
               onClick={() => window.open(b.link, '_blank')}
@@ -279,15 +265,6 @@ function BannerCarousel({ banners }) {
                 fontSize: 'clamp(12px,1.1vw,15px)', fontWeight: 800, color: '#fff',
                 cursor: 'pointer', boxShadow: '0 4px 20px rgba(76,0,176,0.5)',
               }}>Top Up Now →</button>
-          )}
-          {!b.link && (
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'linear-gradient(135deg,#4c00b0,#7c3aed)', borderRadius: 9,
-              padding: 'clamp(8px,1vw,12px) clamp(18px,2vw,28px)',
-              fontSize: 'clamp(12px,1.1vw,15px)', fontWeight: 800, color: '#fff',
-              boxShadow: '0 4px 20px rgba(76,0,176,0.5)',
-            }}>Browse Top-Ups →</div>
           )}
         </div>
 
