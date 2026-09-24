@@ -64,7 +64,7 @@ export default function AdminBanners() {
       }}>
         {[
           { label: 'PC / Desktop', ratio: '3:1', size: '1200 × 400 px', icon: '🖥️' },
-          { label: 'Mobile', ratio: '2:1', size: '750 × 375 px', icon: '📱' },
+          { label: 'Mobile', ratio: '7:6', size: '700 × 600 px', icon: '📱' },
         ].map(({ label, ratio, size, icon }) => (
           <div key={label} style={{
             display: 'flex', alignItems: 'center', gap: 10,
@@ -153,7 +153,7 @@ export default function AdminBanners() {
                   <span style={{ fontSize: 16 }}>📱</span>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>Mobile Image</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Ratio 2:1 · Recommended 750 × 375 px</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Ratio 7:6 · Recommended 700 × 600 px</div>
                   </div>
                 </div>
                 <input type="file" accept="image/*" onChange={e => setFileMobile(e.target.files[0])} style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }} />
