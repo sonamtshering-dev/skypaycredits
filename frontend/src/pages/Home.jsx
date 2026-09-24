@@ -250,10 +250,10 @@ function BannerCarousel({ banners }) {
   return (
     <div className="banner-wrap" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: '#060612' }}>
       {b.image && (
-        <picture key={idx} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        <picture key={idx} style={{ display: 'block', position: 'absolute', inset: 0 }}>
           {b.imageMobile && <source media="(max-width: 767px)" srcSet={b.imageMobile} />}
           <img src={b.image} alt={b.title || ''} className="banner-img"
-            style={{ width: '100%', height: '100%', animation: 'bannerFade 0.5s ease' }} />
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', animation: 'bannerFade 0.5s ease' }} />
         </picture>
       )}
 
