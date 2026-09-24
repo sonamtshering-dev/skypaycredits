@@ -102,10 +102,11 @@ export default function Home() {
         .banner-featured { display: none; }
         @media (min-width: 768px)  { .banner-thumbs { display: flex; } .banner-dots { display: none; } .banner-featured { display: inline-block; } }
         .banner-wrap { height: clamp(260px, 40vw, 500px); }
-        .banner-img  { object-fit: cover; }
+        .banner-img-mobile { display: none; }
         @media (max-width: 767px) {
-          .banner-wrap { height: 300px; margin: 0 12px; border-radius: 12px; }
-          .banner-img  { object-fit: cover; }
+          .banner-wrap        { height: 300px; margin: 0 12px; border-radius: 12px; }
+          .banner-img-desktop { display: none; }
+          .banner-img-mobile  { display: block; }
         }
       `}</style>
       <Navbar />
@@ -250,11 +251,14 @@ function BannerCarousel({ banners }) {
   return (
     <div className="banner-wrap" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: '#060612' }}>
       {b.image && (
-        <picture key={idx} style={{ display: 'block', position: 'absolute', inset: 0 }}>
-          {b.imageMobile && <source media="(max-width: 767px)" srcSet={b.imageMobile} />}
-          <img src={b.image} alt={b.title || ''} className="banner-img"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', animation: 'bannerFade 0.5s ease' }} />
-        </picture>
+        <>
+          <img key={`d-${idx}`} src={b.image} alt={b.title || ''} className="banner-img banner-img-desktop"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
+          {b.imageMobile && (
+            <img key={`m-${idx}`} src={b.imageMobile} alt="" className="banner-img banner-img-mobile"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
+          )}
+        </>
       )}
 
       {/* Main content row */}
