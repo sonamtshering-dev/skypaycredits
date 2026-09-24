@@ -6,10 +6,11 @@ const Settings = require('../models/Settings')
 const mongoose = require('mongoose')
 
 const bannerSchema = new mongoose.Schema({
-  title:  { type: String, default: '' },
-  image:  { type: String, default: '' },
-  link:   { type: String, default: '' },
-  active: { type: Boolean, default: true },
+  title:       { type: String, default: '' },
+  image:       { type: String, default: '' },
+  imageMobile: { type: String, default: '' },
+  link:        { type: String, default: '' },
+  active:      { type: Boolean, default: true },
 }, { timestamps: true })
 const Banner = mongoose.models.Banner || mongoose.model('Banner', bannerSchema)
 
