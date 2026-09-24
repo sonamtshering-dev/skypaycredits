@@ -102,11 +102,8 @@ export default function Home() {
         .banner-featured { display: none; }
         @media (min-width: 768px)  { .banner-thumbs { display: flex; } .banner-dots { display: none; } .banner-featured { display: inline-block; } }
         .banner-wrap { height: clamp(260px, 40vw, 500px); }
-        .banner-img-mobile { display: none; }
         @media (max-width: 767px) {
           .banner-wrap { height: 300px; margin: 0 12px; border-radius: 12px; }
-          .banner-wrap.has-mobile .banner-img-desktop { display: none; }
-          .banner-wrap.has-mobile .banner-img-mobile  { display: block; }
         }
       `}</style>
       <Navbar />
@@ -241,24 +238,25 @@ function SectionHeader({ icon, title, count }) {
 
 function BannerCarousel({ banners }) {
   const [idx, setIdx] = useState(0)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
   useEffect(() => {
     if (banners.length <= 1) return
     const t = setInterval(() => setIdx(i => (i + 1) % banners.length), 5000)
     return () => clearInterval(t)
   }, [banners.length])
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 767)
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const b = banners[idx]
   const pad = 'clamp(20px, 3vw, 44px)'
+  const imgSrc = (isMobile && b.imageMobile) ? b.imageMobile : b.image
   return (
-    <div className={`banner-wrap${b.imageMobile ? ' has-mobile' : ''}`} style={{ position: 'relative', width: '100%', overflow: 'hidden', background: '#060612' }}>
-      {b.image && (
-        <>
-          <img key={`d-${idx}`} src={b.image} alt={b.title || ''} className="banner-img banner-img-desktop"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
-          {b.imageMobile && (
-            <img key={`m-${idx}`} src={b.imageMobile} alt="" className="banner-img banner-img-mobile"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
-          )}
-        </>
+    <div className="banner-wrap" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: '#060612' }}>
+      {imgSrc && (
+        <img key={`${idx}-${isMobile ? 'm' : 'd'}`} src={imgSrc} alt={b.title || ''}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />
       )}
 
       {/* Main content row */}
