@@ -104,8 +104,8 @@ export default function Home() {
         .banner-wrap { height: clamp(260px, 40vw, 500px); }
         .banner-img  { object-fit: cover; }
         @media (max-width: 767px) {
-          .banner-wrap { height: auto; aspect-ratio: 2/1; }
-          .banner-img  { object-fit: contain; }
+          .banner-wrap { height: 300px; margin: 0 12px; border-radius: 12px; }
+          .banner-img  { object-fit: cover; }
         }
       `}</style>
       <Navbar />
