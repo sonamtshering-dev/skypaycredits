@@ -57,6 +57,7 @@ router.get("/", async (req, res) => {
       facebook:        settings.facebook,
       purchasesEnabled: settings.purchasesEnabled,
       phpRate:          settings.phpRate,
+      phoneOtpEnabled:  settings.phoneOtpEnabled !== false,
     }
     _settingsCache = safe
     _settingsCacheAt = now
@@ -72,7 +73,9 @@ router.put("/", protect, adminOnly, upload.fields([{ name: "logo" },{ name: "fav
     const body = { ...req.body }
     if (req.files?.logo)    body.logo    = `/uploads/site/${req.files.logo[0].filename}`
     if (req.files?.favicon) body.favicon = `/uploads/site/${req.files.favicon[0].filename}`
-    if (typeof body.maintenanceMode === "string") body.maintenanceMode = body.maintenanceMode === "true"
+    if (typeof body.maintenanceMode  === "string") body.maintenanceMode  = body.maintenanceMode  === "true"
+    if (typeof body.purchasesEnabled === "string") body.purchasesEnabled = body.purchasesEnabled === "true"
+    if (typeof body.phoneOtpEnabled  === "string") body.phoneOtpEnabled  = body.phoneOtpEnabled  === "true"
 
     // Auto-set currency symbol from currency code
     const SYMBOLS = {

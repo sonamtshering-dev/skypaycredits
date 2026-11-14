@@ -32,7 +32,8 @@ async function _audit(actorId, actorRole, action, targetUserId, opts = {}) {
 
 // Credit wallet — only credits if user exists, wallet active, and cap not exceeded
 // Returns { ok, balanceBefore, balanceAfter, error }
-async function creditWallet(userId, amountPaise, type, referenceId, description, performedBy, ipAddress) {
+// Pass bypassCap: true for admin refunds to skip the balance limit check
+async function creditWallet(userId, amountPaise, type, referenceId, description, performedBy, ipAddress, { bypassCap = false } = {}) {
   if (!amountPaise || amountPaise <= 0) return { ok: false, error: 'Amount must be positive' }
 
   // Fetch role first so we can determine the correct cap
@@ -40,20 +41,28 @@ async function creditWallet(userId, amountPaise, type, referenceId, description,
   if (!userDoc) return { ok: false, error: 'User not found or wallet is blocked' }
   if (userDoc.walletStatus === 'blocked') return { ok: false, error: 'User not found or wallet is blocked' }
 
-  const cap = ['reseller', 'admin'].includes(userDoc.role) ? MAX_BALANCE_RESELLER : MAX_BALANCE
+  let user
+  if (bypassCap) {
+    user = await User.findOneAndUpdate(
+      { _id: userId, walletStatus: { $ne: 'blocked' } },
+      { $inc: { walletBalance: amountPaise } },
+      { new: false }
+    )
+  } else {
+    const cap = ['reseller', 'admin'].includes(userDoc.role) ? MAX_BALANCE_RESELLER : MAX_BALANCE
+    user = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        walletStatus: { $ne: 'blocked' },
+        walletBalance: { $lte: cap - amountPaise },
+      },
+      { $inc: { walletBalance: amountPaise } },
+      { new: false }
+    )
+    if (!user) return { ok: false, error: `Wallet balance would exceed maximum limit of ₹${cap / 100}` }
+  }
 
-  // Atomic: only increment if balance stays within cap — no rollback needed
-  const user = await User.findOneAndUpdate(
-    {
-      _id: userId,
-      walletStatus: { $ne: 'blocked' },
-      walletBalance: { $lte: cap - amountPaise },
-    },
-    { $inc: { walletBalance: amountPaise } },
-    { new: false }
-  )
-  if (!user) return { ok: false, error: `Wallet balance would exceed maximum limit of ₹${cap / 100}` }
-
+  if (!user) return { ok: false, error: 'User not found' }
   const balanceBefore = user.walletBalance
   const balanceAfter  = user.walletBalance + amountPaise
 

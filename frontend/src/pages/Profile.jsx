@@ -188,7 +188,15 @@ export default function Profile() {
                         if (!/^[6-9]\d{9}$/.test(cpPhone)) return setCpErr('Enter a valid 10-digit number')
                         setCpLoading(true)
                         try {
-                          await api.post('/auth/send-phone-otp', { phone: cpPhone })
+                          const { data } = await api.post('/auth/send-phone-otp', { phone: cpPhone })
+                          // If phone OTP is disabled by admin, bypass is returned with token directly
+                          if (data.bypass && data.token) {
+                            await api.post('/auth/add-phone', { phoneVerifiedToken: data.token })
+                            login(localStorage.getItem('token'), { ...user, phone: cpPhone })
+                            setCpMsg('Phone number updated!')
+                            setShowPhoneForm(false)
+                            return
+                          }
                           setCpOtpSent(true); setCpOtp('')
                           let c = 30; setCpCooldown(c)
                           const t = setInterval(() => { c--; setCpCooldown(c); if (c <= 0) clearInterval(t) }, 1000)

@@ -20,6 +20,8 @@ const settingsSchema = new mongoose.Schema(
     purchasesEnabled:  { type: Boolean, default: true },
     // Payment gateway toggle
     paymentGateway: { type: String, enum: ["novapay","manual"], default: "novapay" },
+    // Phone OTP toggle — disable when SMS provider is down
+    phoneOtpEnabled: { type: Boolean, default: true },
   },
   { timestamps: true }
 )

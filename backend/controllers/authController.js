@@ -568,10 +568,15 @@ exports.sendPhoneOTPPre = async (req, res) => {
     const phone = `91${phone10}`
     const taken = await User.findOne({ phone, isEmailVerified: true })
     if (taken) return res.status(400).json({ message: "Phone number already registered" })
+    const settings = await require("../models/Settings").findOne()
+    // If phone OTP is disabled by admin, skip SMS and return a verified token directly
+    if (settings?.phoneOtpEnabled === false) {
+      const token = jwt.sign({ phone, type: 'phone-verified' }, process.env.JWT_SECRET, { expiresIn: '15m' })
+      return res.json({ message: "Phone OTP is currently disabled", bypass: true, token })
+    }
     const otp = generateOTP()
     await OTP.deleteMany({ phone, purpose: 'pre-phone' })
     await OTP.create({ phone, otp: hashOTP(otp), purpose: 'pre-phone' })
-    const settings = await require("../models/Settings").findOne()
     await sendSMSOTP(phone, otp, settings?.siteName || 'Nitrogen Store')
     res.json({ message: "OTP sent to your phone" })
   } catch (err) {

@@ -101,9 +101,9 @@ export default function Home() {
         .banner-dots   { display: flex; }
         .banner-featured { display: none; }
         @media (min-width: 768px)  { .banner-thumbs { display: flex; } .banner-dots { display: none; } .banner-featured { display: inline-block; } }
-        .banner-wrap { height: clamp(260px, 40vw, 500px); }
+        .banner-wrap { width: 100%; height: clamp(260px, 40vw, 500px); }
         @media (max-width: 767px) {
-          .banner-wrap { height: 300px; margin: 0 12px; border-radius: 12px; }
+          .banner-wrap { height: 300px; width: calc(100% - 24px); margin: 0 12px; border-radius: 12px; }
         }
       `}</style>
       <Navbar />
@@ -253,7 +253,7 @@ function BannerCarousel({ banners }) {
   const pad = 'clamp(20px, 3vw, 44px)'
   const imgSrc = (isMobile && b.imageMobile) ? b.imageMobile : b.image
   return (
-    <div className="banner-wrap" style={{ position: 'relative', width: '100%', overflow: 'hidden', background: '#060612' }}>
+    <div className="banner-wrap" style={{ position: 'relative', overflow: 'hidden', background: '#060612' }}>
       {imgSrc && (
         <img key={`${idx}-${isMobile ? 'm' : 'd'}`} src={imgSrc} alt={b.title || ''}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'bannerFade 0.5s ease' }} />

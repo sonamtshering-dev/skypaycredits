@@ -4,10 +4,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import api from '../api/axios'
 import { CheckCircle, XCircle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function PaymentSuccess() {
   const [params]   = useSearchParams()
   const navigate   = useNavigate()
+  const { refreshWallet } = useAuth()
   const orderId    = params.get('order_id')
   const isWallet   = params.get('type') === 'wallet'
   const [status, setStatus] = useState('checking') // checking | paid | failed
@@ -23,6 +25,7 @@ export default function PaymentSuccess() {
         const { data } = await api.get(`/payment/status-by-order/${orderId}`)
         if (data.status === 'PAID' || data.status === 'COMPLETED') {
           setStatus('paid')
+          refreshWallet()
           setTimeout(() => navigate(isWallet ? '/wallet?topup=success' : '/orders'), 2000)
         } else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
           setStatus('failed')

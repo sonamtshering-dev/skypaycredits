@@ -263,7 +263,7 @@ exports.refundToWallet = async (req, res) => {
     const result = await creditWallet(
       order.userId, amountPaise, 'refund',
       order._id.toString(), `Refund: ${reason}`,
-      req.user._id, getIp(req)
+      req.user._id, getIp(req), { bypassCap: true }
     )
 
     if (!result.ok) {
