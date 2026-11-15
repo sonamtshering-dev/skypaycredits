@@ -20,6 +20,10 @@ export default function Dashboard() {
   const [s2Loading, setS2Loading] = useState(false)
   const [s2Error, setS2Error]     = useState('')
 
+  const [s3Bal, setS3Bal]         = useState(null)
+  const [s3Loading, setS3Loading] = useState(false)
+  const [s3Error, setS3Error]     = useState('')
+
   const fetchS1Balance = () => {
     setS1Loading(true); setS1Error('')
     api.get('/smile/balance')
@@ -36,6 +40,14 @@ export default function Dashboard() {
       .finally(() => setS2Loading(false))
   }
 
+  const fetchS3Balance = () => {
+    setS3Loading(true); setS3Error('')
+    api.get('/aluu/balance')
+      .then(r => setS3Bal(r.data.data?.wallet_balance ?? r.data.balance))
+      .catch(e => setS3Error(e.response?.data?.message || 'Failed'))
+      .finally(() => setS3Loading(false))
+  }
+
   useEffect(() => {
     api.get('/orders/stats')
       .then(r => setStats(r.data))
@@ -43,6 +55,7 @@ export default function Dashboard() {
       .finally(() => setLoading(false))
     fetchS1Balance()
     fetchS2Balance()
+    fetchS3Balance()
   }, [])
 
   if (loading) return <div style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div>
@@ -129,6 +142,35 @@ export default function Dashboard() {
           ) : s2Bal !== null ? (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <span style={{ fontSize: 30, fontWeight: 900, color: '#a78bfa' }}>{Number(s2Bal).toLocaleString()}</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>USD</span>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Supplier 4 — Aluu */}
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 16, padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#06b6d4,#22d3ee)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Wallet size={17} color="#fff" />
+              </div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Supplier 4</div>
+            </div>
+            <button onClick={fetchS3Balance} disabled={s3Loading} style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
+              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            }}>
+              <RefreshCw size={12} style={{ animation: s3Loading ? 'spin 1s linear infinite' : 'none' }} />
+            </button>
+          </div>
+          {s3Loading ? (
+            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>Fetching…</div>
+          ) : s3Error ? (
+            <div style={{ color: '#f87171', fontSize: 12 }}>{s3Error}</div>
+          ) : s3Bal !== null ? (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontSize: 30, fontWeight: 900, color: '#22d3ee' }}>{Number(s3Bal).toLocaleString()}</span>
               <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>USD</span>
             </div>
           ) : null}
