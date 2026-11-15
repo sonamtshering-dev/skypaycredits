@@ -317,7 +317,7 @@ function CodesTab() {
     setCreateErr('')
     const paise = Math.round(parseFloat(value) * 100)
     if (!paise || paise <= 0) return setCreateErr('Enter a valid value (₹)')
-    if (paise > 200000) return setCreateErr('Max code value is ₹2,000')
+    if (paise > 10000000) return setCreateErr('Max code value is ₹1,00,000')
     setCreating(true)
     try {
       const { data } = await api.post('/admin/wallet/codes', {
@@ -397,8 +397,8 @@ function CodesTab() {
               <input style={inp} type="number" min="1" max="100" value={count} onChange={e => setCount(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Value (₹) · max ₹2,000 *</label>
-              <input style={inp} type="number" min="1" max="2000" placeholder="e.g. 500" value={value} onChange={e => setValue(e.target.value)} />
+              <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Value (₹) · max ₹1,00,000 *</label>
+              <input style={inp} type="number" min="1" max="100000" placeholder="e.g. 500" value={value} onChange={e => setValue(e.target.value)} />
             </div>
             <div>
               <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 5 }}>Expires (optional)</label>
