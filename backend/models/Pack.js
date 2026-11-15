@@ -19,7 +19,7 @@ const packSchema = new mongoose.Schema(
     oldPrice:      { type: Number, default: 0 },
     image:       { type: String, default: "" },
     active:      { type: Boolean, default: true },
-    provider:    { type: String, enum: ["moogold","smile","g2bulk","manual","fintopup","fazercards",""], default: "" },
+    provider:    { type: String, enum: ["moogold","smile","g2bulk","manual","fintopup","fazercards","aluu",""], default: "" },
     providerGameId: { type: String, default: "" },
     skuCode:     { type: String, default: "" },
     skuCodes:    [skuSchema],

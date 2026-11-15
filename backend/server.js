@@ -43,12 +43,18 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"],
 }))
 
-// Webhook — raw body MUST be before express.json; own rate limiter (VULN-09)
+// Webhooks — raw body MUST be before express.json; own rate limiter (VULN-09)
 app.post(
   "/api/payment/webhook",
   rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false }),
   express.raw({ type: "application/json" }),
   require("./routes/paymentRoutes").webhookHandler
+)
+app.post(
+  "/api/aluu/webhook",
+  rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false }),
+  express.raw({ type: "application/json" }),
+  require("./routes/aluuRoutes").webhookHandler
 )
 
 app.use(express.json({ limit: "100kb" }))
@@ -97,6 +103,7 @@ app.use("/api/orders",    orderLimiter,    require("./routes/orderRoutes"))
 app.use("/api/users",     adminLimiter,    require("./routes/userRoutes"))
 app.use("/api/payment",   payLimiter,      require("./routes/paymentRoutes"))
 app.use("/api/smile",     adminLimiter,    require("./routes/smileRoutes"))
+app.use("/api/aluu",      adminLimiter,    require("./routes/aluuRoutes"))
 app.use("/api/fazercards", adminLimiter,   require("./routes/fazercardsRoutes"))
 app.use("/api/fintopup",                   require("./routes/fintopupRoutes"))
 app.use("/api/recharge",  rechargeLimiter, require("./routes/rechargeRoutes"))

@@ -6,6 +6,7 @@ import { Gamepad2 } from 'lucide-react'
 
 const PROVIDER_LABEL = {
   fintopup:   'Supplier 1',
+  aluu:       'Aluu',
   smile:      'Supplier 2',
   fazercards: 'Supplier 3',
   manual:     'Manual',
@@ -210,6 +211,7 @@ export default function AdminGames() {
                         <option value="fintopup">Supplier 1</option>
                         <option value="smile">Supplier 2</option>
                         <option value="fazercards">Supplier 3</option>
+                        <option value="aluu">Aluu</option>
                       </select>
                     </div>
                     <div className="form-group" style={{ flex: 1 }}>
@@ -326,6 +328,7 @@ function RegionRow({ region, onChange, onRemove }) {
                 <option value="fintopup">Supplier 1</option>
                 <option value="smile">Supplier 2</option>
                 <option value="fazercards">Supplier 3</option>
+                <option value="aluu">Aluu</option>
                 <option value="manual">Manual</option>
               </select>
             </div>

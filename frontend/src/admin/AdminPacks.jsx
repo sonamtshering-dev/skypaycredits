@@ -7,6 +7,7 @@ import theme from '../theme'
 
 const PROVIDER_LABEL = {
   fintopup:   'Supplier 1',
+  aluu:       'Aluu',
   smile:      'Supplier 2',
   fazercards: 'Supplier 3',
   manual:     'Manual',
@@ -185,6 +186,7 @@ function PackModal({ pack, gameId, regionSlug, onSave, onClose }) {
                 <option value="fintopup">Supplier 1</option>
                 <option value="smile">Supplier 2</option>
                 <option value="fazercards">Supplier 3</option>
+                <option value="aluu">Aluu</option>
               </select>
             </div>
             <div className="form-group">

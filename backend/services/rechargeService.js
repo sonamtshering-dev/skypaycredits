@@ -3,6 +3,7 @@ const fintopup   = require("./fintopupService")
 const smile      = require("./smileService")
 const fazercards = require("./fazercardsService")
 const g2bulk     = require("./g2bulkService")
+const aluu       = require("./aluuService")
 
 const isProd = process.env.NODE_ENV === "production"
 const log    = (...a) => { if (!isProd) console.log(...a) }
@@ -89,6 +90,21 @@ async function verifyPlayer(game, playerData, packs) {
       if (e.message.includes('Player not found')) throw e
     }
     return { username: userId, skipped: true }
+  }
+
+  if (provider === "aluu") {
+    try {
+      // BGMI uses dedicated check; other games use game-check
+      const isBgmi = providerGameId === 'bgmi_instant' || providerGameId === 'bgmi'
+      if (isBgmi) {
+        const res = await aluu.verifyBgmiPlayer(userId)
+        return { username: res.username }
+      }
+      const res = await aluu.verifyPlayer({ gameCode: providerGameId, userId, serverId: zoneId || undefined })
+      return { username: res.username }
+    } catch (e) {
+      throw new Error(e.message || 'Player not found. Please check your Player ID.')
+    }
   }
 
   return { username: userId, skipped: true }
@@ -186,8 +202,29 @@ async function processRecharge(order, pack, game) {
         })
       }
 
+      else if (provider === "aluu") {
+        // denom = skuCode (e.g. "bgmi_360uc"), game = providerGameId (e.g. "bgmi_instant")
+        result = await aluu.placeOrder({
+          game:           providerGameId,
+          denom:          skuCode,
+          userId,
+          serverId:       zoneId || undefined,
+          partnerOrderId: `${order._id}-${i}`,
+        })
+        // For BGMI, the response is synchronous (status is already final)
+        if (result.status === 'error' || result.status === 'failed') {
+          throw new Error(result.message || 'Order failed at provider')
+        }
+        transactions.push({
+          skuCode,
+          providerOrderId: result.providerOrderId || result.reference || '',
+          playerName:      result.username || '',
+          status:          result.status === 'successful' ? 'success' : 'pending',
+        })
+      }
+
       else if (provider === "moogold") {
-        throw new Error("Moogold provider is not active. Reconfigure this game to use fintopup, smile, fazercards, or manual.")
+        throw new Error("Moogold provider is not active. Reconfigure this game to use fintopup, smile, fazercards, aluu, or manual.")
       }
 
       else {
