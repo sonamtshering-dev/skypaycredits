@@ -13,7 +13,7 @@ const TABS = [
   { id: 'history',  label: 'History' },
 ]
 
-const TOPUP_AMOUNTS = [10000, 50000, 100000, 200000, 500000, 1000000] // paise (₹100–₹10,000)
+const TOPUP_AMOUNTS = [5000, 10000, 20000, 50000, 100000, 200000] // paise (₹50–₹2,000)
 
 
 function txIcon(type) {
@@ -96,7 +96,7 @@ export default function WalletPage() {
     e.preventDefault()
     setTopupErr(''); setTopupResult(null)
     if (!amountPaise || amountPaise < 2000) return setTopupErr(`Minimum deposit is ${fmtP(2000)}`)
-    if (amountPaise > 10000000) return setTopupErr(`Maximum deposit is ₹1,00,000 per transaction.`)
+    if (amountPaise > 200000) return setTopupErr(`Maximum ₹2,000 per transaction. Add multiple times to accumulate balance.`)
     setTopupLoading(true)
     try {
       const { data } = await api.post('/wallet/topup', { amount: amountPaise })
@@ -283,14 +283,14 @@ export default function WalletPage() {
                         style={inp}
                         type="number"
                         min={isReseller ? "200" : "20"}
-                        max="100000"
+                        max="2000"
                         step="1"
                         placeholder="Enter amount…"
                         value={amount}
                         onChange={e => setAmount(e.target.value)}
                       />
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>
-                        Min ₹{isReseller ? '200' : '20'} · Max ₹1,00,000 per transaction
+                        Min ₹{isReseller ? '200' : '20'} · Max ₹2,000 per transaction
                       </div>
                     </div>
 
