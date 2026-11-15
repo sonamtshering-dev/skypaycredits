@@ -212,7 +212,7 @@ async function processRecharge(order, pack, game) {
           partnerOrderId: `${order._id}-${i}`,
         })
         // For BGMI, the response is synchronous (status is already final)
-        if (result.status === 'error' || result.status === 'failed') {
+        if (result.status === 'error') {
           throw new Error(result.message || 'Order failed at provider')
         }
         transactions.push({

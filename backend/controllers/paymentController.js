@@ -51,11 +51,16 @@ async function triggerRechargeIfNeeded(paymentId) {
   if (order.orderType === 'wallet_topup') {
     if (!order.walletCredited) {
       const topupPaise = order.walletAmountTopup || Math.round(order.price * 100)
-      await creditWallet(
+      const topupResult = await creditWallet(
         order.userId, topupPaise, 'topup',
         order._id.toString(), 'Wallet topup via NovaPay',
-        null, null
+        null, null, { bypassCap: true }
       )
+      if (!topupResult.ok) {
+        console.error('[WALLET] Topup credit failed for order', order._id, ':', topupResult.error)
+        await Order.findByIdAndUpdate(order._id, { status: 'Failed', adminNote: `Wallet credit failed: ${topupResult.error}` })
+        return null
+      }
       await Order.findOneAndUpdate(
         { _id: order._id, walletCredited: { $ne: true } },
         { walletCredited: true, status: 'Completed' }

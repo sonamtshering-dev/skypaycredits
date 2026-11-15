@@ -2,8 +2,9 @@ const securityLog = require('../services/securityLogger')
 const crypto = require('crypto')
 const mongoose = require('mongoose')
 const jwt   = require("jsonwebtoken")
-const User  = require("../models/User")
-const OTP   = require("../models/OTP")
+const User     = require("../models/User")
+const OTP      = require("../models/OTP")
+const Settings = require("../models/Settings")
 const { generateOTP, sendOTPEmail, sendPasswordResetEmail } = require("../services/emailService")
 const { sendSMSOTP, maskPhone } = require("../services/smsService")
 
@@ -111,7 +112,7 @@ exports.register = async (req, res) => {
     const otp = generateOTP()
     await OTP.create({ email, otp: hashOTP(otp) })
     try {
-      const settings = await require("../models/Settings").findOne()
+      const settings = await Settings.findOne()
       await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
     } catch (emailErr) {
       console.error("[EMAIL] Failed to send OTP:", emailErr.message)
@@ -228,7 +229,7 @@ exports.resendPhoneOTP = async (req, res) => {
     const otp = generateOTP()
     await OTP.create({ email, phone: user.phone, otp: hashOTP(otp), purpose: 'phone' })
 
-    const settings = await require("../models/Settings").findOne()
+    const settings = await Settings.findOne()
     await sendSMSOTP(user.phone, otp, settings?.siteName || 'Nitrogen Store')
 
     res.json({ message: "New code sent to your phone" })
@@ -250,7 +251,7 @@ exports.resendOTP = async (req, res) => {
     const otp = generateOTP()
     await OTP.create({ email, otp: hashOTP(otp) })
 
-    const settings = await require("../models/Settings").findOne()
+    const settings = await Settings.findOne()
     await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
 
     res.json({ message: "New verification code sent" })
@@ -287,7 +288,7 @@ exports.login = async (req, res) => {
       await OTP.deleteMany({ email })
       const otp = generateOTP()
       await OTP.create({ email, otp: hashOTP(otp) })
-      const settings = await require("../models/Settings").findOne()
+      const settings = await Settings.findOne()
       await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings)).catch(() => {})
       return res.status(403).json({
         message: "Email not verified. A new code has been sent.",
@@ -311,7 +312,7 @@ exports.login = async (req, res) => {
       await OTP.deleteMany({ email, purpose: 'admin-login' })
       const adminOtp = generateOTP()
       await OTP.create({ email, otp: hashOTP(adminOtp), purpose: 'admin-login' })
-      const settings = await require('../models/Settings').findOne()
+      const settings = await Settings.findOne()
       await sendOTPEmail(email, adminOtp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
         .catch(err => console.error('[EMAIL] Admin OTP send failed:', err.message))
       return res.json({ requiresAdminOTP: true, email })
@@ -460,7 +461,7 @@ exports.forgotPassword = async (req, res) => {
     const otp = generateOTP()
     await OTP.create({ email, otp: hashOTP(otp), purpose: 'reset' })
 
-    const settings = await require('../models/Settings').findOne()
+    const settings = await Settings.findOne()
     await sendPasswordResetEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings)).catch(err => {
       console.error('[EMAIL] Failed to send reset OTP:', err.message)
     })
@@ -524,7 +525,7 @@ exports.sendEmailOTPPre = async (req, res) => {
     const otp = generateOTP()
     await OTP.deleteMany({ email, purpose: 'pre-email' })
     await OTP.create({ email, otp: hashOTP(otp), purpose: 'pre-email' })
-    const settings = await require("../models/Settings").findOne()
+    const settings = await Settings.findOne()
     await sendOTPEmail(email, otp, settings?.siteName || 'Nitrogen Store', logoUrl(settings))
     res.json({ message: "OTP sent to your email" })
   } catch (err) {
@@ -568,7 +569,7 @@ exports.sendPhoneOTPPre = async (req, res) => {
     const phone = `91${phone10}`
     const taken = await User.findOne({ phone, isEmailVerified: true })
     if (taken) return res.status(400).json({ message: "Phone number already registered" })
-    const settings = await require("../models/Settings").findOne()
+    const settings = await Settings.findOne()
     // If phone OTP is disabled by admin, skip SMS and return a verified token directly
     if (settings?.phoneOtpEnabled === false) {
       const token = jwt.sign({ phone, type: 'phone-verified' }, process.env.JWT_SECRET, { expiresIn: '15m' })

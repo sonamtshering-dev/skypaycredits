@@ -54,7 +54,11 @@ async function webhookHandler(req, res) {
     const timestamp = req.headers['x-webhook-timestamp'] || ''
     const signature = req.headers['x-webhook-signature'] || ''
 
-    if (secret && signature) {
+    if (secret) {
+      if (!signature) {
+        console.warn('[ALUU WEBHOOK] Missing signature header')
+        return res.status(401).json({ success: false, message: 'Missing signature' })
+      }
       if (!/^\d+$/.test(timestamp) || Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) {
         console.warn('[ALUU WEBHOOK] Stale timestamp:', timestamp)
         return res.status(400).json({ success: false, message: 'Stale webhook' })
@@ -82,6 +86,10 @@ async function webhookHandler(req, res) {
     // partner_orderid format: "<mongoId>-<index>"
     // Strip the index suffix to get the MongoDB order _id
     const orderId = partnerOrderId.replace(/-\d+$/, '')
+    if (!/^[a-f\d]{24}$/i.test(orderId)) {
+      console.warn('[ALUU WEBHOOK] Invalid orderId:', orderId)
+      return res.json({ received: true })
+    }
 
     if (status === 'successful') {
       // Idempotency: only update if not already Completed
@@ -128,8 +136,6 @@ async function webhookHandler(req, res) {
     res.status(400).json({ message: 'Webhook processing failed' })
   }
 }
-
-router.use('/', require('express').Router())  // placeholder so module.exports works
 
 module.exports = router
 module.exports.webhookHandler = webhookHandler

@@ -5,18 +5,8 @@ const router  = express.Router()
 const multer  = require("multer")
 const path    = require("path")
 const fs      = require("fs")
-const mongoose = require("mongoose")
 const { protect, adminOnly, validateObjectId } = require("../middlewares/authMiddleware")
-
-// Simple inline Banner model
-const bannerSchema = new mongoose.Schema({
-  title:       { type: String, default: "" },
-  image:       { type: String, default: "" },
-  imageMobile: { type: String, default: "" },
-  link:        { type: String, default: "" },
-  active:      { type: Boolean, default: true },
-}, { timestamps: true })
-const Banner = mongoose.models.Banner || mongoose.model("Banner", bannerSchema)
+const Banner = require("../models/Banner")
 
 // Multer
 const storage = multer.diskStorage({
