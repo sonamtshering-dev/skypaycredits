@@ -84,7 +84,7 @@ exports.adminCredit = async (req, res) => {
     const result = await creditWallet(
       req.params.userId, amountPaise, 'credit',
       null, `Admin credit: ${reason}`,
-      req.user._id, getIp(req)
+      req.user._id, getIp(req), { bypassCap: true }
     )
     if (!result.ok) return res.status(400).json({ message: result.error })
     res.json({ success: true, ...result })
