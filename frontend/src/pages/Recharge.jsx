@@ -510,7 +510,7 @@ export default function Recharge() {
                       if (!user) { navigate('/auth'); return }
                       if (!playerData[fields[0]?.name]) { setError('Enter your Player ID'); return }
                       if (!selectedPack) { setError('Select a pack'); return }
-                      if (!user.phone) { setShowPhoneGate(true); return }
+                      if (!user.phone && settings.phoneOtpEnabled !== false) { setShowPhoneGate(true); return }
                       setShowPaySheet(true)
                     }}
                     disabled={paying}
