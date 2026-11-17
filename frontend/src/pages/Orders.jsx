@@ -19,6 +19,8 @@ const STATUS = {
   Refunded:   { label: 'Refunded',   color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
 }
 
+const TERMINAL = new Set(['Completed', 'Failed', 'Refunded'])
+
 export default function Orders() {
   const [orders, setOrders]   = useState([])
   const [loading, setLoading] = useState(true)
@@ -30,6 +32,16 @@ export default function Orders() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  // Poll every 4s while any order is Pending/Processing
+  useEffect(() => {
+    const hasActive = orders.some(o => !TERMINAL.has(o.status))
+    if (!hasActive) return
+    const id = setInterval(() => {
+      api.get('/orders/my').then(r => setOrders(r.data)).catch(() => {})
+    }, 4000)
+    return () => clearInterval(id)
+  }, [orders])
 
   return (
     <>

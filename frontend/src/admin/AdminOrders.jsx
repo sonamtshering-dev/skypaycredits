@@ -56,6 +56,14 @@ export default function AdminOrders() {
 
   useEffect(() => { load(1, filter, search) }, [filter, search])
 
+  // Poll every 5s while any order on this page is Pending/Processing
+  useEffect(() => {
+    const hasActive = orders.some(o => o.status === 'Pending' || o.status === 'Processing')
+    if (!hasActive) return
+    const id = setInterval(() => load(page, filter, search), 5000)
+    return () => clearInterval(id)
+  }, [orders, page, filter, search])
+
   const goPage = (pg) => {
     setPage(pg)
     load(pg, filter, search)
