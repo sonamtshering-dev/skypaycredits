@@ -123,7 +123,7 @@ async function triggerRechargeIfNeeded(paymentId) {
         processRecharge(order, pack, game)
           .then(async (result) => {
             const update = {
-              status: "Completed",
+              status: result.awaitingWebhook ? "Processing" : "Completed",
               providerOrderId: result.providerOrderId || "",
             }
             if (result.playerName)              update.playerName = result.playerName

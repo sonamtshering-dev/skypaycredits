@@ -92,9 +92,9 @@ async function webhookHandler(req, res) {
     }
 
     if (status === 'successful') {
-      // Idempotency: only update if not already Completed
+      // Allow updating Failed → Completed (order may have been wrongly set Failed before webhook arrived)
       const order = await Order.findOneAndUpdate(
-        { _id: orderId, status: { $nin: ['Completed', 'Failed'] } },
+        { _id: orderId, status: { $ne: 'Completed' } },
         {
           status:            'Completed',
           providerOrderId:   data.provider_order_id || data.reference || partnerOrderId,

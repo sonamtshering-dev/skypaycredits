@@ -293,7 +293,7 @@ router.post("/", protect, async (req, res) => {
           await Order.findByIdAndUpdate(order._id, { status: 'Processing' })
           processRecharge(order, packForRecharge, game)
             .then(async result => {
-              const upd = { status: 'Completed', providerOrderId: result.providerOrderId || '' }
+              const upd = { status: result.awaitingWebhook ? 'Processing' : 'Completed', providerOrderId: result.providerOrderId || '' }
               if (result.playerName) upd.playerName = result.playerName
               if (result.transactions?.length > 0) upd.providerTransactions = result.transactions
               await Order.findByIdAndUpdate(order._id, upd)

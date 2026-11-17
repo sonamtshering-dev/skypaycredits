@@ -240,16 +240,20 @@ async function processRecharge(order, pack, game) {
   }
 
   const successful = transactions.filter(t => t.status === "success")
+  // 'pending' = placed but awaiting async confirmation (Aluu webhook-based)
+  const placed     = transactions.filter(t => t.status === "success" || t.status === "pending")
   const failed     = transactions.filter(t => t.status === "failed")
 
-  if (successful.length === 0) throw new Error(failed[0]?.error || "All SKUs failed")
+  if (placed.length === 0) throw new Error(failed[0]?.error || "All SKUs failed")
 
+  const lead = successful[0] || placed[0]
   return {
-    providerOrderId: successful[0]?.providerOrderId || "",
-    playerName:      successful[0]?.playerName || "",
+    providerOrderId: lead?.providerOrderId || "",
+    playerName:      lead?.playerName || "",
     status:          "PENDING",
     message:         `Delivered ${successful.length}/${allSkus.length} items`,
-    transactions
+    transactions,
+    awaitingWebhook: successful.length === 0 && placed.length > 0,
   }
 }
 
